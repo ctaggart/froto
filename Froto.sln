@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoParser", "ProtoParser\ProtoParser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoParser.Test", "ProtoParser.Test\ProtoParser.Test.fsproj", "{18104831-6F33-4F15-AB45-3E8527CC5181}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C31DA31-BEC5-4E73-9D83-E36D18847439}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C31DA31-BEC5-4E73-9D83-E36D18847439}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C31DA31-BEC5-4E73-9D83-E36D18847439}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C31DA31-BEC5-4E73-9D83-E36D18847439}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18104831-6F33-4F15-AB45-3E8527CC5181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18104831-6F33-4F15-AB45-3E8527CC5181}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18104831-6F33-4F15-AB45-3E8527CC5181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18104831-6F33-4F15-AB45-3E8527CC5181}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
