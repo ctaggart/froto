@@ -31,6 +31,18 @@
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FParsec, Version=0.7.3.1, Culture=neutral, PublicKeyToken=null">
+      <Name>FParsec</Name>
+      <AssemblyName>FParsec.dll</AssemblyName>
+      <HintPath>..\lib\FParsec.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FParsecCS, Version=0.7.3.1, Culture=neutral, PublicKeyToken=null">
+      <Name>FParsecCS</Name>
+      <AssemblyName>FParsecCS.dll</AssemblyName>
+      <HintPath>..\lib\FParsecCS.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
