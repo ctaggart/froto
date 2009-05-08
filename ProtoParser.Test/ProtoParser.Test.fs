@@ -3,6 +3,7 @@ namespace Froto.ProtoParser
 module Test
 
 open System
+open System.IO
 open Xunit
 open FParsec.Primitives
 open FParsec.CharParser
@@ -27,6 +28,19 @@ let assertParseFailure (pr:ParserResult<_>) = Assert.Throws<FailureException>(th
 let parseString p s = runParserOnString p () String.Empty s
 let canParse p s = assertParseSuccess(parseString p s)
 let canNotParse p s = assertParseFailure(runParserOnString p () String.Empty s) |> ignore
+
+/// gets the path for a test file
+/// looking for froto\test\file when
+/// current assembly is froto\Project\bin\Configuration\Project.dll
+let getTestFile file =
+   let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
+   let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
+   let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent).FullName
+   Path.Combine(solutionPath, Path.Combine("test",file))
+
+let parseFile p f = runParserOnFile p () (getTestFile f) Text.Encoding.UTF8 
+let canParseFile p f = assertParseSuccess(parseFile p f)
+let canNotParseFile p f = assertParseFailure(parseFile p f)
 
 let isParseResult p s expected =
   isTrue(
@@ -76,7 +90,27 @@ let pWordTest() =
   isParseResult pWord "word " "word"
   
 [<Fact>]
-let pScalarType() =
+let pScalarTypeTest() =
   isParseResult pScalarType "double" ProtoDouble
   isParseResult pScalarType "float" ProtoFloat
-  //canNotParse pScalarType "dbl"
+  canNotParse pScalarType "dbl"
+
+[<Fact>]
+let pFieldRuleTest() =
+  isParseResult pFieldRule "required" Required
+  isParseResult pFieldRule "optional" Optional
+  isParseResult pFieldRule "repeated" Repeated
+  canNotParse pFieldRule "rep"
+
+[<Fact>]
+let pFieldTest() =
+  canParse pField "required string query = 1;"
+  canParse pField "required   string   query=34245   ;"
+
+[<Fact>]  
+let findTestFileTest() =
+  isTrue (File.Exists (getTestFile "SearchRequest.proto"))
+
+[<Fact>]
+let pMessageTest() =
+  canParseFile pMessage "SearchRequest.proto"

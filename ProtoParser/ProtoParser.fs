@@ -29,10 +29,14 @@ let spaces : State<unit> -> Reply<unit,State<unit>> =
 let spaces1 : State<unit> -> Reply<unit,State<unit>> =
   skipMany1Satisfy isWhitespaceChar
 
+// perhaps add comments?
+let isEndOfLineChar c = c = '\n' || c = '\r'
+let pEndOfLine =
+  skipManySatisfy isEndOfLineChar
+  
+
 let pWord : State<unit> -> Reply<string,State<unit>> = 
   many1Chars (asciiLetter <|> digit <|> anyOf "_")
-
-let pMessageName = pstring "message" >>. spaces1 >>. many1Chars (asciiLetter <|> digit)
 
 type ScalarType =
   | ProtoDouble
@@ -74,20 +78,64 @@ let scalarTypeMap =
 let toScalarType s = scalarTypeMap.[s]
 let isScalarType s = scalarTypeMap.ContainsKey s
 
-//let pScalarType =
-//  pWord |>> fun w ->
-//    if isScalarType w then
-//      toScalarType w
-//    else 
-//      failwithf "unknown scalar type: %s" w
-
 let pScalarType =
+  pWord |>>= fun w state ->
+    if isScalarType w then
+      EmptyOK (toScalarType w) state
+    else
+      EmptyError (messageError state (sprintf "unknown scalar type: %s" w))
+
+type FieldRule =
+  | Required
+  | Optional
+  | Repeated
+
+let fieldRuleMap =
+  [
+    "required", Required;
+    "optional", Optional;
+    "repeated", Repeated;
+  ]
+  |> Map.of_list
+
+let toFieldRule s = fieldRuleMap.[s]
+let isFieldRule s = fieldRuleMap.ContainsKey s
+
+let pFieldRule =
+  pWord |>>= fun w state ->
+    if isFieldRule w then
+      EmptyOK (toFieldRule w) state
+    else
+      EmptyError (messageError state (sprintf "uknown field type: %s" w))
+
+let pMessageName = pstring "message" >>. spaces1 >>. pWord
+
+/// a line with a field
+let pField =
   parse {
-    let! w = pWord
-//    if isScalarType w then
-//      return toScalarType(w)
-//    else
-//      //fail ("unknown scalar type: %s" w)
-    return toScalarType(w)
+    do! spaces;
+    let! ft = pFieldRule
+    do! spaces1
+    let! st = pScalarType
+    do! spaces1
+    let! name = pWord
+    do! spaces
+    do! skipChar '='
+    do! spaces
+    let! order = pint32
+    do! spaces
+    do! skipChar ';'
+    do! pEndOfLine
+    return ft, st, name, order
   }
-  
+
+let pMessage =
+  parse {
+    let! mn = pMessageName
+    do! spaces1
+    do! skipChar '{'
+    do! pEndOfLine
+    let! f = many1 pField
+    do! skipChar '}'
+    return mn, f
+  }

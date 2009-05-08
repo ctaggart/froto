@@ -30,6 +30,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Froto\xunit-1.1\xunit.console.exe</StartProgram>
+    <StartArguments>C:\Froto\froto\ProtoParser.Test\bin\Debug\Froto.ProtoParser.Test.dll</StartArguments>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="FParsec, Version=0.7.3.1, Culture=neutral, PublicKeyToken=null">
       <Name>FParsec</Name>
