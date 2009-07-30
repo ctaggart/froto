@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 10
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoParser", "ProtoParser\ProtoParser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoParser.Test", "ProtoParser.Test\ProtoParser.Test.fsproj", "{18104831-6F33-4F15-AB45-3E8527CC5181}"

@@ -1,4 +1,4 @@
-﻿#light
+﻿
 namespace Froto.ProtoParser
 module Test
 
@@ -6,7 +6,7 @@ open System
 open System.IO
 open Xunit
 open FParsec.Primitives
-open FParsec.CharParser
+open FParsec.CharParsers
 open Froto.ProtoParser
 
 let equal expected actual = Assert.Equal(expected, actual)
@@ -18,11 +18,11 @@ let throwParserFailure pr =
   Assert.ThrowsDelegate(fun () ->
     match pr with
     | Success(_) -> () 
-    | Failure(errorMsg,_) -> failwith errorMsg
+    | Failure(errorMsg, _, _) -> failwith errorMsg
   )
 
-let assertParseSuccess (pr:ParserResult<_>) = Assert.DoesNotThrow(throwParserFailure pr)
-let assertParseFailure (pr:ParserResult<_>) = Assert.Throws<FailureException>(throwParserFailure pr)
+let assertParseSuccess (pr:ParserResult<_,_>) = Assert.DoesNotThrow(throwParserFailure pr)
+let assertParseFailure (pr:ParserResult<_,_>) = Assert.Throws<FailureException>(throwParserFailure pr)
 
 /// test a parser on a string
 let parseString p s = runParserOnString p () String.Empty s
@@ -45,8 +45,8 @@ let canNotParseFile p f = assertParseFailure(parseFile p f)
 let isParseResult p s expected =
   isTrue(
     match parseString p s with
-    | Success actual -> actual = expected
-    | Failure (_,_) -> false
+    | Success (actual, _, _) -> actual = expected
+    | Failure (_, _, _) -> false
   )
 
 /// testing xUnit setup :)

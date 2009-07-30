@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>ProtoParser.Test</RootNamespace>
     <AssemblyName>Froto.ProtoParser.Test</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Name>ProtoParser.Test</Name>
   </PropertyGroup>
@@ -36,17 +36,26 @@
     <StartArguments>C:\Froto\froto\ProtoParser.Test\bin\Debug\Froto.ProtoParser.Test.dll</StartArguments>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FParsec, Version=0.7.3.1, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="FParsec, Version=0.8.0.0, Culture=neutral, PublicKeyToken=null">
       <Name>FParsec</Name>
       <AssemblyName>FParsec.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\FParsec.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="FParsecCS, Version=0.7.3.1, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="FParsecCS, Version=0.8.0.0, Culture=neutral, PublicKeyToken=null">
       <Name>FParsecCS</Name>
       <AssemblyName>FParsecCS.dll</AssemblyName>
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\FParsecCS.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharp.Core">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+      <Private>False</Private>
+      <SpecificVersion>True</SpecificVersion>
     </Reference>
     <Reference Include="System" />
     <Reference Include="xunit, Version=1.1.0.1323, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c">
@@ -66,7 +75,7 @@
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\FSharp\1.0\Microsoft.FSharp.Targets" />
+  <Import Project="$(ProgramFiles)\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
 	<Target Name="BeforeBuild">

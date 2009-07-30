@@ -1,12 +1,14 @@
-﻿#light
+﻿
 namespace Froto
 module ProtoParser
 
 // http://code.google.com/apis/protocolbuffers/docs/proto.html
 // http://www.quanttec.com/fparsec/
 
+open FParsec
 open FParsec.Primitives
-open FParsec.CharParser
+open FParsec.CharParsers
+open FParsec.Error
 
 /// testing xUnit setup :)
 let capitalize (s:string) = s.ToUpper()
@@ -24,19 +26,16 @@ let isNewLineFalse c = isNewLine c = false
 // overriding spaces, newlines are important for comments
 // http://www.quanttec.com/fparsec/#spaces
 /// skip zero or more whitespace characters, never fails
-let spaces : State<unit> -> Reply<unit,State<unit>> =
-  skipManySatisfy isWhitespaceChar
-let spaces1 : State<unit> -> Reply<unit,State<unit>> =
-  skipMany1Satisfy isWhitespaceChar
+//let spaces : State<unit> -> Reply<unit,State<unit>> =
+let spaces = skipManySatisfy isWhitespaceChar
+let spaces1 = skipMany1Satisfy isWhitespaceChar
 
 // perhaps add comments?
 let isEndOfLineChar c = c = '\n' || c = '\r'
 let pEndOfLine =
   skipManySatisfy isEndOfLineChar
-  
 
-let pWord : State<unit> -> Reply<string,State<unit>> = 
-  many1Chars (asciiLetter <|> digit <|> anyOf "_")
+let pWord = many1Chars (asciiLetter <|> digit <|> anyOf "_")
 
 type ScalarType =
   | ProtoDouble
@@ -79,11 +78,11 @@ let toScalarType s = scalarTypeMap.[s]
 let isScalarType s = scalarTypeMap.ContainsKey s
 
 let pScalarType =
-  pWord |>>= fun w state ->
+  pWord >>= fun w state ->
     if isScalarType w then
-      EmptyOK (toScalarType w) state
+     Reply<_,unit>(toScalarType w, state)
     else
-      EmptyError (messageError state (sprintf "unknown scalar type: %s" w))
+      Reply(Error, expectedError (sprintf "unknown scalar type: %s" w), state)
 
 type FieldRule =
   | Required
@@ -102,11 +101,11 @@ let toFieldRule s = fieldRuleMap.[s]
 let isFieldRule s = fieldRuleMap.ContainsKey s
 
 let pFieldRule =
-  pWord |>>= fun w state ->
+  pWord >>= fun w state ->
     if isFieldRule w then
-      EmptyOK (toFieldRule w) state
+      Reply(toFieldRule w, state)
     else
-      EmptyError (messageError state (sprintf "uknown field type: %s" w))
+      Reply<_,_>(Error, expectedError (sprintf "uknown field type: %s" w), state)
 
 let pMessageName = pstring "message" >>. spaces1 >>. pWord
 
