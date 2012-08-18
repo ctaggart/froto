@@ -1,6 +1,5 @@
 ﻿
-namespace Froto.ProtoParser
-module Test
+module Froto.ProtoParser.Test
 
 open System
 open System.IO
@@ -22,7 +21,7 @@ let throwParserFailure pr =
   )
 
 let assertParseSuccess (pr:ParserResult<_,_>) = Assert.DoesNotThrow(throwParserFailure pr)
-let assertParseFailure (pr:ParserResult<_,_>) = Assert.Throws<FailureException>(throwParserFailure pr)
+let assertParseFailure (pr:ParserResult<_,_>) = Assert.Throws<Exception>(throwParserFailure pr)
 
 /// test a parser on a string
 let parseString p s = runParserOnString p () String.Empty s

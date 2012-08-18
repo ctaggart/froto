@@ -12,6 +12,8 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Name>ProtoParser.Test</Name>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -35,19 +37,18 @@
     <StartProgram>C:\Froto\xunit-1.1\xunit.console.exe</StartProgram>
     <StartArguments>C:\Froto\froto\ProtoParser.Test\bin\Debug\Froto.ProtoParser.Test.dll</StartArguments>
   </PropertyGroup>
+  <Import Project="$(ProgramFiles)\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
   <ItemGroup>
-    <Reference Include="FParsec, Version=0.8.0.0, Culture=neutral, PublicKeyToken=null">
-      <Name>FParsec</Name>
-      <AssemblyName>FParsec.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\lib\FParsec.dll</HintPath>
+    <Compile Include="ProtoParser.Test.fs" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FParsec">
+      <HintPath>..\packages\FParsec.0.9.2.0\lib\net40\FParsec.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="FParsecCS, Version=0.8.0.0, Culture=neutral, PublicKeyToken=null">
-      <Name>FParsecCS</Name>
-      <AssemblyName>FParsecCS.dll</AssemblyName>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\lib\FParsecCS.dll</HintPath>
+    <Reference Include="FParsecCS">
+      <HintPath>..\packages\FParsec.0.9.2.0\lib\net40\FParsecCS.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FSharp.Core">
@@ -58,24 +59,16 @@
       <SpecificVersion>True</SpecificVersion>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="xunit, Version=1.1.0.1323, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c">
-      <Name>xunit</Name>
-      <AssemblyName>xunit.dll</AssemblyName>
-      <HintPath>..\lib\xunit.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ProtoParser.Test.fs" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\ProtoParser\ProtoParser.fsproj">
       <Name>ProtoParser</Name>
       <Project>{1c31da31-bec5-4e73-9d83-e36d18847439}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="xunit, Version=1.1.0.1323, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c">
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
-  <Import Project="$(ProgramFiles)\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
 	<Target Name="BeforeBuild">

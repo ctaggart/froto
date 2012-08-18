@@ -1,6 +1,5 @@
 ﻿
-namespace Froto
-module ProtoParser
+module Froto.ProtoParser
 
 // http://code.google.com/apis/protocolbuffers/docs/proto.html
 // http://www.quanttec.com/fparsec/
@@ -27,7 +26,7 @@ let isNewLineFalse c = isNewLine c = false
 // http://www.quanttec.com/fparsec/#spaces
 /// skip zero or more whitespace characters, never fails
 //let spaces : State<unit> -> Reply<unit,State<unit>> =
-let spaces = skipManySatisfy isWhitespaceChar
+let spaces : Parser<unit,unit> = skipManySatisfy isWhitespaceChar
 let spaces1 = skipMany1Satisfy isWhitespaceChar
 
 // perhaps add comments?
@@ -71,18 +70,20 @@ let scalarTypeMap =
     "bool", ProtoBool;
     "string", ProtoString;
   ]
-  |> Map.of_list
+  |> Map.ofList
 
 /// http://code.google.com/apis/protocolbuffers/docs/proto.html#scalar
 let toScalarType s = scalarTypeMap.[s]
 let isScalarType s = scalarTypeMap.ContainsKey s
 
 let pScalarType =
-  pWord >>= fun w state ->
+  pWord >>= fun w ->
     if isScalarType w then
-     Reply<_,unit>(toScalarType w, state)
+      toScalarType w |> preturn
     else
-      Reply(Error, expectedError (sprintf "unknown scalar type: %s" w), state)
+      //Reply(Error, expectedError (sprintf "unknown scalar type: %s" w))
+//      expected "scalar type"
+      fun stream -> Reply(Error, expected "scalar type")
 
 type FieldRule =
   | Required
@@ -95,17 +96,17 @@ let fieldRuleMap =
     "optional", Optional;
     "repeated", Repeated;
   ]
-  |> Map.of_list
+  |> Map.ofList
 
 let toFieldRule s = fieldRuleMap.[s]
 let isFieldRule s = fieldRuleMap.ContainsKey s
 
 let pFieldRule =
-  pWord >>= fun w state ->
+  pWord >>= fun w ->
     if isFieldRule w then
-      Reply(toFieldRule w, state)
+      toFieldRule w |> preturn
     else
-      Reply<_,_>(Error, expectedError (sprintf "uknown field type: %s" w), state)
+      fun stream -> Reply(Error, expected "field type")
 
 let pMessageName = pstring "message" >>. spaces1 >>. pWord
 
