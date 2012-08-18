@@ -4,14 +4,10 @@ module Froto.ProtoParser.Test
 open System
 open System.IO
 open Xunit
+open FsUnit.Xunit
 open FParsec.Primitives
 open FParsec.CharParsers
 open Froto.ProtoParser
-
-let equal expected actual = Assert.Equal(expected, actual)
-let notEqual expected actual = Assert.NotEqual(expected, actual)
-let isTrue condition = Assert.True(condition)
-let isFalse condition = Assert.False(condition)
 
 let throwParserFailure pr =
   Assert.ThrowsDelegate(fun () ->
@@ -42,19 +38,17 @@ let canParseFile p f = assertParseSuccess(parseFile p f)
 let canNotParseFile p f = assertParseFailure(parseFile p f)
 
 let isParseResult p s expected =
-  isTrue(
-    match parseString p s with
-    | Success (actual, _, _) -> actual = expected
-    | Failure (_, _, _) -> false
-  )
+  match parseString p s with
+  | Success (actual, _, _) -> actual = expected
+  | Failure (_, _, _) -> false
+  |> should be True
 
 /// testing xUnit setup :)
 [<Fact>]
 let capitalizeTest() =
-  equal (capitalize "a") "A"
-  equal (capitalize "a") "A"
-  notEqual (capitalize "a") "a"
-  notEqual (capitalize "b") "A"
+  "A" |> should equal (capitalize "a") 
+  "a" |> should not' (equal (capitalize "a"))
+  "A" |> should not' (equal (capitalize "b"))
 
 [<Fact>]
 let canParseTest() =
@@ -64,9 +58,9 @@ let canParseTest() =
 
 [<Fact>]
 let isNewLineTest() =
-  isTrue (isNewLine '\r')
-  isTrue (isNewLine '\n')
-  isTrue (isNewLineFalse 'c')
+  isNewLine '\r' |> should be True
+  isNewLine '\n'  |> should be True
+  isNewLineFalse 'c' |> should be True
 
 [<Fact>]
 let spacesTest() =
@@ -108,7 +102,7 @@ let pFieldTest() =
 
 [<Fact>]  
 let findTestFileTest() =
-  isTrue (File.Exists (getTestFile "SearchRequest.proto"))
+  File.Exists (getTestFile "SearchRequest.proto") |> should be True
 
 [<Fact>]
 let pMessageTest() =
