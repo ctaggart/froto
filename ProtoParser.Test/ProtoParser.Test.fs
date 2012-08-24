@@ -5,105 +5,90 @@ open System
 open System.IO
 open Xunit
 open FsUnit.Xunit
-open FParsec.Primitives
-open FParsec.CharParsers
 open Froto.ProtoParser
+open Froto.ProtoAst
 
-let throwParserFailure pr =
-    Assert.ThrowsDelegate(fun () ->
-        match pr with
-        | Success(_) -> () 
-        | Failure(errorMsg, _, _) -> failwith errorMsg
-    )
+[<Fact>]
+let ``can parse field rule of "required"`` () =
+    Required |> should equal (parseString pFieldRule "required")
 
-let assertParseSuccess (pr:ParserResult<_,_>) = Assert.DoesNotThrow(throwParserFailure pr)
-let assertParseFailure (pr:ParserResult<_,_>) = Assert.Throws<Exception>(throwParserFailure pr)
+[<Fact>]
+let ``can parse field rule of "optional"`` () =
+    Optional |> should equal (parseString pFieldRule "optional")
 
-/// test a parser on a string
-let parseString p s = runParserOnString p () String.Empty s
-let canParse p s = assertParseSuccess(parseString p s)
-let canNotParse p s = assertParseFailure(runParserOnString p () String.Empty s) |> ignore
+[<Fact>]
+let ``can parse required field`` () =
+    let field = parseString pField "required string query = 1;"
+    Required |> should equal field.Rule
+    "string" |> should equal field.Type
+    "query" |> should equal field.Name
+    1 |> should equal field.Position
 
-/// gets the path for a test file
-/// looking for froto\test\file when
-/// current assembly is froto\Project\bin\Configuration\Project.dll
+[<Fact>]
+let ``can parse enum item`` () =
+    let enumItem = parseString pEnumItem "UNIVERSAL = 0;"
+    "UNIVERSAL" |> should equal enumItem.Name
+    0 |> should equal enumItem.Value
+
+[<Fact>]
+let ``can parse enum`` () =
+    let enum =
+        """enum Corpus {
+        UNIVERSAL = 0;
+        WEB = 1;
+        IMAGES = 2;
+        LOCAL = 3;
+        NEWS = 4;
+        PRODUCTS = 5;
+        VIDEO = 6;
+        }"""
+        |> parseString pEnum
+    "Corpus" |> should equal enum.Name
+    7 |> should equal enum.Items.Length
+    ()
+
+[<Fact>]
+let ``can parse message`` () =
+    let msg =
+        """message Result {
+          required string url = 1;
+          optional string title = 2;
+          repeated string snippets = 3;
+        }"""
+        |> parseString pMessage
+    "Result" |> should equal msg.Name
+    3 |> should equal msg.Parts.Length
+
+[<Fact>]
+let ``can parse package`` () =
+    "DAL" |> should equal (parseString pPackage "package DAL;")
+
+/// gets the path for a test file based on the relatie path from the executing assembly
 let getTestFile file =
      let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
      let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
      let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent).FullName
      Path.Combine(solutionPath, Path.Combine("test",file))
 
-let parseFile p f = runParserOnFile p () (getTestFile f) Text.Encoding.UTF8 
-let canParseFile p f = assertParseSuccess(parseFile p f)
-let canNotParseFile p f = assertParseFailure(parseFile p f)
-
-let isParseResult p s expected =
-    match parseString p s with
-    | Success (actual, _, _) -> actual = expected
-    | Failure (_, _, _) -> false
-    |> should be True
-
-/// testing xUnit setup :)
 [<Fact>]
-let capitalizeTest() =
-    "A" |> should equal (capitalize "a") 
-    "a" |> should not' (equal (capitalize "a"))
-    "A" |> should not' (equal (capitalize "b"))
+let ``` can parse SearchRequest proto`` () =
+    let proto = getTestFile "SearchRequest.proto" |> parseFile pProto 
+    1 |> should equal proto.Length
+    let message =
+        match proto.[0] with
+        | Message m -> m
+        | _ -> failwith "not a Message"
+    "SearchRequest" |> should equal message.Name
+    3 |> should equal message.Parts.Length
 
 [<Fact>]
-let canParseTest() =
-    let pDuck = pstring "duck"
-    canParse pDuck "duck"
-    canNotParse pDuck "goose"
-
-[<Fact>]
-let isNewLineTest() =
-    isNewLine '\r' |> should be True
-    isNewLine '\n'    |> should be True
-    isNewLineFalse 'c' |> should be True
-
-[<Fact>]
-let spacesTest() =
-    canParse spaces1 "     " // 3 spaces
-    canParse spaces1 "            " // 3 tabs
-    canNotParse spaces1 "f"
-    canNotParse spaces1 "fail"
-    canParse spaces "         spaces tab space tab before this"
-    
-[<Fact>]
-let pMessageNameTest() =
-    canParse pMessageName "message SearchRequest"
-    canNotParse pMessageName "message"
-    isParseResult pMessageName "message SearchRequest" "SearchRequest"
-    
-[<Fact>]
-let pWordTest() =
-    canParse pWord "word"
-    canNotParse pWord " "
-    isParseResult pWord "word " "word"
-    
-[<Fact>]
-let pScalarTypeTest() =
-    isParseResult pScalarType "double" ProtoDouble
-    isParseResult pScalarType "float" ProtoFloat
-    canNotParse pScalarType "dbl"
-
-[<Fact>]
-let pFieldRuleTest() =
-    isParseResult pFieldRule "required" Required
-    isParseResult pFieldRule "optional" Optional
-    isParseResult pFieldRule "repeated" Repeated
-    canNotParse pFieldRule "rep"
-
-[<Fact>]
-let pFieldTest() =
-    canParse pField "required string query = 1;"
-    canParse pField "required     string     query=34245     ;"
-
-[<Fact>]    
-let findTestFileTest() =
-    File.Exists (getTestFile "SearchRequest.proto") |> should be True
-
-[<Fact>]
-let pMessageTest() =
-    canParseFile pMessage "SearchRequest.proto"
+// from protobuf-net\Tools\nwind.proto
+let ``can parse nwind proto`` () =
+    let proto = getTestFile "nwind.proto" |> parseFile pProto 
+    4 |> should equal proto.Length
+    let orderLine = 
+        match proto.[3] with
+        | Message m -> m
+        | _ -> failwith "not a Message"
+    "OrderLine" |> should equal orderLine.Name
+    5 |> should equal orderLine.Parts.Length

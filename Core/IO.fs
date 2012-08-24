@@ -14,21 +14,21 @@ type WireType =
     | EndGroup = 4
     | Fixed32 = 5
 
-type ProtoType =
-    | Double of double option
-    | Float of float option
-    | Int32 of int32 option
-    | Int64 of int64 option
-    | UInt32 of uint32 option
-    | SInt32 of int32 option
-    | SInt64 of int64 option
-    | Fixed32 of uint32 option
-    | Fixed64 of uint64 option
-    | SFixed32 of int32 option
-    | SFixed64 of int64 option
-    | Bool of bool option
-    | String of string option
-    | Bytes of byte[] option
+//type ProtoType =
+//    | Double of double option
+//    | Float of float option
+//    | Int32 of int32 option
+//    | Int64 of int64 option
+//    | UInt32 of uint32 option
+//    | SInt32 of int32 option
+//    | SInt64 of int64 option
+//    | Fixed32 of uint32 option
+//    | Fixed64 of uint64 option
+//    | SFixed32 of int32 option
+//    | SFixed64 of int64 option
+//    | Bool of bool option
+//    | String of string option
+//    | Bytes of byte[] option
 
 let decodeVarintUInt32 (b:byte[]) : uint32 =
     match b.Length with
