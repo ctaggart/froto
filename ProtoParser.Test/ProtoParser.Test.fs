@@ -63,7 +63,7 @@ let ``can parse message`` () =
 let ``can parse package`` () =
     "DAL" |> should equal (parseString pPackage "package DAL;")
 
-/// gets the path for a test file based on the relatie path from the executing assembly
+/// gets the path for a test file based on the relative path from the executing assembly
 let getTestFile file =
      let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
      let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
@@ -71,7 +71,7 @@ let getTestFile file =
      Path.Combine(solutionPath, Path.Combine("test",file))
 
 [<Fact>]
-let ``` can parse SearchRequest proto`` () =
+let `` can parse SearchRequest proto`` () =
     let proto = getTestFile "SearchRequest.proto" |> parseFile pProto 
     1 |> should equal proto.Length
     let message =
