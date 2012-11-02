@@ -28,31 +28,46 @@ let pFieldRule =
         else
             fun stream -> Reply(Error, expected "field type")
 
+let pFieldOption =
+    pWord .>> spaces .>> pchar '=' .>> spaces .>>. pWord
+    |>> fun (name, value) -> ProtoFieldOption(name, value)
+
+let pFieldOptions =
+    pchar '[' >>. spaces >>. sepBy pFieldOption (pchar ',' .>> spaces) .>> (pchar ']') .>> spaces
+
 let pField =
-    pFieldRule .>> spaces1 .>>. pWord .>> spaces1 .>>. pWord .>> spaces .>> pchar '=' .>> spaces .>>. pint32 .>> spaces .>> pchar ';' .>> spaces
-    |>> (fun (((rule, tp), name), position) -> {Rule=rule; Type=tp; Name=name; Position=position})
+    pFieldRule .>> spaces1 .>>. pWord .>> spaces1 .>>. pWord .>> spaces .>> pchar '=' .>> spaces .>>. pint32 .>> spaces .>>. (opt pFieldOptions) .>> pchar ';' .>> spaces
+    |>> fun ((((rule, tp), name), position), options) -> ProtoField(rule, tp, name, position, options)
 
 let pEnumItem =
     pWord .>> spaces .>> pchar '=' .>> spaces .>>. pint32 .>> spaces .>> pchar ';' .>> spaces
-    |>> (fun (name, value) -> {Name=name; Value=value})
+    |>> fun (name, value) -> ProtoEnumItem(name, value)
 
 let pEnum =
-    pstring "enum" >>. (spaces1 >>. pWord .>> spaces .>> pchar '{' .>> spaces .>>. many1 pEnumItem .>> (pchar '}')
-    |>> (fun (name, items) -> {Name=name; Items=items}))
+    pstring "enum" >>. (spaces1 >>. pWord .>> spaces .>> pchar '{' .>> spaces .>>. many1 pEnumItem .>> (pchar '}') .>> spaces
+    |>> fun (name, items) -> ProtoEnum(name, items))
 
-let pMessage =
-    let pFieldPart = pField |>> Field
-    let pEnumPart = pEnum |>> Enum
-    pstring "message" >>. (spaces1 >>. pWord .>> spaces .>> pchar '{' .>> spaces .>>. many1 (pFieldPart <|> pEnumPart) .>> (pchar '}') .>> spaces
-    |>> (fun (name, parts) -> {Name=name; Parts=parts}))
+let pMessageRec, pMessageRecRef = createParserForwardedToRef()
+
+let pMessage : Parser<ProtoMessage,unit> =
+    let pMessageBox = pMessageRec |>> (fun message -> ProtoMessagePart.Message, box message)
+    let pEnumBox = pEnum |>> (fun enum -> ProtoMessagePart.Enum, box enum)
+    let pFieldBox = pField |>> (fun field -> ProtoMessagePart.Field, box field)
+    pstring "message" >>. (spaces1 >>. pWord .>> spaces .>> pchar '{'
+    .>> spaces .>>. many1 (pMessageBox <|> pEnumBox <|> pFieldBox)
+    .>> (pchar '}') .>> spaces
+    |>> fun (name, parts) -> ProtoMessage(name, parts))
+
+do pMessageRecRef := pMessage
 
 let pPackage =
     pstring "package" >>. (spaces1 >>. pWord .>> spaces .>> pchar ';' .>> spaces)
 
 let pProto =
-    let pPackageSection = pPackage |>> Package
-    let pMessageSection = pMessage |>> Message
+    let pPackageSection = pPackage |>> (fun package -> ProtoSection.Package, box package)
+    let pMessageSection = pMessage |>> (fun message -> ProtoSection.Message, box message)
     spaces >>. many (pPackageSection <|> pMessageSection)
+    |>> fun sections -> ProtoFile(sections)
 
 let resultOrFail parserResult =
     match parserResult with

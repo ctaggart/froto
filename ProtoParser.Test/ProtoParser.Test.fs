@@ -25,6 +25,25 @@ let ``can parse required field`` () =
     1 |> should equal field.Position
 
 [<Fact>]
+let ``can parse field options`` () =
+    let options = parseString pFieldOptions "[deprecated=true, packed = false]"
+    2 |> should equal options.Length
+    "deprecated" |> should equal options.[0].Name
+    "true" |> should equal options.[0].Value
+    "packed" |> should equal options.[1].Name
+    "false" |> should equal options.[1].Value
+
+[<Fact>]
+let ``can parse field with field options`` () =
+    let field = parseString pField "repeated int32 test_packed = 5 [packed = true];"
+    Repeated |> should equal field.Rule
+    field.Options.IsSome |> should be True
+    let options = field.Options.Value
+    1 |> should equal options.Length
+    "packed" |> should equal options.[0].Name
+    "true" |> should equal options.[0].Value
+
+[<Fact>]
 let ``can parse enum item`` () =
     let enumItem = parseString pEnumItem "UNIVERSAL = 0;"
     "UNIVERSAL" |> should equal enumItem.Name
@@ -45,6 +64,19 @@ let ``can parse enum`` () =
         |> parseString pEnum
     "Corpus" |> should equal enum.Name
     7 |> should equal enum.Items.Length
+    ()
+
+[<Fact>]
+let ``can parse enum with underscore`` () =
+    let enum =
+        """enum phone_type { 
+        mobile = 0; 
+        home = 1; 
+        work = 2; 
+        }"""
+        |> parseString pEnum
+    "phone_type" |> should equal enum.Name
+    3 |> should equal enum.Items.Length
     ()
 
 [<Fact>]
@@ -73,11 +105,10 @@ let getTestFile file =
 [<Fact>]
 let `` can parse SearchRequest proto`` () =
     let proto = getTestFile "SearchRequest.proto" |> parseFile pProto 
-    1 |> should equal proto.Length
-    let message =
-        match proto.[0] with
-        | Message m -> m
-        | _ -> failwith "not a Message"
+    1 |> should equal proto.Sections.Length
+    let messages = proto.Messages
+    1 |> should equal messages.Length
+    let message = messages.[0]
     "SearchRequest" |> should equal message.Name
     3 |> should equal message.Parts.Length
 
@@ -85,10 +116,17 @@ let `` can parse SearchRequest proto`` () =
 // from protobuf-net\Tools\nwind.proto
 let ``can parse nwind proto`` () =
     let proto = getTestFile "nwind.proto" |> parseFile pProto 
-    4 |> should equal proto.Length
-    let orderLine = 
-        match proto.[3] with
-        | Message m -> m
-        | _ -> failwith "not a Message"
-    "OrderLine" |> should equal orderLine.Name
-    5 |> should equal orderLine.Parts.Length
+    4 |> should equal proto.Sections.Length
+    let messages = proto.Messages
+    3 |> should equal messages.Length
+    let message = messages.[2]
+    "OrderLine" |> should equal message.Name
+    5 |> should equal message.Parts.Length
+
+[<Fact>]
+// from protobuf-net\Examples\ProtoGen\person.proto
+let ``can parse person proto`` () =
+    let proto = getTestFile "person.proto" |> parseFile pProto
+    3 |> should equal proto.Sections.Length
+    7 |> should equal proto.Messages.[0].Fields.Length
+    1 |> should equal proto.Messages.[0].Messages.Length
