@@ -78,8 +78,8 @@ let ``can parse enum with underscore`` () =
     3 |> should equal enum.Items.Length
 
 [<Fact>]
-let ``can parse option`` () =
-    let option = parseString pOption "option (my_option) = \"Hello world!\";"
+let ``can parse option line`` () =
+    let option = parseString pOptionLine "option (my_option) = \"Hello world!\";"
     option.IsCustom |> should be True
 
 [<Fact>]
@@ -164,3 +164,26 @@ let ``can parse rpc proto`` () =
     1 |> should equal svc.Rpcs.Length
     let rpc = svc.Rpcs.[0]
     "Search" |> should equal rpc.Name
+
+[<Fact>]
+let ``pNoComment`` () =
+    "hello world " |> should equal (parseString pNoComment "hello world // comment")
+    "no comment " |> should equal (parseString pNoComment "no comment ")
+    "" |> should equal (parseString pNoComment "// beginning")
+
+[<Fact>]
+let ``pNoComments`` () =
+    let s =
+        """hello world // comment
+        no comment
+        another comment // this is it
+        nope, no more"""
+    let lines = parseString pNoComments s
+    4 |> should equal lines.Length
+
+[<Fact>]
+// from https://developers.google.com/protocol-buffers/docs/proto#options
+let ``can parse FooOptions proto`` () =
+    let proto = getTestFile "FooOptions.proto" |> parseFileStripComments pProto
+    3 |> should equal proto.Sections.Length
+    "Bar" |> should equal proto.Messages.[2].Name

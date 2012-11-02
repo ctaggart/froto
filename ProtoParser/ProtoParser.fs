@@ -2,6 +2,8 @@
 module Froto.ProtoParser
 
 open System
+open System.IO
+open System.Text
 open FParsec
 open FParsec.Primitives
 open FParsec.CharParsers
@@ -25,12 +27,14 @@ let toFieldRule s = fieldRuleMap.[s]
 let pFieldRule =
     (pstring "required" <|> pstring "optional" <|> pstring "repeated") |>> toFieldRule
 
-let pFieldOption =
-    pWord .>> spaces .>> pchar '=' .>> spaces .>>. pWord
-    |>> fun (name, value) -> ProtoFieldOption(name, value)
+let pOption  =
+    let pCustom = pWordParens |>> fun s -> s, true
+    let pNotCustom = pWord |>> fun s -> s, false
+    (pCustom <|> pNotCustom) .>> spaces .>> pchar '=' .>> spaces .>>. (pWordQuotes <|> pWord) .>> spaces
+    |>> fun ((name, isCustom), value) -> ProtoOption(name, value, isCustom)
 
 let pFieldOptions =
-    pchar '[' >>. spaces >>. sepBy pFieldOption (pchar ',' .>> spaces) .>> (pchar ']') .>> spaces
+    pchar '[' >>. spaces >>. sepBy pOption (pchar ',' .>> spaces) .>> (pchar ']') .>> spaces
 
 let pField =
     pFieldRule .>> spaces1 .>>. pWord .>> spaces1 .>>. pWord .>> spaces .>> pchar '=' .>> spaces .>>. pint32 .>> spaces .>>. (opt pFieldOptions) .>> pchar ';' .>> spaces
@@ -44,22 +48,19 @@ let pEnum =
     pstring "enum" >>. (spaces1 >>. pWord .>> spaces .>> pchar '{' .>> spaces .>>. many1 pEnumItem .>> (pchar '}') .>> spaces
     |>> fun (name, items) -> ProtoEnum(name, items))
 
-let pOption  =
-    let pCustom = pWordParens |>> fun s -> s, true
-    let pNotCustom = pWord |>> fun s -> s, false
-    pstring "option" >>. (spaces >>. (pCustom <|> pNotCustom) .>> spaces .>> pchar '=' .>> spaces .>>. (pWordQuotes <|> pWord) .>> spaces .>> pchar ';' .>> spaces
-    |>> fun ((name, isCustom), value) -> ProtoOption(name, value, isCustom))
-
 let pImport  =
     pstring "import" >>. (spaces >>. pWordQuotes .>> spaces .>> pchar ';' .>> spaces)
 
 let pMessageRec, pMessageRecRef = createParserForwardedToRef()
 
+let pOptionLine =
+    pstring "option" >>. spaces >>. pOption .>> spaces .>> pchar ';' .>> spaces
+
 let pMessage : Parser<ProtoMessage,unit> =
     let pMessageBox = pMessageRec |>> fun message -> ProtoMessagePart.Message, box message
     let pEnumBox = pEnum |>> fun enum -> ProtoMessagePart.Enum, box enum
     let pFieldBox = pField |>> fun field -> ProtoMessagePart.Field, box field
-    let pOptionBox = pOption |>> fun option -> ProtoMessagePart.Option, box option
+    let pOptionBox = pOptionLine |>> fun option -> ProtoMessagePart.Option, box option
     (pstring "message" <|> pstring "extend") .>> spaces1 .>>. pWord .>> spaces .>> pchar '{'
     .>> spaces .>>. many1 (pMessageBox <|> pEnumBox <|> pFieldBox <|> pOptionBox)
     .>> pchar '}' .>> spaces
@@ -84,7 +85,7 @@ let pPackage =
 let pProto =
     let pPackageBox = pPackage |>> fun package -> ProtoSection.Package, box package
     let pMessageBox = pMessage |>> fun message -> ProtoSection.Message, box message
-    let pOptionBox = pOption |>> fun option -> ProtoSection.Option, box option
+    let pOptionBox = pOptionLine |>> fun option -> ProtoSection.Option, box option
     let pImportBox = pImport |>> fun import -> ProtoSection.Import, box import
     let pServiceBox = pService |>> fun service -> ProtoSection.Service, box service
     spaces >>. many (pPackageBox <|> pOptionBox <|> pImportBox <|> pMessageBox <|> pServiceBox)
@@ -102,3 +103,27 @@ let parseString parser str =
 let parseFile parser path =
     runParserOnFile (parser .>> eof) () path Text.Encoding.UTF8
     |> resultOrFail
+
+let parseStream parser stream =
+    runParserOnStream (parser .>> eof) () String.Empty stream Encoding.UTF8
+    |> resultOrFail
+
+let pNoComment =
+    let pNotSlash : Parser<string,unit> = manyChars (noneOf "/\r\n")
+    attempt (pNotSlash .>> pstring "//" .>> restOfLine true) <|> restOfLine true
+
+let pNoComments =
+    many1Till pNoComment eof
+
+let stripComments path =
+    let lines = parseFile pNoComments path
+    let ms = new MemoryStream()
+    use sw = new StreamWriter(ms, Encoding.UTF8, 4096, true) // leave stream open
+    lines |> Seq.iter (fun line -> sw.WriteLine line)
+    sw.Flush()
+    ms.Position <- 0L
+    ms
+
+let parseFileStripComments parser path =
+    use stream = stripComments path
+    parseStream parser stream

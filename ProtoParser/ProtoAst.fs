@@ -15,11 +15,7 @@ type ProtoOption (name:string, value:string, isCustom:bool) =
     member val Value = value with get
     member val IsCustom = isCustom with get
 
-type ProtoFieldOption (name:string, value:string) =
-    member val Name = name with get
-    member val Value = value with get
-
-type ProtoField (rule:ProtoFieldRule, tp:string, name:string, position:int32, options:ProtoFieldOption list option) =
+type ProtoField (rule:ProtoFieldRule, tp:string, name:string, position:int32, options:ProtoOption list option) =
     member val Rule = rule with get
     member val Type = tp with get
     member val Name = name with get
