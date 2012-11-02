@@ -64,7 +64,6 @@ let ``can parse enum`` () =
         |> parseString pEnum
     "Corpus" |> should equal enum.Name
     7 |> should equal enum.Items.Length
-    ()
 
 [<Fact>]
 let ``can parse enum with underscore`` () =
@@ -77,7 +76,11 @@ let ``can parse enum with underscore`` () =
         |> parseString pEnum
     "phone_type" |> should equal enum.Name
     3 |> should equal enum.Items.Length
-    ()
+
+[<Fact>]
+let ``can parse option`` () =
+    let option = parseString pOption "option (my_option) = \"Hello world!\";"
+    option.IsCustom |> should be True
 
 [<Fact>]
 let ``can parse message`` () =
@@ -130,3 +133,22 @@ let ``can parse person proto`` () =
     3 |> should equal proto.Sections.Length
     7 |> should equal proto.Messages.[0].Fields.Length
     1 |> should equal proto.Messages.[0].Messages.Length
+
+[<Fact>]
+// from https://developers.google.com/protocol-buffers/docs/javatutorial
+let ``can parse javatutorial proto`` () =
+    let proto = getTestFile "javatutorial.proto" |> parseFile pProto
+    5 |> should equal proto.Sections.Length
+    2 |> should equal proto.Options.Length
+    "java_package" |> should equal proto.Options.[0].Name
+    "com.example.tutorial" |> should equal proto.Options.[0].Value
+
+[<Fact>]
+// from https://developers.google.com/protocol-buffers/docs/proto#options
+let ``can parse protooptions proto`` () =
+    let proto = getTestFile "protooptions.proto" |> parseFile pProto
+    3 |> should equal proto.Sections.Length
+    "google/protobuf/descriptor.proto" |> should equal proto.Imports.[0]
+    2 |> should equal proto.Messages.Length
+    let message = proto.Messages.[1]
+    "my_option" |> should equal message.Options.[0].Name

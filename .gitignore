@@ -4,3 +4,4 @@ bin/
 *.suo
 packages/
 TestResults/
+*.bak

@@ -10,6 +10,11 @@ type ProtoFieldRule =
     | Optional
     | Repeated
 
+type ProtoOption (name:string, value:string, isCustom:bool) =
+    member val Name = name with get
+    member val Value = value with get
+    member val IsCustom = isCustom with get
+
 type ProtoFieldOption (name:string, value:string) =
     member val Name = name with get
     member val Value = value with get
@@ -33,10 +38,12 @@ type ProtoMessagePart =
     | Field
     | Enum
     | Message
+    | Option
 
-type ProtoMessage (name:string, parts:(ProtoMessagePart * Object) list) =
+type ProtoMessage (name:string, parts:(ProtoMessagePart * Object) list, isExtension:bool) =
     member val Name = name with get
     member val Parts = parts with get
+    member val IsExtension = isExtension with get
     member x.Fields =
         x.Parts
         |> List.filter (fun (p,_) -> match p with | Field -> true | _ -> false)
@@ -49,18 +56,23 @@ type ProtoMessage (name:string, parts:(ProtoMessagePart * Object) list) =
         x.Parts
         |> List.filter (fun (p,_) -> match p with | Message -> true | _ -> false)
         |> List.map (fun (_,o) -> o :?> ProtoMessage)
+    member x.Options =
+        x.Parts
+        |> List.filter (fun (p,_) -> match p with | Option -> true | _ -> false)
+        |> List.map (fun (_,o) -> o :?> ProtoOption)
 
 type ProtoSection =
-//    | Import
+    | Import
     | Package
     | Message
+    | Option
 
 type ProtoFile (sections:(ProtoSection * Object) list) =
     member val Sections = sections with get
-//    member x.Imports =
-//        x.Sections
-//        |> List.filter (fun (s,_) -> match s with | Import -> true | _ -> false)
-//        |> List.map (fun (_,o) -> o :?> string)
+    member x.Imports =
+        x.Sections
+        |> List.filter (fun (s,_) -> match s with | Import -> true | _ -> false)
+        |> List.map (fun (_,o) -> o :?> string)
     member x.Packages =
         x.Sections
         |> List.filter (fun (s,_) -> match s with | Package -> true | _ -> false)
@@ -69,3 +81,7 @@ type ProtoFile (sections:(ProtoSection * Object) list) =
         x.Sections
         |> List.filter (fun (s,_) -> match s with | Message -> true | _ -> false)
         |> List.map (fun (_,o) -> o :?> ProtoMessage)
+    member x.Options =
+        x.Sections
+        |> List.filter (fun (s,_) -> match s with | Option -> true | _ -> false)
+        |> List.map (fun (_,o) -> o :?> ProtoOption)
