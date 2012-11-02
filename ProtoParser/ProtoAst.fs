@@ -61,11 +61,29 @@ type ProtoMessage (name:string, parts:(ProtoMessagePart * Object) list, isExtens
         |> List.filter (fun (p,_) -> match p with | Option -> true | _ -> false)
         |> List.map (fun (_,o) -> o :?> ProtoOption)
 
+type ProtoRpc (name, requestType, responseType) =
+    member val Name = name with get
+    member val RequestType = requestType with get
+    member val ResponseType = responseType with get
+
+type ProtoServicePart =
+    | Rpc
+    | Option
+
+type ProtoService (name:string, parts:(ProtoServicePart * Object) list) =
+    member val Name = name with get
+    member val Parts = parts with get
+    member x.Rpcs =
+        x.Parts
+        |> List.filter (fun (p,_) -> match p with | Rpc -> true | _ -> false)
+        |> List.map (fun (_,o) -> o :?> ProtoRpc)
+
 type ProtoSection =
     | Import
     | Package
     | Message
     | Option
+    | Service
 
 type ProtoFile (sections:(ProtoSection * Object) list) =
     member val Sections = sections with get
@@ -85,3 +103,7 @@ type ProtoFile (sections:(ProtoSection * Object) list) =
         x.Sections
         |> List.filter (fun (s,_) -> match s with | Option -> true | _ -> false)
         |> List.map (fun (_,o) -> o :?> ProtoOption)
+    member x.Services =
+        x.Sections
+        |> List.filter (fun (s,_) -> match s with | Service -> true | _ -> false)
+        |> List.map (fun (_,o) -> o :?> ProtoService)

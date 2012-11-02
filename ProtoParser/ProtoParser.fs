@@ -62,10 +62,21 @@ let pMessage : Parser<ProtoMessage,unit> =
     let pOptionBox = pOption |>> fun option -> ProtoMessagePart.Option, box option
     (pstring "message" <|> pstring "extend") .>> spaces1 .>>. pWord .>> spaces .>> pchar '{'
     .>> spaces .>>. many1 (pMessageBox <|> pEnumBox <|> pFieldBox <|> pOptionBox)
-    .>> (pchar '}') .>> spaces
+    .>> pchar '}' .>> spaces
     |>> fun ((tp, name), parts) -> ProtoMessage(name, parts, (tp = "extend"))
 
 do pMessageRecRef := pMessage
+
+let pRpc =
+    pstring "rpc" >>. spaces >>. pWord .>> spaces .>>. pWordParens .>> spaces .>> pstring "returns" .>> spaces .>>. pWordParens .>> spaces .>> pchar ';' .>> spaces
+    |>> fun ((name, requestType), responseType) -> ProtoRpc(name, requestType, responseType)
+
+let pService =
+    let pRpcBox = pRpc |>> fun rpc -> ProtoServicePart.Rpc, box rpc
+    pstring "service" >>. spaces >>. pWord .>> spaces .>> pchar '{' .>> spaces .>>.
+    many1 pRpcBox
+    .>> spaces .>> pchar '}' .>> spaces
+    |>> fun (name, parts) -> ProtoService(name, parts) 
 
 let pPackage =
     pstring "package" >>. (spaces1 >>. pWord .>> spaces .>> pchar ';' .>> spaces)
@@ -75,7 +86,8 @@ let pProto =
     let pMessageBox = pMessage |>> fun message -> ProtoSection.Message, box message
     let pOptionBox = pOption |>> fun option -> ProtoSection.Option, box option
     let pImportBox = pImport |>> fun import -> ProtoSection.Import, box import
-    spaces >>. many (pPackageBox <|> pOptionBox <|> pImportBox <|> pMessageBox)
+    let pServiceBox = pService |>> fun service -> ProtoSection.Service, box service
+    spaces >>. many (pPackageBox <|> pOptionBox <|> pImportBox <|> pMessageBox <|> pServiceBox)
     |>> fun sections -> ProtoFile(sections)
 
 let resultOrFail parserResult =

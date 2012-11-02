@@ -152,3 +152,15 @@ let ``can parse protooptions proto`` () =
     2 |> should equal proto.Messages.Length
     let message = proto.Messages.[1]
     "my_option" |> should equal message.Options.[0].Name
+
+[<Fact>]
+// from protobuf-net\Examples\ProtoGen\rpc.proto
+let ``can parse rpc proto`` () =
+    let proto = getTestFile "rpc.proto" |> parseFile pProto
+    3 |> should equal proto.Sections.Length
+    1 |> should equal proto.Services.Length
+    let svc = proto.Services.[0]
+    "SearchService" |> should equal svc.Name
+    1 |> should equal svc.Rpcs.Length
+    let rpc = svc.Rpcs.[0]
+    "Search" |> should equal rpc.Name
