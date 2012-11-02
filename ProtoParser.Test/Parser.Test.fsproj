@@ -8,10 +8,10 @@
     <ProjectGuid>{18104831-6f33-4f15-ab45-3e8527cc5181}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>ProtoParser.Test</RootNamespace>
-    <AssemblyName>Froto.ProtoParser.Test</AssemblyName>
+    <AssemblyName>Froto.Parser.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <Name>ProtoParser.Test</Name>
+    <Name>Parser.Test</Name>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <TargetFrameworkProfile>
@@ -71,8 +71,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
-    <ProjectReference Include="..\ProtoParser\ProtoParser.fsproj">
-      <Name>ProtoParser</Name>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ProtoParser\Parser.fsproj">
+      <Name>Parser</Name>
       <Project>{1c31da31-bec5-4e73-9d83-e36d18847439}</Project>
       <Private>True</Private>
     </ProjectReference>

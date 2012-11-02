@@ -1,7 +1,5 @@
 ﻿
-// https://developers.google.com/protocol-buffers/docs/proto
-
-module Froto.ProtoAst
+module Froto.Parser.ProtoAst
 
 open System
 

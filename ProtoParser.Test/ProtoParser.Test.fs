@@ -1,12 +1,12 @@
 ﻿
-module Froto.ProtoParser.Test
+module Froto.Parser.ProtoParserTest
 
 open System
 open System.IO
 open Xunit
 open FsUnit.Xunit
-open Froto.ProtoParser
-open Froto.ProtoAst
+open Froto.Parser.ProtoAst
+open Froto.Parser.ProtoParser
 
 [<Fact>]
 let ``can parse field rule of "required"`` () =
@@ -184,6 +184,14 @@ let ``pNoComments`` () =
 [<Fact>]
 // from https://developers.google.com/protocol-buffers/docs/proto#options
 let ``can parse FooOptions proto`` () =
-    let proto = getTestFile "FooOptions.proto" |> parseFileStripComments pProto
+    let proto = getTestFile "FooOptions.proto" |> parseProtoFile
+    3 |> should equal proto.Sections.Length
+    "Bar" |> should equal proto.Messages.[2].Name
+
+[<Fact>]
+let ``test parseProtoStream`` () =
+    let path = getTestFile "FooOptions.proto"
+    use stream = File.OpenRead path
+    let proto = parseProtoStream stream
     3 |> should equal proto.Sections.Length
     "Bar" |> should equal proto.Messages.[2].Name

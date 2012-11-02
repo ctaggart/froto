@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>0.0.0.1</version>
+    <authors>Cameron Taggart</authors>
+    <owners>Cameron Taggart</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+    <projectUrl>http://code.google.com/p/froto/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A parser for .proto files for Protocol Buffers.</description>
+    <copyright>Copyright 2012</copyright>
+  </metadata>
+</package>

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoParser", "ProtoParser\ProtoParser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Parser", "ProtoParser\Parser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoParser.Test", "ProtoParser.Test\ProtoParser.Test.fsproj", "{18104831-6F33-4F15-AB45-3E8527CC5181}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Parser.Test", "ProtoParser.Test\Parser.Test.fsproj", "{18104831-6F33-4F15-AB45-3E8527CC5181}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Core", "Core\Core.fsproj", "{C37745D0-275D-4DCE-9DDC-C4663A462EDD}"
 EndProject

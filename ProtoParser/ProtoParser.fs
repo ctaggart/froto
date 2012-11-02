@@ -1,5 +1,5 @@
 ﻿
-module Froto.ProtoParser
+module Froto.Parser.ProtoParser
 
 open System
 open System.IO
@@ -115,8 +115,7 @@ let pNoComment =
 let pNoComments =
     many1Till pNoComment eof
 
-let stripComments path =
-    let lines = parseFile pNoComments path
+let stripComments (lines:string seq) =
     let ms = new MemoryStream()
     use sw = new StreamWriter(ms, Encoding.UTF8, 4096, true) // leave stream open
     lines |> Seq.iter (fun line -> sw.WriteLine line)
@@ -124,6 +123,10 @@ let stripComments path =
     ms.Position <- 0L
     ms
 
-let parseFileStripComments parser path =
-    use stream = stripComments path
-    parseStream parser stream
+let parseProtoFile path =
+    use s = parseFile pNoComments path |> stripComments
+    parseStream pProto s
+
+let parseProtoStream stream =
+    use s = parseStream pNoComments stream |> stripComments
+    parseStream pProto s
