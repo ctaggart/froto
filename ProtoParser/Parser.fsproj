@@ -39,6 +39,7 @@
     <Compile Include="ProtoParser.fs" />
     <Compile Include="Version.fs" />
     <None Include="packages.config" />
+    <None Include="Parser.nuspec" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
