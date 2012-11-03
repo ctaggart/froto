@@ -8,10 +8,10 @@ type ProtoFieldRule =
     | Optional
     | Repeated
 
-type ProtoOption (name:string, value:string, isCustom:bool) =
+type ProtoOption (prefix:string option, name:string option, value:string) =
+    member val Prefix = prefix with get
     member val Name = name with get
     member val Value = value with get
-    member val IsCustom = isCustom with get
 
 type ProtoField (rule:ProtoFieldRule, tp:string, name:string, position:int32, options:ProtoOption list option) =
     member val Rule = rule with get
@@ -32,12 +32,13 @@ type ProtoMessagePart =
     | Field
     | Enum
     | Message
+    | Extend
     | Option
 
-type ProtoMessage (name:string, parts:(ProtoMessagePart * Object) list, isExtension:bool) =
+type ProtoMessage (name:string, parts:(ProtoMessagePart * Object) list, isExtend:bool) =
     member val Name = name with get
     member val Parts = parts with get
-    member val IsExtension = isExtension with get
+    member val IsExtend = isExtend with get
     member x.Fields =
         x.Parts
         |> List.filter (fun (p,_) -> match p with | Field -> true | _ -> false)
@@ -49,6 +50,10 @@ type ProtoMessage (name:string, parts:(ProtoMessagePart * Object) list, isExtens
     member x.Messages =
         x.Parts
         |> List.filter (fun (p,_) -> match p with | Message -> true | _ -> false)
+        |> List.map (fun (_,o) -> o :?> ProtoMessage)
+    member x.Extends =
+        x.Parts
+        |> List.filter (fun (p,_) -> match p with | Extend -> true | _ -> false)
         |> List.map (fun (_,o) -> o :?> ProtoMessage)
     member x.Options =
         x.Parts
@@ -76,6 +81,7 @@ type ProtoSection =
     | Import
     | Package
     | Message
+    | Extend
     | Option
     | Service
 
@@ -92,6 +98,10 @@ type ProtoFile (sections:(ProtoSection * Object) list) =
     member x.Messages =
         x.Sections
         |> List.filter (fun (s,_) -> match s with | Message -> true | _ -> false)
+        |> List.map (fun (_,o) -> o :?> ProtoMessage)
+    member x.Extends =
+        x.Sections
+        |> List.filter (fun (s,_) -> match s with | Extend -> true | _ -> false)
         |> List.map (fun (_,o) -> o :?> ProtoMessage)
     member x.Options =
         x.Sections

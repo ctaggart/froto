@@ -28,9 +28,9 @@ let ``can parse required field`` () =
 let ``can parse field options`` () =
     let options = parseString pFieldOptions "[deprecated=true, packed = false]"
     2 |> should equal options.Length
-    "deprecated" |> should equal options.[0].Name
+    "deprecated" |> should equal options.[0].Name.Value
     "true" |> should equal options.[0].Value
-    "packed" |> should equal options.[1].Name
+    "packed" |> should equal options.[1].Name.Value
     "false" |> should equal options.[1].Value
 
 [<Fact>]
@@ -40,7 +40,7 @@ let ``can parse field with field options`` () =
     field.Options.IsSome |> should be True
     let options = field.Options.Value
     1 |> should equal options.Length
-    "packed" |> should equal options.[0].Name
+    "packed" |> should equal options.[0].Name.Value
     "true" |> should equal options.[0].Value
 
 [<Fact>]
@@ -79,8 +79,9 @@ let ``can parse enum with underscore`` () =
 
 [<Fact>]
 let ``can parse option line`` () =
-    let option = parseString pOptionLine "option (my_option) = \"Hello world!\";"
-    option.IsCustom |> should be True
+    let hw = parseString pOptionLine "option (my_option) = \"Hello world!\";"
+    hw.Prefix.IsSome |> should be True
+    "my_option" |> should equal hw.Prefix.Value
 
 [<Fact>]
 let ``can parse message`` () =
@@ -140,7 +141,7 @@ let ``can parse javatutorial proto`` () =
     let proto = getTestFile "javatutorial.proto" |> parseFile pProto
     5 |> should equal proto.Sections.Length
     2 |> should equal proto.Options.Length
-    "java_package" |> should equal proto.Options.[0].Name
+    "java_package" |> should equal proto.Options.[0].Name.Value
     "com.example.tutorial" |> should equal proto.Options.[0].Value
 
 [<Fact>]
@@ -149,9 +150,11 @@ let ``can parse protooptions proto`` () =
     let proto = getTestFile "protooptions.proto" |> parseFile pProto
     3 |> should equal proto.Sections.Length
     "google/protobuf/descriptor.proto" |> should equal proto.Imports.[0]
-    2 |> should equal proto.Messages.Length
-    let message = proto.Messages.[1]
-    "my_option" |> should equal message.Options.[0].Name
+    1 |> should equal proto.Imports.Length
+    1 |> should equal proto.Extends.Length
+    1 |> should equal proto.Messages.Length
+    let message = proto.Messages.[0]
+    "my_option" |> should equal message.Options.[0].Prefix.Value
 
 [<Fact>]
 // from protobuf-net\Examples\ProtoGen\rpc.proto
@@ -186,7 +189,7 @@ let ``pNoComments`` () =
 let ``can parse FooOptions proto`` () =
     let proto = getTestFile "FooOptions.proto" |> parseProtoFile
     3 |> should equal proto.Sections.Length
-    "Bar" |> should equal proto.Messages.[2].Name
+    "Bar" |> should equal proto.Messages.[1].Name
 
 [<Fact>]
 let ``test parseProtoStream`` () =
@@ -194,4 +197,23 @@ let ``test parseProtoStream`` () =
     use stream = File.OpenRead path
     let proto = parseProtoStream stream
     3 |> should equal proto.Sections.Length
-    "Bar" |> should equal proto.Messages.[2].Name
+    "Bar" |> should equal proto.Messages.[1].Name
+
+[<Fact>]
+let ``can parse option`` () =
+    let hw = parseString pOption "(my_option) = \"Hello world!\""
+    hw.Prefix.IsSome |> should be True
+    "my_option" |> should equal hw.Prefix.Value
+    let ns = parseString pOption "(google.protobuf.csharp_file_options).namespace = \"Google.ProtocolBuffers.Examples.AddressBook\""
+    ns.Prefix.IsSome |> should be True
+    ns.Name.IsSome |> should be True
+    "google.protobuf.csharp_file_options" |> should equal ns.Prefix.Value
+    ".namespace" |> should equal ns.Name.Value
+    "Google.ProtocolBuffers.Examples.AddressBook" |> should equal ns.Value
+
+[<Fact>]
+// from http://code.google.com/p/protobuf-csharp-port/wiki/GettingStarted
+let ``can parse addressbook proto`` () =
+    let proto = getTestFile "addressbook.proto" |> parseProtoFile
+    7 |> should equal proto.Sections.Length
+    3 |> should equal proto.Options.Length

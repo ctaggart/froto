@@ -28,10 +28,10 @@ let pFieldRule =
     (pstring "required" <|> pstring "optional" <|> pstring "repeated") |>> toFieldRule
 
 let pOption  =
-    let pCustom = pWordParens |>> fun s -> s, true
-    let pNotCustom = pWord |>> fun s -> s, false
+    let pCustom = pWordParens .>>. opt pWord |>> fun (prefix, name) -> Some prefix, name
+    let pNotCustom = pWord |>> fun name -> None, Some name
     (pCustom <|> pNotCustom) .>> spaces .>> pchar '=' .>> spaces .>>. (pWordQuotes <|> pWord) .>> spaces
-    |>> fun ((name, isCustom), value) -> ProtoOption(name, value, isCustom)
+    |>> fun ((prefix, name), value) -> ProtoOption(prefix, name, value)
 
 let pFieldOptions =
     pchar '[' >>. spaces >>. sepBy pOption (pchar ',' .>> spaces) .>> (pchar ']') .>> spaces
@@ -57,7 +57,9 @@ let pOptionLine =
     pstring "option" >>. spaces >>. pOption .>> spaces .>> pchar ';' .>> spaces
 
 let pMessage : Parser<ProtoMessage,unit> =
-    let pMessageBox = pMessageRec |>> fun message -> ProtoMessagePart.Message, box message
+    let pMessageBox = pMessageRec |>> fun (msg:ProtoMessage) -> 
+        let pmp = if msg.IsExtend then ProtoMessagePart.Extend else ProtoMessagePart.Message
+        pmp, box msg
     let pEnumBox = pEnum |>> fun enum -> ProtoMessagePart.Enum, box enum
     let pFieldBox = pField |>> fun field -> ProtoMessagePart.Field, box field
     let pOptionBox = pOptionLine |>> fun option -> ProtoMessagePart.Option, box option
@@ -84,7 +86,9 @@ let pPackage =
 
 let pProto =
     let pPackageBox = pPackage |>> fun package -> ProtoSection.Package, box package
-    let pMessageBox = pMessage |>> fun message -> ProtoSection.Message, box message
+    let pMessageBox = pMessage |>> fun msg ->
+        let ps = if msg.IsExtend then ProtoSection.Extend else ProtoSection.Message
+        ps, box msg
     let pOptionBox = pOptionLine |>> fun option -> ProtoSection.Option, box option
     let pImportBox = pImport |>> fun import -> ProtoSection.Import, box import
     let pServiceBox = pService |>> fun service -> ProtoSection.Service, box service
