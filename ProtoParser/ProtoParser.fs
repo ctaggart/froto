@@ -121,7 +121,7 @@ let pNoComments =
 
 let stripComments (lines:string seq) =
     let ms = new MemoryStream()
-    use sw = new StreamWriter(ms, Encoding.UTF8, 4096, true) // leave stream open
+    use sw = new Froto.NoCloseStreamWriter(ms, Encoding.UTF8) // leave stream open
     lines |> Seq.iter (fun line -> sw.WriteLine line)
     sw.Flush()
     ms.Position <- 0L
