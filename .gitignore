@@ -5,3 +5,4 @@ bin/
 packages/
 TestResults/
 *.bak
+*.nupkg
