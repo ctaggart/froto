@@ -1,5 +1,5 @@
 ﻿
-module Froto.Parser.ProtoParserTest
+module Froto.Parser.ParserTests
 
 open System
 open System.IO

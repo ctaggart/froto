@@ -11,7 +11,7 @@
     <AssemblyName>Froto.Parser.Test</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <Name>Parser.Test</Name>
+    <Name>Froto.Parser.Test</Name>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
@@ -34,7 +34,7 @@
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ProtoParser.Test.fs" />
+    <Compile Include="ParserTests.fs" />
     <None Include="packages.config" />
     <None Include="app.config" />
   </ItemGroup>
@@ -69,8 +69,8 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ProtoParser\Parser.fsproj">
-      <Name>Parser</Name>
+    <ProjectReference Include="..\ProtoParser\Froto.Parser.fsproj">
+      <Name>Froto.Parser</Name>
       <Project>{1c31da31-bec5-4e73-9d83-e36d18847439}</Project>
       <Private>True</Private>
     </ProjectReference>

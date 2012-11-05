@@ -6,3 +6,4 @@ packages/
 TestResults/
 *.bak
 *.nupkg
+/test/*.cs
