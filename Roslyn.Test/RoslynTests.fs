@@ -16,7 +16,7 @@ let getTestFile file =
      Path.Combine(solutionPath, Path.Combine("test",file))
 
 [<Fact>]
-let ``createCompilation`` () =
+let ``test createCompilation`` () =
     let path = getTestFile "addressbook1.proto"
     let cmp = createCompilation path
 
@@ -30,4 +30,14 @@ let ``createCompilation`` () =
 
     "Tutorial.Blah.AddressBookProto" |> should equal t.FullName
 
+    ()
+
+[<Fact>]
+let ``address1 proto creates types`` () =
+    let path = getTestFile "addressbook1.proto"
+    let cmp = createCompilation path
+    let nsList = namespaces "Tutorial" cmp
+    2 |> should equal nsList.Count
+    "Tutorial.Blah" |> should equal (nsList.[1].ToString())
+    
     ()

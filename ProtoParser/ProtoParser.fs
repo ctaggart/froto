@@ -10,11 +10,11 @@ open FParsec.CharParsers
 open FParsec.Error
 open ProtoAst
 
-let pWord : Parser<string,unit> = many1Chars (asciiLetter <|> digit <|> anyOf "_.")
-let pWordQuotes : Parser<string,unit> = pchar '"' >>. many1Chars (asciiLetter <|> digit <|> anyOf "_./! ") .>> pchar '"'
-let pWordParens = pchar '(' >>. pWord .>> pchar ')'
+let internal pWord : Parser<string,unit> = many1Chars (asciiLetter <|> digit <|> anyOf "_.")
+let internal pWordQuotes : Parser<string,unit> = pchar '"' >>. many1Chars (asciiLetter <|> digit <|> anyOf "_./! ") .>> pchar '"'
+let internal pWordParens = pchar '(' >>. pWord .>> pchar ')'
 
-let fieldRuleMap =
+let internal fieldRuleMap =
     [
     "required", Required;
     "optional", Optional;
@@ -22,7 +22,7 @@ let fieldRuleMap =
     ]
     |> Map.ofList
 
-let toFieldRule s = fieldRuleMap.[s]
+let internal toFieldRule s = fieldRuleMap.[s]
 
 let pFieldRule =
     (pstring "required" <|> pstring "optional" <|> pstring "repeated") |>> toFieldRule
@@ -95,7 +95,7 @@ let pProto =
     spaces >>. many (pPackageBox <|> pOptionBox <|> pImportBox <|> pMessageBox <|> pServiceBox)
     |>> fun sections -> ProtoFile(sections)
 
-let resultOrFail parserResult =
+let internal resultOrFail parserResult =
     match parserResult with
     | Success (result, _, _) -> result
     | Failure (errMsg, _, _) -> failwith errMsg
@@ -112,25 +112,38 @@ let parseStream parser stream =
     runParserOnStream (parser .>> eof) () String.Empty stream Encoding.UTF8
     |> resultOrFail
 
-let pNoComment =
+let pSingleLineComments =
     let pNotSlash : Parser<string,unit> = manyChars (noneOf "/\r\n")
-    attempt (pNotSlash .>> pstring "//" .>> restOfLine true) <|> restOfLine true
+    let pComment = attempt (pNotSlash .>> pstring "//" .>> restOfLine true) <|> restOfLine true
+    many1Till pComment eof
 
-let pNoComments =
-    many1Till pNoComment eof
+let pMultiLineComments =
+    let pBefore : Parser<string,unit> = manyCharsTill anyChar ((skipString "/*") <|> eof)
+    let pIn = manyCharsTill anyChar (skipString "*/")
+    let pAfter = manyCharsTill anyChar eof
+    many (attempt (pBefore .>> pIn)) .>>. pAfter .>> eof
 
-let stripComments (lines:string seq) =
+let internal createMemoryStream (fWrite : StreamWriter -> unit) =
     let ms = new MemoryStream()
     use sw = new Froto.NoCloseStreamWriter(ms, Encoding.UTF8) // leave stream open
-    lines |> Seq.iter (fun line -> sw.WriteLine line)
+    fWrite sw
     sw.Flush()
     ms.Position <- 0L
     ms
 
+let internal parseProto lines =
+    use sSingle = createMemoryStream (fun sw ->
+        lines |> Seq.iter (fun (line:string) -> sw.WriteLine line)
+    )
+    let texts, last = parseStream pMultiLineComments sSingle
+    use sMulti = createMemoryStream (fun sw ->
+        texts |> Seq.iter (fun text-> sw.Write text)
+        sw.Write last
+    )
+    parseStream pProto sMulti
+
 let parseProtoFile path =
-    use s = parseFile pNoComments path |> stripComments
-    parseStream pProto s
+    parseFile pSingleLineComments path |> parseProto
 
 let parseProtoStream stream =
-    use s = parseStream pNoComments stream |> stripComments
-    parseStream pProto s
+    parseStream pSingleLineComments stream |> parseProto

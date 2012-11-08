@@ -169,19 +169,13 @@ let ``can parse rpc proto`` () =
     "Search" |> should equal rpc.Name
 
 [<Fact>]
-let ``pNoComment`` () =
-    "hello world " |> should equal (parseString pNoComment "hello world // comment")
-    "no comment " |> should equal (parseString pNoComment "no comment ")
-    "" |> should equal (parseString pNoComment "// beginning")
-
-[<Fact>]
 let ``pNoComments`` () =
     let s =
         """hello world // comment
         no comment
         another comment // this is it
         nope, no more"""
-    let lines = parseString pNoComments s
+    let lines = parseString pSingleLineComments s
     4 |> should equal lines.Length
 
 [<Fact>]
@@ -217,3 +211,23 @@ let ``can parse addressbook proto`` () =
     let proto = getTestFile "addressbook.proto" |> parseProtoFile
     7 |> should equal proto.Sections.Length
     3 |> should equal proto.Options.Length
+
+open FParsec
+
+[<Fact>]
+let ``can parse multi-line comments`` () =
+    let texts, last = parseString pMultiLineComments "repeated /* comment */ abc /* what */ hi"
+    2 |> should equal texts.Length
+    " hi" |> should equal last
+
+[<Fact>]
+// from https://github.com/basho/riak_pb/blob/master/src/riak.proto
+let ``can parse riak proto`` () =
+    let proto = getTestFile "riak.proto" |> parseProtoFile
+    5 |> should equal proto.Sections.Length
+    2 |> should equal proto.Options.Length
+    3 |> should equal proto.Messages.Length
+    let kv = getTestFile "riak_kv.proto" |> parseProtoFile
+    23 |> should equal kv.Sections.Length
+    let search = getTestFile "riak_search.proto" |> parseProtoFile
+    6 |> should equal search.Sections.Length
