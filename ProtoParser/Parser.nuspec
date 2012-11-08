@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>0.0.0.3</version>
+    <version>0.0.0.4</version>
     <authors>Cameron Taggart</authors>
     <owners>Cameron Taggart</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
