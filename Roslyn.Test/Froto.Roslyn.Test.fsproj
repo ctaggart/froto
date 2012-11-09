@@ -44,6 +44,18 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="FParsec">
+      <HintPath>..\packages\FParsec.0.9.2.0\lib\net40\FParsec.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FParsecCS">
+      <HintPath>..\packages\FParsec.0.9.2.0\lib\net40\FParsecCS.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Froto.Parser">
+      <HintPath>..\packages\Froto.Parser.0.0.0.4\lib\net40-Client\Froto.Parser.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FsUnit.CustomMatchers">
       <HintPath>..\packages\FsUnit.xUnit.1.1.0.1\lib\Net40\FsUnit.CustomMatchers.dll</HintPath>
       <Private>True</Private>
@@ -89,11 +101,6 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ProtoParser\Froto.Parser.fsproj">
-      <Name>Froto.Parser</Name>
-      <Project>{1c31da31-bec5-4e73-9d83-e36d18847439}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Roslyn\Froto.Roslyn.fsproj">
       <Name>Froto.Roslyn</Name>
       <Project>{49d025ed-f804-4d97-9027-461671b333b6}</Project>

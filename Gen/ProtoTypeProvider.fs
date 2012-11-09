@@ -1,6 +1,6 @@
 ﻿
 namespace Froto.Gen.Name
-type ProtoGen() = inherit obj()
+type internal ProtoGen() = inherit obj()
 
 namespace Froto.Gen
 
@@ -9,7 +9,10 @@ open System.Diagnostics
 open System.IO
 open System.Reflection
 open Microsoft.FSharp.Core.CompilerServices
-open Froto.Roslyn
+
+// aliases
+module PG = Froto.Roslyn.ProtoGen
+module Cmp = Froto.Roslyn.Compilation
 
 [<TypeProvider>]
 type ProtoTypeProvider(cfg:TypeProviderConfig) =
@@ -54,14 +57,9 @@ type ProtoTypeProvider(cfg:TypeProviderConfig) =
 
             // build a new compilation if the path is different
             if path <> protoPath then
-                protoPath <- null
-                let compilation = createCompilation path
-                assemblyStream <- new MemoryStream()
-                let emitResult = compilation.Emit(assemblyStream)
-                if not emitResult.Success then
-                    failwithf "unable to emit: %A" emitResult.Diagnostics
-                assembly <- Assembly.Load(assemblyStream.GetBuffer())
                 protoPath <- path
+                assemblyStream <- PG.createCompilation path |> Cmp.emitStream
+                assembly <- Assembly.Load(assemblyStream.GetBuffer())
 
             assembly.GetType("Tutorial.Blah.AddressBookProto")
 

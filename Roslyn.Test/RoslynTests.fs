@@ -7,6 +7,13 @@ open Xunit
 open FsUnit.Xunit
 open System.Reflection
 open System.Diagnostics
+open Froto.Roslyn
+
+// aliases
+module Cmp = Compilation
+module CU = CompilationUnitSyntax
+module NS = NamespaceDeclarationSyntax
+module CD = ClassDeclarationSyntax
 
 /// gets the path for a test file based on the relative path from the executing assembly
 let getTestFile file =
@@ -16,28 +23,33 @@ let getTestFile file =
      Path.Combine(solutionPath, Path.Combine("test",file))
 
 [<Fact>]
-let ``test createCompilation`` () =
-    let path = getTestFile "addressbook1.proto"
-    let cmp = createCompilation path
-
-    let ms = new MemoryStream()
-    let emitResult = cmp.Emit(ms)
-    if not emitResult.Success then
-        failwithf "unable to emit: %A" emitResult.Diagnostics
-
-    let assembly = Assembly.Load(ms.GetBuffer())
-    let t = assembly.GetType("Tutorial.Blah.AddressBookProto")
-
-    "Tutorial.Blah.AddressBookProto" |> should equal t.FullName
-
-    ()
+let ``test creating a type`` () =
+    let assembly =
+        Cmp.createDll "tutorial"
+        |> Cmp.addReference "mscorlib"
+        |> Cmp.addSyntaxTree (
+            CU.Empty
+            |> CU.addMember (
+                NS.create "Tutorial"
+                |> NS.addMember (
+                    CD.create "Person"
+                    |> CD.addModifier Keyword.Public
+                )
+            )
+            |> CU.createSyntaxTree
+        )
+        |> Cmp.emitAssembly
+    assembly.GetType "Tutorial.Person" |> should not' (be Null)
 
 [<Fact>]
 let ``address1 proto creates types`` () =
     let path = getTestFile "addressbook1.proto"
-    let cmp = createCompilation path
-    let nsList = namespaces "Tutorial" cmp
-    2 |> should equal nsList.Count
-    "Tutorial.Blah" |> should equal (nsList.[1].ToString())
-    
-    ()
+    let cmp = ProtoGen.createCompilation path
+    cmp |> Cmp.syntaxTrees |> Seq.iter (fun st ->
+        Debug.WriteLine <| sprintf "%A" st
+    )
+    let assembly = cmp |> Cmp.emitAssembly
+    assembly.GetType "tutorial.Person" |> should not' (be Null)
+    assembly.GetType "tutorial.AddressBook" |> should not' (be Null)
+    // TODO PhoneNumber
+    // TODO PhoneType
