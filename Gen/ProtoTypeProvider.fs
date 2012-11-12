@@ -34,7 +34,9 @@ type ProtoTypeProvider(cfg:TypeProviderConfig) =
 
         [<CLIEvent>]
         member x.Invalidate =
-//            Debugger.Break()
+#if DEBUG
+            Debugger.Break()
+#endif
             invalidation.Publish
 
         member x.GetStaticParameters(typeWithoutArguments) =
@@ -61,7 +63,8 @@ type ProtoTypeProvider(cfg:TypeProviderConfig) =
                 assemblyStream <- PG.createCompilation path |> Cmp.emitStream
                 assembly <- Assembly.Load(assemblyStream.GetBuffer())
 
-            assembly.GetType("Tutorial.Blah.AddressBookProto")
+            //assembly.GetType("Tutorial.Blah.AddressBookProto")
+            assembly.GetType("tutorial.Person")
 
         member x.GetInvokerExpression(syntheticMethodBase, parameters) =
             Debug.WriteLine <| sprintf "GetInvokerExpression(%A, %A)" syntheticMethodBase parameters

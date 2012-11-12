@@ -1,7 +1,6 @@
 ﻿
 namespace Froto.Roslyn
 
-open Froto.Parser
 open Roslyn.Compilers
 open Roslyn.Compilers.CSharp
 open System
@@ -10,15 +9,24 @@ open System.Collections.Generic
 open Roslyn.Services
 open Roslyn.Services.Formatting
 
-module NameSyntax = 
-    let create name =
-        Syntax.ParseName name
+module TypeSyntax =
+    let predefined kind =
+        Syntax.PredefinedType <| Syntax.Token kind :> TypeSyntax
 
-module Nm = NameSyntax
+    let double = predefined SyntaxKind.DoubleKeyword
+    let float = predefined SyntaxKind.FloatKeyword
+    let int = predefined SyntaxKind.IntKeyword
+    let uint = predefined SyntaxKind.UIntKeyword
+    let bool = predefined SyntaxKind.BoolKeyword
+    let string = predefined SyntaxKind.StringKeyword
+
+    let int64 = Syntax.ParseTypeName "int64"
+    let uint64 = Syntax.ParseTypeName "uint64"
+    let byteArray = Syntax.ParseTypeName "byte[]"
 
 module NamespaceDeclarationSyntax =
     let create name =
-        Syntax.NamespaceDeclaration <| Nm.create name
+        Syntax.NamespaceDeclaration <| Syntax.ParseName  name
 
     let addMember m (ns:NamespaceDeclarationSyntax) =
         ns.AddMembers [| m |]
@@ -33,7 +41,7 @@ module CompilationUnitSyntax =
         Syntax.ParseCompilationUnit String.Empty
 
     let addUsing name (cu:CompilationUnitSyntax) =
-        cu.AddUsings [| Syntax.UsingDirective <| Nm.create name |]
+        cu.AddUsings [| Syntax.UsingDirective <| Syntax.ParseName name |]
 
     let addMember m (cu:CompilationUnitSyntax) =
         cu.AddMembers [| m |]
@@ -55,6 +63,25 @@ module Keyword =
     let Private = Syntax.Token SyntaxKind.PrivateKeyword
     let Get = Syntax.Token SyntaxKind.PrivateKeyword
 
+module AccessorDeclarationSyntax =
+    //Syntax.AccessorDeclaration SyntaxKind.GetKeyword
+    // http://social.msdn.microsoft.com/Forums/nl/roslyn/thread/679f4fd9-f37f-4fa6-8816-88eb64e6a3d3
+
+    let get = 
+        let st = SyntaxTree.ParseText "string Foo { get; }"
+        st.GetRoot() |> SyntaxNode.descendants |> Seq.find(fun sn -> sn.GetType() = typeof<AccessorDeclarationSyntax>)
+        :?> AccessorDeclarationSyntax
+        
+    let set = 
+        let st = SyntaxTree.ParseText "string Foo { set; }"
+        st.GetRoot() |> SyntaxNode.descendants |> Seq.find(fun sn -> sn.GetType() = typeof<AccessorDeclarationSyntax>)
+        :?> AccessorDeclarationSyntax
+
+module PropertyDeclarationSyntax =
+    let create (id:string) tp =
+        let p = Syntax.PropertyDeclaration(tp, id)
+        p.AddAccessorListAccessors([| AccessorDeclarationSyntax.get; AccessorDeclarationSyntax.set |])
+
 module ClassDeclarationSyntax =
     let create name =
         Syntax.ClassDeclaration (name:string)
@@ -65,7 +92,29 @@ module ClassDeclarationSyntax =
     let addMember m (cd:ClassDeclarationSyntax) =
         cd.AddMembers [| m |]
 
+    let addMembers mbrs (cd:ClassDeclarationSyntax) =
+        cd.AddMembers (mbrs |> Array.ofList)
+
 module CD = ClassDeclarationSyntax
+
+module EnumMemberDeclarationSyntax =
+    let create name (value:int32) =
+        let v = Syntax.EqualsValueClause(Syntax.LiteralExpression(SyntaxKind.NumericLiteralExpression, Syntax.Literal value))
+        Syntax.EnumMemberDeclaration(SyntaxList(), Syntax.Identifier name, v)
+
+module EnumDeclarationSyntax =
+    let create name =
+        Syntax.EnumDeclaration (name:string)
+
+    let addModifier m (ed:EnumDeclarationSyntax) =
+        ed.AddModifiers [| m |]
+
+    let addMember name value (ed:EnumDeclarationSyntax) =
+        let mbr = EnumMemberDeclarationSyntax.create name value
+        ed.AddMembers [| mbr |]
+
+    let addMembers members (ed:EnumDeclarationSyntax) =
+        ed.AddMembers(members |> Array.ofList)
 
 module Compilation =
     let createDll name = 
@@ -88,46 +137,5 @@ module Compilation =
         use ms = emitStream cmp
         Reflection.Assembly.Load(ms.GetBuffer())
 
-    /// get all namespaces in a compilation under the root name 
-    let namespaces name (compilation:Compilation) =
-        let list = List()
-        let gnsMembers = compilation.GlobalNamespace.GetMembers(name).AsEnumerable() |> List.ofSeq
-        if gnsMembers.Length = 1 then
-            let nsRoot = gnsMembers.[0] :?> NamespaceSymbol
-            let rec add (ns:NamespaceSymbol) =
-                list.Add ns
-                ns.GetNamespaceMembers() |> Seq.iter (fun m -> add m)
-            add nsRoot
-        list
-
     let syntaxTrees (cmp:Compilation) =
         cmp.SyntaxTrees.AsEnumerable() |> List.ofSeq
-
-module Cmp = Compilation
-
-// TODO
-module ProtoGen =
-    let createCompilation path =
-
-        let proto = ProtoParser.parseProtoFile path
-        
-        let cds = proto.Messages |> List.map (fun msg ->
-            CD.create msg.Name
-            |> CD.addModifier Keyword.Public
-            :> MemberDeclarationSyntax
-        )
-
-        let ns =
-            NS.create proto.Packages.[0]
-            |> NS.addMembers cds
-
-        let st =
-            CU.Empty
-            //|> CU.addUsing "Protobuf"
-            |> CU.addMember ns
-            |> CU.formatDefault
-            |> CU.createSyntaxTree
-
-        Cmp.createDll "proto"
-        |> Cmp.addReference "mscorlib"
-        |> Cmp.addSyntaxTree st

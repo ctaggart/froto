@@ -44,27 +44,23 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Gen\Froto.Gen.fsproj">
-      <Name>Froto.Gen</Name>
-      <Project>{2b3ae1cf-af7c-455c-94e2-78a7299f27bc}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\ProtoParser\Froto.Parser.fsproj">
-      <Name>Froto.Parser</Name>
-      <Project>{1c31da31-bec5-4e73-9d83-e36d18847439}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Roslyn\Froto.Roslyn.fsproj">
-      <Name>Froto.Roslyn</Name>
-      <Project>{49d025ed-f804-4d97-9027-461671b333b6}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <Reference Include="FParsec">
       <HintPath>..\packages\FParsec.0.9.2.0\lib\net40\FParsec.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FParsecCS">
       <HintPath>..\packages\FParsec.0.9.2.0\lib\net40\FParsecCS.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Froto.Gen">
+      <HintPath>..\Gen\bin\Debug\Froto.Gen.dll</HintPath>
+    </Reference>
+    <Reference Include="Froto.Parser">
+      <HintPath>..\packages\Froto.Parser.0.0.0.4\lib\net40-Client\Froto.Parser.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Froto.Roslyn">
+      <HintPath>..\packages\Froto.Roslyn.0.0.0.1\lib\net45\Froto.Roslyn.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FsUnit.CustomMatchers">
@@ -83,24 +79,19 @@
       <HintPath>..\packages\FsUnit.xUnit.1.1.0.1\lib\Net40\NHamcrest.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Roslyn.Compilers">
-      <HintPath>..\packages\Roslyn.Compilers.Common.1.2.20906.2\lib\net45\Roslyn.Compilers.dll</HintPath>
+    <Reference Include="Roslyn.Compilers, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
       <Private>True</Private>
     </Reference>
-    <Reference Include="Roslyn.Compilers.CSharp">
-      <HintPath>..\packages\Roslyn.Compilers.CSharp.1.2.20906.2\lib\net45\Roslyn.Compilers.CSharp.dll</HintPath>
+    <Reference Include="Roslyn.Compilers.CSharp, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
       <Private>True</Private>
     </Reference>
-    <Reference Include="Roslyn.Services">
-      <HintPath>..\packages\Roslyn.Services.Common.1.2.20906.2\lib\net45\Roslyn.Services.dll</HintPath>
+    <Reference Include="Roslyn.Services, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
       <Private>True</Private>
     </Reference>
-    <Reference Include="Roslyn.Services.CSharp">
-      <HintPath>..\packages\Roslyn.Services.CSharp.1.2.20906.2\lib\net45\Roslyn.Services.CSharp.dll</HintPath>
+    <Reference Include="Roslyn.Services.CSharp, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
       <Private>True</Private>
     </Reference>
-    <Reference Include="Roslyn.Utilities">
-      <HintPath>..\packages\Roslyn.Services.Common.1.2.20906.2\lib\net45\Roslyn.Utilities.dll</HintPath>
+    <Reference Include="Roslyn.Utilities, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

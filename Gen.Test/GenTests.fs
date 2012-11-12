@@ -18,3 +18,4 @@ let getTestFile file =
 //[<Fact>]
 //let ``createCompilation`` () =
 
+type Person = Froto.Gen.ProtoGen< @"C:\Users\taggartc\froto\froto\test\addressbook1.proto">

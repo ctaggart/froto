@@ -9,6 +9,11 @@ open System.Reflection
 open System.Diagnostics
 open Froto.Roslyn
 
+open Roslyn.Compilers
+open Roslyn.Compilers.CSharp
+open Roslyn.Services
+open Roslyn.Services.Formatting
+
 // aliases
 module Cmp = Compilation
 module CU = CompilationUnitSyntax
@@ -51,5 +56,5 @@ let ``address1 proto creates types`` () =
     let assembly = cmp |> Cmp.emitAssembly
     assembly.GetType "tutorial.Person" |> should not' (be Null)
     assembly.GetType "tutorial.AddressBook" |> should not' (be Null)
-    // TODO PhoneNumber
-    // TODO PhoneType
+    assembly.GetType "tutorial.PhoneNumber" |> should not' (be Null)
+    assembly.GetType "tutorial.PhoneType" |> should not' (be Null)

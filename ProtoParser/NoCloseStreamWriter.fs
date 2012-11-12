@@ -1,6 +1,7 @@
 ﻿
 namespace Froto
 
+#if NET40
 open System.IO
 
 /// Encapsulates a stream writer which does not close the underlying stream.
@@ -13,5 +14,4 @@ type NoCloseStreamWriter(stream:Stream, encoding) =
         // Dispose the stream writer but pass false to the dispose
         // method to stop it from closing the underlying stream
         base.Dispose(false)
-
-
+#endif
