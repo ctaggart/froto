@@ -1,21 +1,8 @@
 ﻿
-module Froto.Gen.GenTests
+namespace tutorial
 
-open System
-open System.IO
-open Xunit
-open FsUnit.Xunit
-open System.Reflection
-open System.Diagnostics
+type AddressBookProto = Froto.Gen.ProtoGen< @"test\addressbook1.proto">
 
-/// gets the path for a test file based on the relative path from the executing assembly
-let getTestFile file =
-     let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
-     let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
-     let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent).FullName
-     Path.Combine(solutionPath, Path.Combine("test",file))
+//module test =
+//    let p = AddressBookProto.CreatePerson()
 
-//[<Fact>]
-//let ``createCompilation`` () =
-
-type Person = Froto.Gen.ProtoGen< @"C:\Users\taggartc\froto\froto\test\addressbook1.proto">

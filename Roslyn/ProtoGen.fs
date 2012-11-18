@@ -1,6 +1,8 @@
 ﻿
 module Froto.Roslyn.ProtoGen
 
+open System
+open System.IO
 open Froto.Parser
 open Froto.Parser.ProtoAst
 open Roslyn.Compilers.CSharp
@@ -11,6 +13,8 @@ module CU = CompilationUnitSyntax
 module CD = ClassDeclarationSyntax
 module ED = EnumDeclarationSyntax
 module Cmp = Compilation
+module MD = MethodDeclarationSyntax
+module PD = PropertyDeclarationSyntax
 
 // https://developers.google.com/protocol-buffers/docs/proto#scalar
 let scalarToSyntaxKind =
@@ -32,7 +36,7 @@ let scalarToSyntaxKind =
     ]
     |> Map.ofList
 
-let createCompilation path =
+let createCompilation path rootNsName rootTpName =
 
     let proto = ProtoParser.parseProtoFile path
         
@@ -48,18 +52,25 @@ let createCompilation path =
                 yield! listEnums message.Enums message.Messages
         ]
 
-    let cds = listMessages proto.Messages |> List.map (fun msg ->
+    let messages = listMessages proto.Messages
+
+    let cds = messages |> List.map (fun msg ->
         CD.create msg.Name
+        |> CD.addAttribute (
+            AttributeSyntax.create "ProtoContract"
+        )
         |> CD.addModifier Keyword.Public
+        |> CD.addModifier Keyword.Sealed
         |> CD.addMembers (
             msg.Fields |> List.map (fun f ->
                 let tp =
                     if scalarToSyntaxKind.ContainsKey f.Type then
                         scalarToSyntaxKind.[f.Type]
                     else
-                        Syntax.ParseTypeName f.Type
+                        TypeSyntax.create f.Type
 
-                PropertyDeclarationSyntax.create f.Name tp
+                PD.create f.Name tp
+                |> PD.addModifier Keyword.Public
                 :> MemberDeclarationSyntax
             )
         )
@@ -68,23 +79,90 @@ let createCompilation path =
 
     let enums = listEnums [] proto.Messages |> List.map (fun enum ->
         ED.create enum.Name
+        |> ED.addAttribute (
+            AttributeSyntax.create "ProtoContract"
+        )
         |> ED.addModifier Keyword.Public
         |> ED.addMembers (enum.Items |> List.map (fun item -> EnumMemberDeclarationSyntax.create item.Name item.Value))
         :> MemberDeclarationSyntax
     )
 
+    let nsName =
+        if proto.Packages.Length > 0 then
+            proto.Packages.[0]
+        else
+            rootNsName
+
     let ns =
-        NS.create proto.Packages.[0]
+        NS.create nsName
         |> NS.addMembers enums
         |> NS.addMembers cds
 
+    let rootTp =
+        CD.create rootTpName
+        |> CD.addModifier Keyword.Public
+        |> CD.addModifier Keyword.Static
+        |> CD.fold messages (fun cd msg ->
+            cd
+            // Create
+            |> CD.addMember (
+                MD.create (TypeSyntax.create msg.Name) ("Create" + msg.Name)
+                |> MD.addModifier Keyword.Public
+                |> MD.addModifier Keyword.Static
+                |> MD.addBodyStatements [
+                    "return new " + msg.Name + "();" |> Syntax.ParseStatement
+                ]
+            )
+            // Serialize
+            |> CD.addMember (
+                MD.create (TypeSyntax.vd) ("Serialize" + msg.Name)
+                |> MD.addModifier Keyword.Public
+                |> MD.addModifier Keyword.Static
+                |> MD.addParameters [
+                    ParameterSyntax.create (TypeSyntax.create "Stream") "stream"
+                    ParameterSyntax.create (TypeSyntax.create msg.Name) "instance"
+                ]
+                |> MD.addBodyStatements [
+                    "Serializer.Serialize(stream, instance);" |> Syntax.ParseStatement
+                ]
+            )
+            // Deserialize
+            |> CD.addMember (
+                MD.create (TypeSyntax.create msg.Name) ("Deserialize" + msg.Name)
+                |> MD.addModifier Keyword.Public
+                |> MD.addModifier Keyword.Static
+                |> MD.addParameters [
+                    ParameterSyntax.create (TypeSyntax.create "Stream") "stream"
+                ]
+                |> MD.addBodyStatements [
+                    "return Serializer.Deserialize<" + msg.Name + ">(stream);" |> Syntax.ParseStatement
+                ]
+            )
+        )
+
+    let rootNs =
+        NS.create rootNsName
+        |> NS.addUsing nsName
+        |> NS.addMember rootTp
+
     let st =
         CU.Empty
-        //|> CU.addUsing "Protobuf"
+        |> CU.addUsing "ProtoBuf"
+        |> CU.addUsing "System.IO"
         |> CU.addMember ns
+        |> CU.addMember rootNs
         |> CU.formatDefault
         |> CU.createSyntaxTree
 
-    Cmp.createDll "proto"
-    |> Cmp.addReference "mscorlib"
+    Cmp.createDll rootTpName
+    |> Cmp.addReference typeof<Object> // mscorlib
+    |> Cmp.addReference typeof<Attribute> // System.Runtime
+    |> Cmp.addReference typeof<ProtoBuf.Serializer> // protobuf-net
     |> Cmp.addSyntaxTree st
+
+let generate pathProto rootNamespace rootType pathCs =
+    use sw = new StreamWriter(pathCs, false, Text.Encoding.UTF8)
+    createCompilation pathProto rootNamespace rootType
+    |> Cmp.syntaxTrees |> Seq.iter (fun st ->
+        sprintf "%A" st |> sw.WriteLine
+    )

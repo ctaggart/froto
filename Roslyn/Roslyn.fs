@@ -10,6 +10,9 @@ open Roslyn.Services
 open Roslyn.Services.Formatting
 
 module TypeSyntax =
+    let create name =
+        Syntax.ParseTypeName name
+
     let predefined kind =
         Syntax.PredefinedType <| Syntax.Token kind :> TypeSyntax
 
@@ -19,14 +22,38 @@ module TypeSyntax =
     let uint = predefined SyntaxKind.UIntKeyword
     let bool = predefined SyntaxKind.BoolKeyword
     let string = predefined SyntaxKind.StringKeyword
+    let vd = predefined SyntaxKind.VoidKeyword
 
     let int64 = Syntax.ParseTypeName "int64"
     let uint64 = Syntax.ParseTypeName "uint64"
     let byteArray = Syntax.ParseTypeName "byte[]"
 
+module MethodDeclarationSyntax =
+    let create returnType id =
+        Syntax.MethodDeclaration(returnType, (id:string))
+
+    let fold list f (md:MethodDeclarationSyntax) =
+        List.fold (fun acc elem -> f acc elem) md list
+
+    let addModifier m (md:MethodDeclarationSyntax) =
+        md.AddModifiers [| m |]
+    
+    let addParameters pl (md:MethodDeclarationSyntax) =
+        md.AddParameterListParameters (pl |> Array.ofList)
+
+    let addBodyStatements stmts (md:MethodDeclarationSyntax) =
+        md.AddBodyStatements(stmts |> Array.ofList)
+
+module ParameterSyntax =
+    let create tp name =
+        Syntax.Parameter(Syntax.List(), Syntax.TokenList(), tp, Syntax.Identifier name, null)
+
 module NamespaceDeclarationSyntax =
     let create name =
-        Syntax.NamespaceDeclaration <| Syntax.ParseName  name
+        Syntax.NamespaceDeclaration <| Syntax.ParseName name
+
+    let addUsing name (ns:NamespaceDeclarationSyntax) =
+        ns.AddUsings [| Syntax.UsingDirective <| Syntax.ParseName name |]
 
     let addMember m (ns:NamespaceDeclarationSyntax) =
         ns.AddMembers [| m |]
@@ -62,10 +89,12 @@ module Keyword =
     let Public = Syntax.Token SyntaxKind.PublicKeyword
     let Private = Syntax.Token SyntaxKind.PrivateKeyword
     let Get = Syntax.Token SyntaxKind.PrivateKeyword
+    let Static = Syntax.Token SyntaxKind.StaticKeyword
+    let Sealed = Syntax.Token SyntaxKind.SealedKeyword
 
 module AccessorDeclarationSyntax =
-    //Syntax.AccessorDeclaration SyntaxKind.GetKeyword
-    // http://social.msdn.microsoft.com/Forums/nl/roslyn/thread/679f4fd9-f37f-4fa6-8816-88eb64e6a3d3
+//    let get = Syntax.AccessorDeclaration SyntaxKind.GetAccessorDeclaration  
+//    let set = Syntax.AccessorDeclaration SyntaxKind.SetAccessorDeclaration
 
     let get = 
         let st = SyntaxTree.ParseText "string Foo { get; }"
@@ -82,9 +111,19 @@ module PropertyDeclarationSyntax =
         let p = Syntax.PropertyDeclaration(tp, id)
         p.AddAccessorListAccessors([| AccessorDeclarationSyntax.get; AccessorDeclarationSyntax.set |])
 
+    let addModifier m (pd:PropertyDeclarationSyntax) =
+        pd.AddModifiers [| m |]
+
+module AttributeListSyntax =
+    let addAttribute a (al:AttributeListSyntax) =
+        al.AddAttributes [| a |]
+
 module ClassDeclarationSyntax =
     let create name =
         Syntax.ClassDeclaration (name:string)
+
+    let fold list f (cd:ClassDeclarationSyntax) =
+        List.fold (fun acc elem -> f acc elem) cd list
 
     let addModifier m (cd:ClassDeclarationSyntax) =
         cd.AddModifiers [| m |]
@@ -94,6 +133,19 @@ module ClassDeclarationSyntax =
 
     let addMembers mbrs (cd:ClassDeclarationSyntax) =
         cd.AddMembers (mbrs |> Array.ofList)
+
+    let addAttribute attr (cd:ClassDeclarationSyntax) =
+        cd.AddAttributeLists [|
+            Syntax.AttributeList()
+            |> AttributeListSyntax.addAttribute attr
+        |]
+
+module AttributeSyntax =
+    let create name =
+        Syntax.Attribute(Syntax.ParseName name)
+
+    let addArgument arg (attr:AttributeSyntax) =
+        attr.AddArgumentListArguments [| arg |]
 
 module CD = ClassDeclarationSyntax
 
@@ -116,26 +168,40 @@ module EnumDeclarationSyntax =
     let addMembers members (ed:EnumDeclarationSyntax) =
         ed.AddMembers(members |> Array.ofList)
 
+    let addAttribute attr (ed:EnumDeclarationSyntax) =
+        ed.AddAttributeLists [|
+            Syntax.AttributeList()
+            |> AttributeListSyntax.addAttribute attr
+        |]
+
 module Compilation =
     let createDll name = 
         Compilation.Create(name, options=CompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
-    let addReference name (cmp:Compilation) =
-        cmp.AddReferences [| MetadataReference.CreateAssemblyReference(name) |]
+    let addReference (tp:Type) (cmp:Compilation) =
+        cmp.AddReferences [| MetadataFileReference(tp.Assembly.Location) :> MetadataReference |]
 
     let addSyntaxTree (st:SyntaxTree) (cmp:Compilation) =
         cmp.AddSyntaxTrees [ st ]
 
-    let emitStream (cmp:Compilation) =
-        let ms = new MemoryStream()
-        let result = cmp.Emit ms
+    let emit (stream:Stream) (cmp:Compilation) =
+        let result = cmp.Emit stream
         if not result.Success then
-            failwithf "emitAssembly failed: %A" result.Diagnostics
+            failwithf "emit failed: %A" result.Diagnostics
+
+    let emitMemoryStream (cmp:Compilation) =
+        let ms = new MemoryStream()
+        emit ms cmp
+        ms.Position <- 0L
         ms
 
     let emitAssembly cmp =
-        use ms = emitStream cmp
+        use ms = emitMemoryStream cmp
         Reflection.Assembly.Load(ms.GetBuffer())
+
+    let emitFile path cmp =
+        use fs = File.OpenWrite path
+        emit fs cmp
 
     let syntaxTrees (cmp:Compilation) =
         cmp.SyntaxTrees.AsEnumerable() |> List.ofSeq

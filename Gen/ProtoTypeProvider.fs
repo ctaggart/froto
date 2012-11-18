@@ -17,9 +17,10 @@ module Cmp = Froto.Roslyn.Compilation
 [<TypeProvider>]
 type ProtoTypeProvider(cfg:TypeProviderConfig) =
     
-    let mutable protoPath = null
-    let mutable assemblyStream = null
-    let mutable assembly = null
+    let mutable protoPath = None
+    let mutable assemblyBytes = None
+    let mutable assembly = None
+    let mutable rootTp = None
 
     let invalidation = new Event<_,_>()
     
@@ -55,16 +56,30 @@ type ProtoTypeProvider(cfg:TypeProviderConfig) =
         // the type name returned must match typeNameWithArguments[n-1]
         member x.ApplyStaticArguments(typeWithoutArguments, typeNameWithArguments, staticArguments) =
             Debug.WriteLine <| sprintf "ApplyStaticArguments(%A, %A, %A)" typeWithoutArguments typeNameWithArguments staticArguments
-            let path = staticArguments.[0] :?> string
+            let rootTpFullName = String.Join(".", typeNameWithArguments)
 
-            // build a new compilation if the path is different
-            if path <> protoPath then
-                protoPath <- path
-                assemblyStream <- PG.createCompilation path |> Cmp.emitStream
-                assembly <- Assembly.Load(assemblyStream.GetBuffer())
+            if typeWithoutArguments = typeof<Name.ProtoGen> then
+                let path = staticArguments.[0] :?> string
+                if false = File.Exists path then
+                    failwithf "proto file not found: %s" path
 
-            //assembly.GetType("Tutorial.Blah.AddressBookProto")
-            assembly.GetType("tutorial.Person")
+                // build a new compilation if...
+                if protoPath.IsNone || path <> protoPath.Value || rootTpFullName <> rootTp.Value then
+                    protoPath <- path |> Some
+                    rootTp <- rootTpFullName |> Some
+                    let rootNsName = String.Join(".", typeNameWithArguments.[0..typeNameWithArguments.Length-2])
+                    let rootTpName = typeNameWithArguments.[typeNameWithArguments.Length-1]
+                    let cmp = PG.createCompilation path rootNsName rootTpName
+                    use assemblyStream = cmp |> Cmp.emitStream
+                    assemblyBytes <- assemblyStream.ToArray() |> Some
+                    assembly <- Assembly.Load assemblyBytes.Value |> Some
+                
+                if assembly.IsSome then
+                    assembly.Value.GetType rootTpFullName
+                else
+                    failwith "assembly not generated"
+            else
+                failwith "only ProtoGen supported"
 
         member x.GetInvokerExpression(syntheticMethodBase, parameters) =
             Debug.WriteLine <| sprintf "GetInvokerExpression(%A, %A)" syntheticMethodBase parameters
@@ -72,18 +87,21 @@ type ProtoTypeProvider(cfg:TypeProviderConfig) =
             | :? ConstructorInfo as ctor ->
                 Quotations.Expr.NewObject(ctor, Array.toList parameters) 
             | :? MethodInfo as mi ->
-                Quotations.Expr.Call(parameters.[0], mi, Array.toList parameters.[1..])
+                if parameters.Length = 0 then
+                    Quotations.Expr.Call(mi, parameters |> List.ofArray)
+                else
+                    Quotations.Expr.Call(parameters.[0], mi, Array.toList parameters.[1..])
             | _ ->
-                NotImplementedException(sprintf "Not Implemented: ITypeProvider.GetInvokerExpression(%A, %A)" syntheticMethodBase parameters) |> raise
+                NotImplementedException(sprintf "Not Implemented: GetInvokerExpression(%A, %A)" syntheticMethodBase parameters) |> raise
 
         member x.GetGeneratedAssemblyContents(assembly) =
             Debug.WriteLine <| sprintf "GetGeneratedAssemblyContents(%A)" assembly
-            assemblyStream.GetBuffer()
+            if assemblyBytes.IsSome then
+                assemblyBytes.Value
+            else
+                failwith "assembly bytes not generated"
 
-        member x.Dispose() =
-            Debug.WriteLine <| sprintf "Dispose()"
-            use s = assemblyStream
-            ()
+        member x.Dispose() = ()
 
 
 [<assembly: TypeProviderAssembly>]

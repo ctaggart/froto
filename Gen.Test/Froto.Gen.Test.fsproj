@@ -79,6 +79,10 @@
       <HintPath>..\packages\FsUnit.xUnit.1.1.0.1\lib\Net40\NHamcrest.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\packages\Froto.Roslyn.0.0.0.1\lib\net45\protobuf-net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Roslyn.Compilers, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
       <Private>True</Private>
     </Reference>

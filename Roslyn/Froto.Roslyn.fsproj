@@ -22,7 +22,6 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Roslyn.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,7 +30,6 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Roslyn.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -51,15 +49,19 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="FParsec">
-      <HintPath>..\packages\Froto.Parser.0.0.0.5\lib\net45\FParsec.dll</HintPath>
+      <HintPath>..\packages\FParsec.0.9.2.0\lib\net40\FParsec.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FParsecCS">
-      <HintPath>..\packages\Froto.Parser.0.0.0.5\lib\net45\FParsecCS.dll</HintPath>
+      <HintPath>..\packages\FParsec.0.9.2.0\lib\net40\FParsecCS.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Froto.Parser">
-      <HintPath>..\packages\Froto.Parser.0.0.0.5\lib\net45\Froto.Parser.dll</HintPath>
+      <HintPath>..\packages\Froto.Parser.0.0.0.4\lib\net40-Client\Froto.Parser.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\packages\protobuf-net.2.0.0.602\lib\net40\protobuf-net.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Roslyn.Compilers">

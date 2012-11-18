@@ -31,7 +31,7 @@ let getTestFile file =
 let ``test creating a type`` () =
     let assembly =
         Cmp.createDll "tutorial"
-        |> Cmp.addReference "mscorlib"
+        |> Cmp.addReference typeof<Object> // mscorlib
         |> Cmp.addSyntaxTree (
             CU.Empty
             |> CU.addMember (
@@ -49,7 +49,7 @@ let ``test creating a type`` () =
 [<Fact>]
 let ``address1 proto creates types`` () =
     let path = getTestFile "addressbook1.proto"
-    let cmp = ProtoGen.createCompilation path
+    let cmp = ProtoGen.createCompilation path "Froto.Roslyn.RoslynTests" "AddressbookProto"
     cmp |> Cmp.syntaxTrees |> Seq.iter (fun st ->
         Debug.WriteLine <| sprintf "%A" st
     )
@@ -58,3 +58,8 @@ let ``address1 proto creates types`` () =
     assembly.GetType "tutorial.AddressBook" |> should not' (be Null)
     assembly.GetType "tutorial.PhoneNumber" |> should not' (be Null)
     assembly.GetType "tutorial.PhoneType" |> should not' (be Null)
+
+[<Fact>]
+let ``riak proto create source code`` () =
+    let path = getTestFile "riak.proto"
+    ProtoGen.generate path "Riak" "RiakProto" "riak.cs"
