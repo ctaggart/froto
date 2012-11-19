@@ -67,10 +67,14 @@ type ProtoTypeProvider(cfg:TypeProviderConfig) =
                 if protoPath.IsNone || path <> protoPath.Value || rootTpFullName <> rootTp.Value then
                     protoPath <- path |> Some
                     rootTp <- rootTpFullName |> Some
-                    let rootNsName = String.Join(".", typeNameWithArguments.[0..typeNameWithArguments.Length-2])
+                    let rootNsName =
+                        match typeNameWithArguments.Length with
+                        | 2 -> typeNameWithArguments.[0]
+                        | _ -> String.Join(".", typeNameWithArguments.[0..typeNameWithArguments.Length-2])
                     let rootTpName = typeNameWithArguments.[typeNameWithArguments.Length-1]
                     let cmp = PG.createCompilation path rootNsName rootTpName
-                    use assemblyStream = cmp |> Cmp.emitStream
+                    //let cmp = PG.createCompilation @"test\riak.proto" "RiakProto" "tutorial"
+                    use assemblyStream = cmp |> Cmp.emitMemoryStream
                     assemblyBytes <- assemblyStream.ToArray() |> Some
                     assembly <- Assembly.Load assemblyBytes.Value |> Some
                 

@@ -11,4 +11,20 @@
     <description>An F# Type Provider for Protocol Buffers .proto files.</description>
     <copyright>Copyright 2012</copyright>
   </metadata>
+  <files>
+    <file src="bin\Release\Froto.Roslyn.dll" target="lib\net45" />
+    <file src="bin\Release\protobuf-net.dll" target="lib\net45" />
+    <file src="bin\Release\Froto.Parser.dll" target="lib\net45" />
+    <file src="bin\Release\FParsec.dll" target="lib\net45" />
+    <file src="bin\Release\FParsecCS.dll" target="lib\net45" />
+    <!--
+    <file src="bin\Release\Roslyn.Compilers.CSharp.dll" target="lib\net45" />
+    <file src="bin\Release\Roslyn.Compilers.dll" target="lib\net45" />
+    <file src="bin\Release\Roslyn.Services.CSharp.dll" target="lib\net45" />
+    <file src="bin\Release\Roslyn.Services.dll" target="lib\net45" />
+    -->
+    <file src="Roslyn.bat" target="lib\net45" />
+    <file src="bin\Release\FSharp.Core.dll" target="lib\net45" />
+    <file src="Froto.Gen.config" target="lib\net45" />
+  </files>
 </package>
