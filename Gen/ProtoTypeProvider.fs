@@ -73,7 +73,6 @@ type ProtoTypeProvider(cfg:TypeProviderConfig) =
                         | _ -> String.Join(".", typeNameWithArguments.[0..typeNameWithArguments.Length-2])
                     let rootTpName = typeNameWithArguments.[typeNameWithArguments.Length-1]
                     let cmp = PG.createCompilation path rootNsName rootTpName
-                    //let cmp = PG.createCompilation @"test\riak.proto" "RiakProto" "tutorial"
                     use assemblyStream = cmp |> Cmp.emitMemoryStream
                     assemblyBytes <- assemblyStream.ToArray() |> Some
                     assembly <- Assembly.Load assemblyBytes.Value |> Some

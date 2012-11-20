@@ -44,10 +44,10 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
-      <HintPath>..\FParsec.dll</HintPath>
+      <HintPath>..\FParsec.1.0.0.1\lib\net45\FParsec.dll</HintPath>
     </Reference>
     <Reference Include="FParsecCS">
-      <HintPath>..\FParsecCS.dll</HintPath>
+      <HintPath>..\FParsec.1.0.0.1\lib\net45\FParsecCS.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />

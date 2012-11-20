@@ -12,7 +12,7 @@
     <copyright>Copyright 2012</copyright>
   </metadata>
   <files>
-    <file src="..\FParsec.dll" target="lib\net45" />
-    <file src="..\FParsecCS.dll" target="lib\net45" />
+    <file src="bin\Release\FParsec.dll" target="lib\net45" />
+    <file src="bin\Release\FParsecCS.dll" target="lib\net45" />
   </files>
 </package>

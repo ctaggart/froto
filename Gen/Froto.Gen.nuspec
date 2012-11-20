@@ -25,6 +25,5 @@
     -->
     <file src="Roslyn.bat" target="lib\net45" />
     <file src="bin\Release\FSharp.Core.dll" target="lib\net45" />
-    <file src="Froto.Gen.config" target="lib\net45" />
   </files>
 </package>
