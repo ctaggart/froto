@@ -125,11 +125,7 @@ let pMultiLineComments =
 
 let internal createMemoryStream (fWrite : StreamWriter -> unit) =
     let ms = new MemoryStream()
-#if NET40
-    use sw = new Froto.NoCloseStreamWriter(ms, Encoding.UTF8) // leave stream open
-#else
     use sw = new StreamWriter(ms, Encoding.UTF8, 4096, true) // leave stream open
-#endif
     fWrite sw
     sw.Flush()
     ms.Position <- 0L
