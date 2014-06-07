@@ -159,6 +159,7 @@ let createCompilation path rootNsName rootTpName =
     |> Cmp.addReference typeof<Object> // mscorlib
     |> Cmp.addReference typeof<Attribute> // System.Runtime
     |> Cmp.addReference typeof<ProtoBuf.Serializer> // protobuf-net
+    |> Cmp.addReference typeof<Xml.XmlNode>
     |> Cmp.addSyntaxTree st
 
 let generate pathProto rootNamespace rootType pathCs =
