@@ -9,10 +9,10 @@ open System.Reflection
 open System.Diagnostics
 open Froto.Roslyn
 
-open Roslyn.Compilers
-open Roslyn.Compilers.CSharp
-open Roslyn.Services
-open Roslyn.Services.Formatting
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open Microsoft.CodeAnalysis.Formatting
 
 // aliases
 module Cmp = Compilation

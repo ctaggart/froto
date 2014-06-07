@@ -5,7 +5,8 @@ open System
 open System.IO
 open Froto.Parser
 open Froto.Parser.ProtoAst
-open Roslyn.Compilers.CSharp
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
 
 // aliases
 module NS = NamespaceDeclarationSyntax
@@ -110,7 +111,7 @@ let createCompilation path rootNsName rootTpName =
                 |> MD.addModifier Keyword.Public
                 |> MD.addModifier Keyword.Static
                 |> MD.addBodyStatements [
-                    "return new " + msg.Name + "();" |> Syntax.ParseStatement
+                    "return new " + msg.Name + "();" |> SyntaxFactory.ParseStatement
                 ]
             )
             // Serialize
@@ -123,7 +124,7 @@ let createCompilation path rootNsName rootTpName =
                     ParameterSyntax.create (TypeSyntax.create msg.Name) "instance"
                 ]
                 |> MD.addBodyStatements [
-                    "Serializer.Serialize(stream, instance);" |> Syntax.ParseStatement
+                    "Serializer.Serialize(stream, instance);" |> SyntaxFactory.ParseStatement
                 ]
             )
             // Deserialize
@@ -135,7 +136,7 @@ let createCompilation path rootNsName rootTpName =
                     ParameterSyntax.create (TypeSyntax.create "Stream") "stream"
                 ]
                 |> MD.addBodyStatements [
-                    "return Serializer.Deserialize<" + msg.Name + ">(stream);" |> Syntax.ParseStatement
+                    "return Serializer.Deserialize<" + msg.Name + ">(stream);" |> SyntaxFactory.ParseStatement
                 ]
             )
         )
