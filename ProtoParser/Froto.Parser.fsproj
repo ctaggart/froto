@@ -34,7 +34,7 @@
   <ItemGroup>
     <Compile Include="ProtoAst.fs" />
     <Compile Include="ProtoParser.fs" />
-    <Compile Include="Version.fs" />
+    <Compile Include="AssemblyInfo.fs" />
     <None Include="packages.config" />
     <None Include="Froto.Parser.nuspec" />
   </ItemGroup>

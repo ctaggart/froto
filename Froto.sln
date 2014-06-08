@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30110.0
+VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Parser", "ProtoParser\Froto.Parser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
 EndProject
@@ -15,6 +15,11 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Roslyn.Test", "Roslyn
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2291EB39-A4CC-471C-BA12-1E58F298B395}"
 	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		appveyor.yml = appveyor.yml
+		build.cmd = build.cmd
+		build.config = build.config
+		build.fsx = build.fsx
 		readme.md = readme.md
 	EndProjectSection
 EndProject

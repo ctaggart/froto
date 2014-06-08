@@ -1,14 +1,17 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>$id$</id>
-    <version>0.0.0.2</version>
+    <id>Froto.Roslyn</id>
+    <version>0.0.0</version>
     <authors>Cameron Taggart</authors>
-    <owners>Cameron Taggart</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
-    <projectUrl>http://code.google.com/p/froto/</projectUrl>
+    <projectUrl>https://github.com/ctaggart/froto</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A C# code genererator using Protocol Buffers .proto files as input.</description>
-    <copyright>Copyright 2012</copyright>
+    @dependencies@
   </metadata>
+  <files>
+    <file src="Froto.Roslyn.dll" target="lib\net45" />
+    <file src="Froto.Roslyn.pdb" target="lib\net45" />
+  </files>
 </package>
