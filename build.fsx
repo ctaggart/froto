@@ -7,6 +7,7 @@ open System.IO
 open Fake
 open Fake.AppVeyor
 open Fake.AssemblyInfoFile
+open Fake.Testing
 open SourceLink
 
 let release = ReleaseNotesHelper.LoadReleaseNotes "release_notes.md"
@@ -20,19 +21,14 @@ let buildVersion =
     else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion (Int32.Parse(AppVeyorEnvironment.BuildNumber).ToString("000"))
     else sprintf "%s-a%s" assemblyVersion (buildDate.ToString "yyMMddHHmm")
 
-Target "BuildVersion" (fun _ ->
-    Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" buildVersion) |> ignore
-)
-
 MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Minimal }
 
-Target "Clean" (fun _ -> 
-    !! "**/bin/"
-    ++ "**/obj/" 
-    |> CleanDirs 
-)
+Target "BuildVersion" <| fun _ ->
+    Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" buildVersion) |> ignore
 
-Target "AssemblyInfo" (fun _ ->
+Target "Clean" <| fun _ -> !! "**/bin/" ++ "**/obj/" |> DeleteDirs 
+
+Target "AssemblyInfo" <| fun _ ->
     let iv = Text.StringBuilder() // json
     iv.Appendf "{\\\"buildVersion\\\":\\\"%s\\\"" buildVersion
     iv.Appendf ",\\\"buildDate\\\":\\\"%s\\\"" (buildDate.ToString "yyyy'-'MM'-'dd'T'HH':'mm':'sszzz")
@@ -45,13 +41,23 @@ Target "AssemblyInfo" (fun _ ->
         Attribute.InformationalVersion iv.String ]
     common |> CreateFSharpAssemblyInfo "ProtoParser/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
-)
 
-Target "Build" (fun _ ->
+Target "Build" <| fun _ ->
     !! "Froto.sln" |> MSBuildRelease "" "Rebuild" |> ignore
-)
 
-Target "SourceLink" (fun _ ->
+Target "UnitTest" <| fun _ ->
+    CreateDir "bin"
+    xUnit2 (fun p -> 
+        { p with
+            IncludeTraits = ["Kind", "Unit"]
+            XmlOutputPath = Some @"bin\UnitTest.xml"
+            Parallel = ParallelMode.All
+        })
+        [   @"ProtoParser.Test\bin\Release\Froto.Parser.Test.dll"
+            @"Roslyn.Test\bin\Release\Froto.Roslyn.Test.dll"
+        ]
+
+Target "SourceLink" <| fun _ ->
     let sourceIndex proj pdb =
         let p = VsProj.LoadRelease proj
         let pdbToIndex = if Option.isSome pdb then pdb.Value else p.OutputFilePdb
@@ -59,17 +65,14 @@ Target "SourceLink" (fun _ ->
         SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
     sourceIndex "ProtoParser/Froto.Parser.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
-)
 
-Target "NuGet" (fun _ ->
-    let bin = "bin"
-    Directory.CreateDirectory bin |> ignore
-
+Target "NuGet" <| fun _ ->
+    CreateDir "bin"
     NuGet (fun p -> 
     { p with
         Version = buildVersion
         WorkingDir = "ProtoParser/bin/Release"
-        OutputPath = bin
+        OutputPath = "bin"
         DependenciesByFramework =
         [{ 
             FrameworkVersion = "net45"
@@ -84,7 +87,7 @@ Target "NuGet" (fun _ ->
     { p with
         Version = buildVersion
         WorkingDir = "Roslyn/bin/Release"
-        OutputPath = bin
+        OutputPath = "bin"
         DependenciesByFramework =
         [{ 
             FrameworkVersion = "net45"
@@ -95,13 +98,15 @@ Target "NuGet" (fun _ ->
                 ] 
         }]
     }) "Roslyn/Froto.Roslyn.nuspec"
-)
 
-"Clean"
-    =?> ("BuildVersion", isAppVeyorBuild)
-    ==> "AssemblyInfo"
-    ==> "Build"
-    =?> ("SourceLink", isAppVeyorBuild || hasBuildParam "sl")
-    ==> "NuGet"
+// chain targets together only on AppVeyor
+let (==>) a b = a =?> (b, isAppVeyorBuild)
+
+"BuildVersion"
+==> "AssemblyInfo"
+==> "Build"
+==> "UnitTest"
+==> "SourceLink"
+==> "NuGet"
 
 RunTargetOrDefault "NuGet"

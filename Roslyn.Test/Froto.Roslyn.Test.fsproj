@@ -8,7 +8,7 @@
     <ProjectGuid>bba2cd98-1f06-4aad-bdfa-997bc77e73d9</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Roslyn.Test</RootNamespace>
-    <AssemblyName>Roslyn.Test</AssemblyName>
+    <AssemblyName>Froto.Roslyn.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <Name>Froto.Roslyn.Test</Name>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
