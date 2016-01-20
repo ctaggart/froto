@@ -23,6 +23,8 @@ let versionInfo = sprintf """{"buildVersion":"%s","buildDate":"%s","gitCommit":"
 
 let isAppVeyorBuild = environVar "APPVEYOR" <> null
 
+MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Minimal }
+
 Target "Clean" (fun _ -> 
     !! "**/bin/"
     ++ "**/obj/" 

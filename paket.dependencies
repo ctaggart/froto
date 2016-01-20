@@ -1,0 +1,15 @@
+source https://api.nuget.org/v3/index.json
+framework: >= net45
+
+nuget FParsec
+nuget Microsoft.CodeAnalysis.CSharp.Workspaces
+nuget protobuf-net
+
+nuget FsUnit.xUnit
+nuget xunit
+nuget xunit.runner.console
+nuget xunit.runner.visualstudio version_in_path: true
+
+nuget FAKE
+nuget SourceLink.Fake
+nuget NuGet.CommandLine
