@@ -1,5 +1,8 @@
 build_script:
   - ps: |
+      .\paket.bootstrapper.exe
+      .\paket.exe restore
+      if ($lastexitcode -ne 0){ exit $lastexitcode }
       .\build.ps1
       if ($lastexitcode -ne 0){ exit $lastexitcode }
 test: off
