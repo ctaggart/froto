@@ -32,11 +32,6 @@ Target "Clean" (fun _ ->
     |> CleanDirs 
 )
 
-Target "BuildVersion" (fun _ ->
-    let args = sprintf "UpdateBuild -Version \"%s\"" buildVersion
-    Shell.Exec("appveyor", args) |> ignore
-)
-
 Target "AssemblyInfo" (fun _ ->
     let iv = Text.StringBuilder() // json
     iv.Appendf "{\\\"buildVersion\\\":\\\"%s\\\"" buildVersion
