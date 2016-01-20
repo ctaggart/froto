@@ -33,7 +33,7 @@
   <ItemGroup>
     <Compile Include="ProtoAst.fs" />
     <Compile Include="ProtoParser.fs" />
-    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="AssemblyInfo.fs" Condition="Exists('AssemblyInfo.fs')" />
     <None Include="Froto.Parser.nuspec" />
     <None Include="paket.references" />
   </ItemGroup>

@@ -35,7 +35,7 @@
   <ItemGroup>
     <Compile Include="Roslyn.fs" />
     <Compile Include="ProtoGen.fs" />
-    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="AssemblyInfo.fs" Condition="Exists('AssemblyInfo.fs')" />
     <None Include="Froto.Roslyn.nuspec" />
     <None Include="paket.references" />
   </ItemGroup>
