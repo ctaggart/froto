@@ -17,7 +17,7 @@ let assemblyVersion = if hasRepoVersionTag then AppVeyorEnvironment.RepoTagName 
 let buildDate = DateTime.UtcNow
 let buildVersion = 
     if hasRepoVersionTag then assemblyVersion
-    else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion AppVeyorEnvironment.BuildNumber
+    else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion (Int32.Parse(AppVeyorEnvironment.BuildNumber).ToString("000"))
     else sprintf "%s-a%s" assemblyVersion (buildDate.ToString "yyMMddHHmm")
 
 Target "BuildVersion" (fun _ ->
