@@ -1,5 +1,7 @@
 ### 0.2.0 _ 2016-02 under construction
   * [#8](https://github.com/ctaggart/froto/issues/8) Strict/complete proto2 compliance
+  * [#9](https://github.com/ctaggart/froto/issues/9) updated build & dependencies
+    * switched from Apache 2 to MIT license
 
 ### 0.1.0 _ 2014
   * moved project to GitHub https://github.com/ctaggart/froto

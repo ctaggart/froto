@@ -4,11 +4,12 @@
     <id>Froto.Roslyn</id>
     <version>0.0.0</version>
     <authors>Cameron Taggart</authors>
-    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/ctaggart/froto</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A C# code genererator using Protocol Buffers .proto files as input.</description>
     @dependencies@
+    <tags>froto protobuf protobuf-net binary protocol buffers serialization deserialization</tags>
   </metadata>
   <files>
     <file src="Froto.Roslyn.dll" target="lib\net45" />
