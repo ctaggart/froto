@@ -5,23 +5,24 @@
 open System
 open System.IO
 open Fake
+open Fake.AppVeyor
 open Fake.AssemblyInfoFile
 open SourceLink
 
-let dt = DateTime.UtcNow
-let cfg = getBuildConfig __SOURCE_DIRECTORY__
-let repo = new GitRepo(__SOURCE_DIRECTORY__)
+let release = ReleaseNotesHelper.LoadReleaseNotes "release_notes.md"
+let isAppVeyorBuild = buildServer = BuildServer.AppVeyor
+let isVersionTag tag = Version.TryParse tag |> fst
+let hasRepoVersionTag = isAppVeyorBuild && AppVeyorEnvironment.RepoTag && isVersionTag AppVeyorEnvironment.RepoTagName
+let assemblyVersion = if hasRepoVersionTag then AppVeyorEnvironment.RepoTagName else release.NugetVersion
+let buildDate = DateTime.UtcNow
+let buildVersion = 
+    if hasRepoVersionTag then assemblyVersion
+    else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion AppVeyorEnvironment.BuildNumber
+    else sprintf "%s-a%s" assemblyVersion (buildDate.ToString "yyMMddHHmm")
 
-let versionAssembly = cfg.AppSettings.["versionAssembly"].Value // change when incompatible
-let versionFile = cfg.AppSettings.["versionFile"].Value // matches nuget version
-let prerelease =
-    if hasBuildParam "prerelease" then getBuildParam "prerelease"
-    else sprintf "ci%s" (dt.ToString "yyMMddHHmm") // 20 char limit
-
-let buildVersion = if String.IsNullOrEmpty prerelease then versionFile else sprintf "%s-%s" versionFile prerelease
-let versionInfo = sprintf """{"buildVersion":"%s","buildDate":"%s","gitCommit":"%s"}""" buildVersion dt.IsoDateTime repo.Revision // json
-
-let isAppVeyorBuild = environVar "APPVEYOR" <> null
+Target "BuildVersion" (fun _ ->
+    Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" buildVersion) |> ignore
+)
 
 MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Minimal }
 
@@ -37,18 +38,18 @@ Target "BuildVersion" (fun _ ->
 )
 
 Target "AssemblyInfo" (fun _ ->
-    CreateFSharpAssemblyInfo "ProtoParser/AssemblyInfo.fs"
-        [ 
-        Attribute.Version versionAssembly 
-        Attribute.FileVersion versionFile
-        Attribute.InformationalVersion (versionInfo.Replace("\"","\\\"")) // escape quotes
-        ]
-    CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
-        [ 
-        Attribute.Version versionAssembly 
-        Attribute.FileVersion versionFile
-        Attribute.InformationalVersion (versionInfo.Replace("\"","\\\"")) // escape quotes
-        ]
+    let iv = Text.StringBuilder() // json
+    iv.Appendf "{\\\"buildVersion\\\":\\\"%s\\\"" buildVersion
+    iv.Appendf ",\\\"buildDate\\\":\\\"%s\\\"" (buildDate.ToString "yyyy'-'MM'-'dd'T'HH':'mm':'sszzz")
+    if isAppVeyorBuild then
+        iv.Appendf ",\\\"gitCommit\\\":\\\"%s\\\"" AppVeyor.AppVeyorEnvironment.RepoCommit
+        iv.Appendf ",\\\"gitBranch\\\":\\\"%s\\\"" AppVeyor.AppVeyorEnvironment.RepoBranch
+    iv.Appendf "}"
+    let common = [ 
+        Attribute.Version assemblyVersion 
+        Attribute.InformationalVersion iv.String ]
+    common |> CreateFSharpAssemblyInfo "ProtoParser/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
 )
 
 Target "Build" (fun _ ->
@@ -56,17 +57,13 @@ Target "Build" (fun _ ->
 )
 
 Target "SourceLink" (fun _ ->
-    !! "ProtoParser/Froto.Parser.fsproj" 
-    ++ "Roslyn/Froto.Roslyn.fsproj"
-    |> Seq.iter (fun f ->
-        let proj = VsProj.LoadRelease f
-        logfn "source linking %s" proj.OutputFilePdb
-        let files = proj.Compiles -- "**/AssemblyInfo.fs"
-        repo.VerifyChecksums files
-        proj.VerifyPdbChecksums files
-        proj.CreateSrcSrv "https://raw.github.com/ctaggart/froto/{0}/%var2%" repo.Revision (repo.Paths files)
-        Pdbstr.exec proj.OutputFilePdb proj.OutputFilePdbSrcSrv
-    )
+    let sourceIndex proj pdb =
+        let p = VsProj.LoadRelease proj
+        let pdbToIndex = if Option.isSome pdb then pdb.Value else p.OutputFilePdb
+        let url = "https://raw.githubusercontent.com/ctaggart/froto/{0}/%var2%"
+        SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
+    sourceIndex "ProtoParser/Froto.Parser.fsproj" None
+    sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
 )
 
 Target "NuGet" (fun _ ->
