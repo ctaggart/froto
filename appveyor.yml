@@ -1,5 +1,10 @@
 build_script:
-  - cmd: build.cmd %fakeargs%
+  - ps: |
+      .\paket.bootstrapper.exe
+      .\paket.exe restore
+      if ($lastexitcode -ne 0){ exit $lastexitcode }
+      .\build.ps1
+      if ($lastexitcode -ne 0){ exit $lastexitcode }
 test: off
 artifacts:
   - path: bin\*.nupkg

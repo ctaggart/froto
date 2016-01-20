@@ -7,3 +7,5 @@ TestResults/
 *.bak
 *.nupkg
 /test/*.cs
+/paket.exe
+/.fake

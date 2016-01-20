@@ -1,4 +1,5 @@
 ﻿
+[<Xunit.Trait("Kind", "Unit")>]
 module Froto.Roslyn.RoslynTests
 
 open System

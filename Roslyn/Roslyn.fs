@@ -180,7 +180,7 @@ module Compilation =
         CSharpCompilation.Create(name, options=CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
     let addReference (tp:Type) (cmp:Compilation) =
-        cmp.AddReferences [| MetadataFileReference(tp.Assembly.Location) :> MetadataReference |]
+        cmp.AddReferences [| MetadataReference.CreateFromFile(tp.Assembly.Location) :> MetadataReference |]
 
     let addSyntaxTree (st:SyntaxTree) (cmp:Compilation) =
         cmp.AddSyntaxTrees [ st ]
