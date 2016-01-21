@@ -9,3 +9,4 @@ TestResults/
 /test/*.cs
 /paket.exe
 /.fake
+AssemblyInfo.fs
