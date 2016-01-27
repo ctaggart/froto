@@ -10,6 +10,7 @@ NuGet
  * [Froto.Parser](http://www.nuget.org/packages/Froto.Parser)
 
 Status
+ * 2016-01-26 Complete rewrite of parser to support full proto2 and proto3 syntax
  * 2014-02-28 Dusted off project and moved to GitHub
  * 2012-11-02 blog [Parsing a Protocol Buffers .proto File in F#](http://blog.ctaggart.com/2012/11/parsing-protocol-buffers-proto-file-in-f.html)
 
