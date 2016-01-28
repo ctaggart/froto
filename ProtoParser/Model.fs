@@ -50,17 +50,25 @@ let internal cvtOpts (os:POption list) =
         |> List.map cvtOpt
         |> Some
     else None
- 
+
+let internal cvtType = function
+    | TDouble  -> "double" | TFloat -> "float"
+    | TInt32   -> "int32"  | TInt64 -> "int64" | TUInt32 -> "uint32" | TUInt64 -> "uint64" | TSInt32 -> "sint32" | TSInt64 -> "sint64"
+    | TFixed32 -> "fixed32"| TFixed64 -> "fixed64" | TSFixed32 -> "sfixed32" | TSFixed64 -> "sfixed64"
+    | TBool    -> "bool"
+    | TString  -> "string" | TBytes -> "bytes"
+    | TIdent typeIdent -> typeIdent 
+
 let internal cvtFields (parts:PMessageStatement list) =
     parts
     |> List.choose (
         function
-        | TField (ident, label, _type, num, opts) ->
+        | TField (ident, label, ftype, num, opts) ->
             let rule = match label with
                         | TRequired -> Required
                         | TOptional -> Optional
                         | TRepeated -> Repeated
-            ProtoField(rule, _type.ToString(), ident, int32 num, cvtOpts opts) 
+            ProtoField(rule, cvtType ftype, ident, int32 num, cvtOpts opts) 
             |> Some
         | _ -> None )
 
