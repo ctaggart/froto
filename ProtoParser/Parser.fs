@@ -648,4 +648,23 @@ and internal pProtoStatement =
 do pMessageDefR := pMessageDefImpl
 do pGroupCommonR := pGroupCommonImpl
 
+(* Parsing Helpers *)
+let internal resultOrFail parserResult =
+    match parserResult with
+    | Success (result, _, _) -> result
+    | Failure (errMsg, _, _) -> raise <| System.FormatException(errMsg)
 
+/// Parse proto from a string.  Throws System.FormatException on failure.
+let parseString parser str =
+    runParserOnString (parser .>> eof) State.Default String.Empty str
+    |> resultOrFail
+
+/// Parse proto from a file.  Throws System.FormatException on failure.
+let parseFile parser fileName =
+    runParserOnFile (parser .>> eof) State.Default fileName System.Text.Encoding.UTF8
+    |> resultOrFail
+
+/// Parse proto from a stream.  Throws System.FormatException on failure.
+let parseStream parser streamName stream =
+    runParserOnStream (parser .>> eof) State.Default streamName stream System.Text.Encoding.UTF8
+    |> resultOrFail

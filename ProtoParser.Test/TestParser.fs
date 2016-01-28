@@ -10,19 +10,6 @@ open FParsec
 open Froto.Parser.Proto
 open Froto.Parser.Ast
 
-let internal resultOrFail parserResult =
-    match parserResult with
-    | Success (result, _, _) -> result
-    | Failure (errMsg, _, _) -> raise <| System.FormatException(errMsg)
-
-let internal parseString parser str =
-    runParserOnString (parser .>> eof) State.Default String.Empty str
-    |> resultOrFail
-
-let internal parseFile parser fileName =
-    runParserOnFile (parser .>> eof) State.Default fileName System.Text.Encoding.UTF8
-    |> resultOrFail
-
 module Identifiers =
     [<Fact>]
     let ``Identifier can be parsed`` () =
