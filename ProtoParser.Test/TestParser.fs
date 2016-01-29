@@ -127,6 +127,16 @@ module Literals =
         |> should equal (TStrLit "Test")
 
     [<Fact>]
+    let ``String with quote between squotes can be parsed`` () =
+        parseString pStrLit "'Te\"st'"
+        |> should equal (TStrLit "Te\"st")
+
+    [<Fact>]
+    let ``String with squote between quotes can be parsed`` () =
+        parseString pStrLit "\"Test's\""
+        |> should equal (TStrLit "Test's")
+
+    [<Fact>]
     let ``Escaped characters can be parsed`` () =
         parseString pStrLit ("\"" + @"\a\b\f\n\r\t\v\\\'\" + "\"\"")
         |> should equal (TStrLit "\a\b\f\n\r\t\v\\\'\"")
