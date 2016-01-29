@@ -31,9 +31,10 @@
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ProtoAst.fs" />
-    <Compile Include="ProtoParser.fs" />
     <Compile Include="AssemblyInfo.fs" Condition="Exists('AssemblyInfo.fs')" />
+    <Compile Include="Ast.fs" />
+    <Compile Include="Parser.fs" />
+    <Compile Include="Model.fs" />
     <None Include="Froto.Parser.nuspec" />
     <None Include="paket.references" />
   </ItemGroup>
