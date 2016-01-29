@@ -34,13 +34,6 @@ type ProtoEnum (name:string, items:ProtoEnumItem list) =
     member val Name = name with get
     member val Items = items with get
 
-type ProtoMessagePart =
-    | Field
-    | Enum
-    | Message
-    | Extend
-    | Option
-
 let internal cvtOpt (ident,v) =
     ProtoOption(None, Some(ident), v.ToString())
 
