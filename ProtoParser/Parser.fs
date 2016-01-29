@@ -158,16 +158,16 @@ let rec pFieldNum : Parser<uint32,State> =
         ||| NumberLiteralOptions.DefaultUnsignedInteger
 
     numberLiteral numFormat "Field number (integer between 1 .. 2^29)"
-    |>> fun nl ->
+    >>= ( fun nl -> parse {
         let n =
             if nl.IsDecimal && nl.String.[0] = '0'
             then uint32 ("0o" + nl.String)
             else uint32 nl.String
 
         if n > 0u && n < (1u <<< 29)
-        then n
-        else raise <| System.FormatException("Field number must be between 1 .. 2^29")
-        // TODO: return the above as an error message
+        then return n
+        else return! fail "Field number must be between 1 .. 2^29"
+        })
 
 let pFieldNum_ws        = pFieldNum .>> ws
 let pEq_FieldNum_ws     = str_ws "=" >>. pFieldNum_ws

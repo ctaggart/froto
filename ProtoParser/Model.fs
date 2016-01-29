@@ -45,7 +45,8 @@ let internal cvtOpt (ident,v) =
     ProtoOption(None, Some(ident), v.ToString())
 
 let internal cvtOpts (os:POption list) =
-    if List.length os > 0 then
+    if not (List.isEmpty os)
+    then
         os
         |> List.map cvtOpt
         |> Some
@@ -133,10 +134,6 @@ type ProtoRpc (name, requestType, responseType) =
     member val RequestType = requestType with get
     member val ResponseType = responseType with get
 
-type ProtoServicePart =
-    | Rpc
-    | Option
-
 let internal cvtRpc =
     List.choose (
         function
@@ -150,14 +147,6 @@ type ProtoService (name:string, parts:PServiceStatement list) =
     member val Name = name with get
     member val Parts = parts with get
     member x.Rpcs = cvtRpc x.Parts
-
-type ProtoSection =
-    | Import
-    | Package
-    | Message
-    | Extend
-    | Option
-    | Service
 
 let internal cvtImports =
     List.choose (

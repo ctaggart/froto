@@ -1,5 +1,9 @@
 ﻿module Froto.Parser.Ast
 
+// Note: in the following,
+//  A Production is generally prefixed with "P"
+//  A Terminal is generally prefixed with "T"
+
 type PProto = PStatement list
 
 and TIdent = string
@@ -90,13 +94,13 @@ and PMessageStatement =
 
 
 and PLabel =
-    | TRequired
+    | TRequired // proto2
     | TOptional
     | TRepeated
     with
         override x.ToString() =
             match x with
-            | TRequired -> "TRquired"
+            | TRequired -> "TRequired"
             | TOptional -> "TOptional"
             | TRepeated -> "TRepeated"
 
@@ -169,4 +173,4 @@ and PServiceStatement =
             match x with
             | TServiceOption (o)                -> sprintf "TServiceOption %A" o
             | TRpc (id,tReq,bReqStream,tResp,bRespStream,opts)
-                                                -> sprintf "TRpc (%s,%s,%b,%s,%b,%A" id tReq bReqStream tResp bRespStream opts
+                                                -> sprintf "TRpc (%s,%s,%b,%s,%b,%A)" id tReq bReqStream tResp bRespStream opts
