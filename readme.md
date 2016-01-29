@@ -1,20 +1,24 @@
 
 # F# Protocol Buffers
 
-What are Protocol Buffers
+## What are Protocol Buffers
  * https://developers.google.com/protocol-buffers/
  * http://code.google.com/p/protobuf/
  * https://code.google.com/p/protobuf-net/
 
-NuGet
+## NuGet
  * [Froto.Parser](http://www.nuget.org/packages/Froto.Parser)
 
-Status
+## Build Environment Setup for Visual Studio
+  * Install [Paket for Visual Studio](https://github.com/fsprojects/Paket.VisualStudio) from the "Tools/Extensions and Updates..." menu
+  * Solution path cannot contain pound sign (#), such as ".../F#/froto/" [due to a .net limitation](http://stackoverflow.com/questions/9319656/how-to-encode-a-path-that-contains-a-hash)
+
+## Status
  * 2016-01-26 Complete rewrite of parser to support full proto2 and proto3 syntax
  * 2014-02-28 Dusted off project and moved to GitHub
  * 2012-11-02 blog [Parsing a Protocol Buffers .proto File in F#](http://blog.ctaggart.com/2012/11/parsing-protocol-buffers-proto-file-in-f.html)
 
-Todo for parser feature-parity with Google protoc
+## Todo for parser feature-parity with Google protoc
   - [ ] Load and parse files from import statements.
         See https://developers.google.com/protocol-buffers/docs/proto3#importing-definitions
   - [ ] Verify message identifiers used as field types are actually defined
@@ -34,6 +38,3 @@ Todo for parser feature-parity with Google protoc
         FileDescriptorProto and FileDescriptorSet.
   
 
- Visual Studio Build Environment
-  * Install [Paket for Visual Studio](https://github.com/fsprojects/Paket.VisualStudio) from the "Tools/Extensions and Updates..." menu
-  * Solution path cannot contain pound sign (#), such as ".../F#/froto/" [due to a .net limitation](http://stackoverflow.com/questions/9319656/how-to-encode-a-path-that-contains-a-hash)
