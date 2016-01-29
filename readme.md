@@ -2,9 +2,9 @@
 # F# Protocol Buffers
 
 ## What are Protocol Buffers
- * https://developers.google.com/protocol-buffers/
- * http://code.google.com/p/protobuf/
- * https://code.google.com/p/protobuf-net/
+ * https://developers.google.com/protocol-buffers/docs/overview
+ * https://github.com/google/protobuf
+ * https://github.com/mgravell/protobuf-net
 
 ## NuGet
  * [Froto.Parser](http://www.nuget.org/packages/Froto.Parser)
@@ -17,6 +17,23 @@
  * 2016-01-26 Complete rewrite of parser to support full proto2 and proto3 syntax
  * 2014-02-28 Dusted off project and moved to GitHub
  * 2012-11-02 blog [Parsing a Protocol Buffers .proto File in F#](http://blog.ctaggart.com/2012/11/parsing-protocol-buffers-proto-file-in-f.html)
+
+## Updating from Froto 0.1.0
+
+ * The parser now generates an AST based on Discriminated Unions, rather than
+   objects.  `Froto.Parser.Ast` (and the underlying parser) now support the full proto2
+   and proto3 languages.
+
+ * The old primary class, `Froto.Parser.ProtoAst.ProtoFile` has been renamed to
+   `Froto.Parser.Model.ProtoFile` and given static factory methods to simplify
+   access from C#, VB.net, etc.
+
+   _Note that this model curently only supports a subset of the proto2 language.
+   This will be expanded in later releases to fully support proto2 & proto3._
+
+   * `ProtoFile.ParseString(s:string)`
+   * `ProtoFile.ParseStream(streamName:string, stream:System.IO.Stream)`
+   * `ProtoFile.ParseFile(fileName:string)`
 
 ## Todo for parser feature-parity with Google protoc
   - [ ] Load and parse files from import statements.
@@ -36,5 +53,3 @@
         (see https://github.com/google/protobuf/blob/master/src/google/protobuf/descriptor.proto#L84)
   - [ ] Record any other information in the AST needed to generate a complete
         FileDescriptorProto and FileDescriptorSet.
-  
-
