@@ -2,7 +2,8 @@ FRAMEWORK: >= NET45
 NUGET
   remote: http://api.nuget.org/v3/index.json
   specs:
-    FAKE (4.15.1)
+    Argu (2.1.0)
+    FAKE (4.17.1)
     FParsec (1.0.2)
     FSharp.Core (4.0.0.1)
     FsUnit.xUnit (1.4.1)
@@ -22,7 +23,7 @@ NUGET
       Microsoft.CodeAnalysis.Common (1.1.1)
       Microsoft.Composition (>= 1.0.27)
     Microsoft.Composition (1.0.30)
-    Nuget.CommandLine (3.3.0)
+    NuGet.CommandLine (3.3.0)
     protobuf-net (2.0.0.668)
     SourceLink.Fake (1.1.0)
     System.Collections (4.0.10)

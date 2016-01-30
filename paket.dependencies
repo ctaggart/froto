@@ -1,7 +1,9 @@
 source https://api.nuget.org/v3/index.json
 framework: >= net45
 
+nuget Argu
 nuget FParsec
+nuget FSharp.Core
 nuget Microsoft.CodeAnalysis.CSharp.Workspaces
 nuget protobuf-net
 

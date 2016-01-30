@@ -41,6 +41,7 @@ Target "AssemblyInfo" <| fun _ ->
         Attribute.InformationalVersion iv.String ]
     common |> CreateFSharpAssemblyInfo "ProtoParser/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "Exe/AssemblyInfo.fs"
 
 Target "Build" <| fun _ ->
     !! "Froto.sln" |> MSBuildRelease "" "Rebuild" |> ignore
@@ -65,6 +66,7 @@ Target "SourceLink" <| fun _ ->
         SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
     sourceIndex "ProtoParser/Froto.Parser.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
+    sourceIndex "Exe/Exe.fsproj" None
 
 Target "NuGet" <| fun _ ->
     CreateDir "bin"
@@ -98,6 +100,13 @@ Target "NuGet" <| fun _ ->
                 ] 
         }]
     }) "Roslyn/Froto.Roslyn.nuspec"
+
+    NuGet (fun p -> 
+    { p with
+        Version = buildVersion
+        WorkingDir = "Exe/bin/Release"
+        OutputPath = "bin"
+    }) "Exe/Froto.nuspec"
 
 // chain targets together only on AppVeyor
 let (==>) a b = a =?> (b, isAppVeyorBuild)

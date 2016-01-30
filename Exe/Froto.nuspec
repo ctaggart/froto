@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>Froto</id>
+    <version>0.0.0</version>
+    <authors>Cameron Taggart</authors>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/ctaggart/froto</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A froto.exe code generator for Protocol Buffers.</description>
+    <tags>froto protobuf binary protocol buffers serialization deserialization</tags>
+  </metadata>
+  <files>
+    <file src="froto.exe" target="tools" />
+    <file src="froto.exe.config" target="tools" />
+    <file src="*.dll" target="tools" />
+    <file src="*.pdb" target="tools" />
+  </files>
+</package>
