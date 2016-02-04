@@ -44,6 +44,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{992FDC44-0
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Exe", "Exe\Exe.fsproj", "{F5D8D709-919D-4539-8908-91C540C970B3}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Core.Test", "Froto.Core.Test\Froto.Core.Test.fsproj", "{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +76,10 @@ Global
 		{F5D8D709-919D-4539-8908-91C540C970B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5D8D709-919D-4539-8908-91C540C970B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5D8D709-919D-4539-8908-91C540C970B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
