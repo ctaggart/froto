@@ -130,6 +130,7 @@
     <Compile Include="TestWireFormat.fs" />
     <Content Include="app.config" />
     <None Include="paket.references" />
+    <Compile Include="TestProto.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

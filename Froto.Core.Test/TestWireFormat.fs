@@ -7,6 +7,7 @@ open System
 
 open Froto.Core
 open Froto.Core.WireFormat
+open Froto.Core.Encoding
 
 type System.ArraySegment<'a>
     with member x.ToArray() =
@@ -202,37 +203,68 @@ module Read =
         
         [| 0x08uy |]
         |> ZCR
-        |> readTag
-        |> should equal (1UL, WireType.Varint)
+        |> decodeTag
+        |> should equal (1, WireType.Varint)
 
         [| 0x11uy |]
         |> ZCR
-        |> readTag
-        |> should equal (2UL, WireType.Fixed64)
+        |> decodeTag
+        |> should equal (2, WireType.Fixed64)
+
+    [<Fact>]
+    let ``Tag validated to range [1,2^28)`` () =
+        
+        fun () ->
+            [| 0x08uy |]
+            |> ZCR
+            |> decodeTag
+            |> ignore
+        |> should not' (throw typeof<ProtobufWireFormatException>)
+
+        fun () ->
+            [| 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0x08uy |]
+            |> ZCR
+            |> decodeTag
+            |> ignore
+        |> should not' (throw typeof<ProtobufWireFormatException>)
+
+        fun () ->
+            [| 0x00uy |]
+            |> ZCR
+            |> decodeTag
+            |> ignore
+        |> should throw typeof<ProtobufWireFormatException>
+
+        fun () ->
+            [| 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x10uy |]
+            |> ZCR
+            |> decodeTag
+            |> ignore
+        |> should throw typeof<ProtobufWireFormatException>
 
     [<Fact>]
     let ``Read varint field`` () =
         [| 0x08uy; 1uy |]
         |> ZCR
-        |> readField
-        |> should equal (1UL, Varint 1UL)
+        |> decodeField
+        |> should equal (Varint (1, 1UL))
 
     [<Fact>]
     let ``Read fixed64 field`` () =
         [| 0x09uy; 0x00uy;0x00uy;0x00uy;0x00uy; 0x00uy;0x01uy;0x02uy;0x03uy |]
         |> ZCR
-        |> readField
-        |> should equal (1UL, Fixed64 0x0302010000000000UL)
+        |> decodeField
+        |> should equal (Fixed64 (1, 0x0302010000000000UL))
 
     [<Fact>]
     let ``Read length delimited field`` () =
-        let num, field =
+        let field =
             [| 0x1Auy; 0x03uy; 0x00uy;0x00uy;0x01uy; 0x00uy;0x00uy;0x01uy;0x02uy;0x03uy |]
             |> ZCR
-            |> readField
+            |> decodeField
 
         match field with
-        | LengthDelimited seg ->
+        | LengthDelimited (num, seg) ->
             seg.ToArray()
             |> should equal [| 0uy; 0uy; 1uy |]
         | _ -> failwithf "Expected: LengthDelimited; Found: %A" field
@@ -241,8 +273,8 @@ module Read =
     let ``Read fixed32 field`` () =
         [| byte ((9<<<3) ||| 5); 0x00uy;0x01uy;0x02uy;0x03uy |]
         |> ZCR
-        |> readField
-        |> should equal (9UL, Fixed32 0x03020100u)
+        |> decodeField
+        |> should equal (Fixed32 (9, 0x03020100u))
 
 module Write =
 
@@ -253,21 +285,43 @@ module Write =
     [<Fact>]
     let ``Write tag`` () =
         ZCW(256)
-        |> writeTag 2u WireType.Fixed64
+        |> encodeTag 2 WireType.Fixed64
         |> toArray
         |> should equal [| 0x11uy |]
 
     [<Fact>]
+    let ``Field number validated to range [1, 2^28)`` () =
+        let buf = ZCW(256)
+
+        fun () -> buf |> encodeTag 1 WireType.Fixed64 |> ignore
+        |> should not' (throw typeof<ProtobufWireFormatException>)
+
+        fun () -> buf |> encodeTag RawField.MaxTag WireType.Fixed64 |> ignore
+        |> should not' (throw typeof<ProtobufWireFormatException>)
+
+        fun () -> buf |> encodeTag 0 WireType.Fixed64 |> ignore
+        |> should throw typeof<ProtobufWireFormatException>
+
+        fun () -> buf |> encodeTag (RawField.MaxTag+1) WireType.Fixed64 |> ignore
+        |> should throw typeof<ProtobufWireFormatException>
+
+        fun () -> buf |> encodeTag -1 WireType.Fixed64 |> ignore
+        |> should throw typeof<ProtobufWireFormatException>
+
+        fun () -> buf |> encodeTag (Int32.MinValue) WireType.Fixed64 |> ignore
+        |> should throw typeof<ProtobufWireFormatException>
+
+    [<Fact>]
     let ``Write varint field`` () =
         ZCW(256)
-        |> writeFieldVarint 2u 42UL 
+        |> encodeFieldVarint 2 42UL 
         |> toArray
         |> should equal [| 0x10uy; 42uy |]
 
     [<Fact>]
     let ``Write fixed64 field`` () =
         ZCW(256)
-        |> writeFieldFixed64 2u 42UL 
+        |> encodeFieldFixed64 2 42UL 
         |> toArray
         |> should equal [| 0x11uy; 42uy; 0uy; 0uy; 0uy; 0uy; 0uy; 0uy; 0uy|]
 
@@ -277,7 +331,7 @@ module Write =
         let len = src.Length
 
         ZCW(256)
-        |> writeFieldLengthDelimited 2u
+        |> encodeFieldLengthDelimited 2
             (uint32 len)
             (fun dest-> Array.Copy(src, 0L, dest.Array, int64 dest.Offset, int64 len) )
         |> toArray
@@ -287,7 +341,7 @@ module Write =
         let src = [| for i in 1..64 -> byte i|]
 
         ZCW(256)
-        |> writeFieldBytes 2u (ArraySegment(src))
+        |> encodeFieldBytes 2 (ArraySegment(src))
         |> toArray
         |> should equal (Array.append [| 0x12uy; 64uy |] src)
 
@@ -295,13 +349,13 @@ module Write =
         let src = "123"
 
         ZCW(256)
-        |> writeFieldString 2u src
+        |> encodeFieldString 2 src
         |> toArray
         |> should equal [| 0x12uy; 3uy; 0x31uy; 0x32uy; 0x33uy |]
 
     [<Fact>]
     let ``Write fixed32 field`` () =
         ZCW(256)
-        |> writeFieldFixed32 2u 42u 
+        |> encodeFieldFixed32 2 42u 
         |> toArray
         |> should equal [| 0x15uy; 42uy; 0uy; 0uy; 0uy|]

@@ -37,7 +37,9 @@
   <ItemGroup>
     <Compile Include="Exceptions.fs" />
     <Compile Include="ZeroCopyBuffer.fs" />
+    <Compile Include="EncodingTypes.fs" />
     <Compile Include="WireFormat.fs" />
+    <Compile Include="Serializer.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets" />
 </Project>

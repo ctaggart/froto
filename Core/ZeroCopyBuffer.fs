@@ -18,12 +18,16 @@ open System
 /// additional error checking.
 
 type ZeroCopyBufferBase (seg:ArraySegment<byte>) =
+
     member val internal Array = seg.Array with get
     member val internal Position = uint32 seg.Offset with get,set
     member val internal Limit = uint32 seg.Offset + uint32 seg.Count with get
 
     new ( backing : byte array ) =
         ZeroCopyBufferBase(ArraySegment(backing))
+
+    member x.IsEof
+        with get() = x.Position = x.Limit
 
 /// Readable ZeroCopyBuffer (see @ZeroCopyBufferBase)
 type ZeroCopyReadBuffer (seg:ArraySegment<byte>) =
@@ -99,3 +103,20 @@ type ZeroCopyWriteBuffer (seg:ArraySegment<byte>) =
         else
             raise <| ProtobufWireFormatException("Write past end of protobuf buffer")
 
+/// Null ZeroCopyWriteBuffer.  Used to calculate serialized length, without
+/// actually writing anything.
+//
+// Note: This class simplifies the serialization logic, because a single code
+// path can be used to both serialize AND calculate size requiements.  However,
+// this probably does cost a bit of performance.
+
+type NullWriteBuffer() =
+    inherit ZeroCopyWriteBuffer(0)
+
+    member x.WriteByte b =
+        x.Position <- x.Position + 1u
+
+    member x.WriteByteSegment (len:uint32) (_:ArraySegment<byte>->unit) =
+        x.Position <- x.Position + len
+
+    member x.Length = x.Position
