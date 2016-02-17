@@ -20,8 +20,8 @@ type Test () =
     let mutable m_name = ""
     let mutable m_option = false
     let mutable m_test = ETest.Nada
-    let mutable m_packedFixed32 : uint32 [] = Array.empty
-    let mutable m_repeatedInt32 : int32 list = List.empty
+    let mutable m_packedFixed32 = Array.empty
+    let mutable m_repeatedInt32 = List.empty
 
     override x.DecoderRing =
         [
