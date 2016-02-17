@@ -171,6 +171,20 @@ module Serializer =
         WireFormat.encodeTag fieldNum WireType.LengthDelimited
         >> serializeMsg
 
+    (* Repeated Field Helpers *)
+    let hydrateRepeated<'a> (hydrater:'a ref -> RawField -> unit) propRef rawField =
+        let element = Unchecked.defaultof<'a>
+        hydrater (ref element) rawField
+        propRef := element :: !propRef
+
+    let dehydrateRepeated<'a> (dehydrater:FieldNum -> 'a -> ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) (fldNum:int32) (vs:'a list) : (ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) =
+        let dh = flip (dehydrater fldNum)
+        let wrapperFn (zcb:ZeroCopyWriteBuffer) =
+            vs
+            |> List.iter (dh zcb >> ignore)
+            zcb
+        wrapperFn
+
 
 [<AbstractClass>]
 type MessageBase () =

@@ -21,6 +21,7 @@ type Test () =
     let mutable m_option = false
     let mutable m_test = ETest.Nada
     let mutable m_packedFixed32 : uint32 [] = Array.empty
+    let mutable m_repeatedInt32 : int32 list = List.empty
 
     override x.DecoderRing =
         [
@@ -29,6 +30,7 @@ type Test () =
             3, ref m_option         |> Serializer.hydrateBool
             4, ref m_test           |> Serializer.hydrateEnum
             5, ref m_packedFixed32  |> Serializer.hydratePackedFixed32
+            6, ref m_repeatedInt32  |> Serializer.hydrateRepeated Serializer.hydrateInt32
         ]
         |> Map.ofList
 
@@ -39,6 +41,7 @@ type Test () =
             m_option        |> Serializer.dehydrateBool 3
             m_test          |> Serializer.dehydrateVarint 4
             m_packedFixed32 |> Serializer.dehydratePackedFixed32 5
+            m_repeatedInt32 |> Serializer.dehydrateRepeated Serializer.dehydrateVarint 6
         ]
 
     static member Deserialize buf =
@@ -57,6 +60,7 @@ type Test () =
     member x.bOption = m_option
     member x.Test = m_test
     member x.PackedFixed32 = m_packedFixed32
+    member x.RepeatedInt32 = m_repeatedInt32
 
 
 type OuterTest() =
