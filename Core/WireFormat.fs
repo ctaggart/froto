@@ -94,7 +94,7 @@ let encodeFixed64 (u:uint64) dest =
     |> encodeFixed32 (uint32 u)
     |> encodeFixed32 (uint32 (u >>> 32))
     
-let encodeSingle (f:float32) =
+let encodeSingle (f:single) =
     let bytes = BitConverter.GetBytes(f)
     if not BitConverter.IsLittleEndian then Array.Reverse bytes
     let u = BitConverter.ToUInt32(bytes,0)
@@ -169,7 +169,7 @@ let encodeFieldFixed64 (fieldNum:int32) (u:uint64) =
     encodeTag fieldNum WireType.Fixed64
     >> encodeFixed64 u
 
-let encodeFieldSingle (fieldNum:int32) (f:float32) =
+let encodeFieldSingle (fieldNum:int32) (f:single) =
     encodeTag fieldNum WireType.Fixed32
     >> encodeSingle f
 

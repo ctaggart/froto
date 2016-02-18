@@ -24,7 +24,9 @@ module Utility =
 
 module Serializer =
 
-    let internal toBool (u:uint64) = not (u=0UL)
+    let inline internal flip f a b = f b a
+    let inline internal toBool (u:uint64) = not (u=0UL)
+    let inline internal fromBool b = if b then 1UL else 0UL
 
     let internal raiseMismatch expected actual =
         let extractNumAndType = function
@@ -61,7 +63,7 @@ module Serializer =
 
     let hydrateFixed32  = helper_fx32 int32
     let hydrateSFixed32 = helper_fx32 (int32 >> Utility.zagZig32)
-    let hydrateFloat  =
+    let hydrateSingle  =
         let aux (u:uint32) =
             // TODO: eliminate the Array allocation,
             //       perhaps using CIL (MSIL) to load float from a register
@@ -113,12 +115,11 @@ module Serializer =
     let helper_packed f fld = function
         | RawField.LengthDelimited (_,v) ->
             fld := 
-                seq {
+                [
                     let s = ZeroCopyReadBuffer(v)
                     while not s.IsEof do
                         yield (f s)
-                    }
-                |> Array.ofSeq
+                ]
         | raw ->
             raiseMismatch "LengthDelimited" raw
 
@@ -137,33 +138,105 @@ module Serializer =
     let hydratePackedSingle   = helper_packed decodeSingle
     let hydratePackedDouble   = helper_packed decodeDouble
 
-    (* Dehydrate Varint *)
-    let inline dehydrateVarint fieldNum i =
-        WireFormat.encodeFieldVarint fieldNum (uint64 i)
+    /// Generic Dehydrate for all varint types, excepted for signed & bool:
+    ///   int32, int64, uint32, uint64, enum
+    let inline dehydrateVarint fldNum i = WireFormat.encodeFieldVarint fldNum (uint64 i)
 
-    (* Dehydrate Bool *)
-    let dehydrateBool fieldNum b =
-        let bul = if b then 1UL else 0UL
-        dehydrateVarint fieldNum bul
+    let dehydrateSInt32 fldNum i = WireFormat.encodeFieldVarint fldNum (Utility.zigZag32 i |> uint64)
+    let dehydrateSInt64 fldNum i = WireFormat.encodeFieldVarint fldNum (Utility.zigZag64 i |> uint64)
 
-    (* Dehydrate String *)
-    let dehydrateString fieldNum s =
-        WireFormat.encodeFieldString fieldNum s
+    let dehydrateBool fldNum b = dehydrateVarint fldNum (fromBool b)
 
-    (* Dehydrate Fixed *)
-    let inline flip f a b = f b a
+    let inline dehydrateFixed32  fldNum i = WireFormat.encodeFieldFixed32 fldNum (uint32 i)
+    let inline dehydrateFixed64  fldNum i = WireFormat.encodeFieldFixed64 fldNum (uint64 i)
+    let inline dehydrateSFixed32 fldNum i = WireFormat.encodeFieldFixed32 fldNum (Utility.zigZag32 i |> uint32)
+    let inline dehydrateSFixed64 fldNum i = WireFormat.encodeFieldFixed64 fldNum (Utility.zigZag64 i |> uint64)
 
-    let dehydratePackedFixed32 fieldNum xs =
-        let xslen = (xs |> Array.length) * 4 |> uint64
+    let dehydrateSingle fldNum i = WireFormat.encodeFieldSingle fldNum i
+    let dehydrateDouble fldNum i = WireFormat.encodeFieldDouble fldNum i
+
+    let dehydrateString fldNum s = WireFormat.encodeFieldString fldNum s
+    let dehydrateBytes  fldNum buf = WireFormat.encodeFieldBytes fldNum buf
+
+    (* Dehydrate Repeated Packed Numeric Values *)
+
+    let dehydratePackedHelper lenFn encFn fieldNum xs =
+        let xslen = xs
+                    |> lenFn
+                    |> uint64
         WireFormat.encodeTag fieldNum WireType.LengthDelimited
         >> WireFormat.encodeVarint xslen
-        >> flip (Array.fold (fun buf x -> buf |> WireFormat.encodeFixed32 x )) xs
+        >> flip (List.fold (fun buf x -> buf |> encFn x )) xs
 
-    let dehydratePackedFixed64 fieldNum xs =
-        let xslen = (xs |> Array.length) * 8 |> uint64
-        WireFormat.encodeTag fieldNum WireType.LengthDelimited
-        >> WireFormat.encodeVarint xslen
-        >> flip (Array.fold (fun buf x -> buf |> WireFormat.encodeFixed64 x )) xs
+    let inline varIntListPackedLen (xs:'a list) =
+        List.sumBy (uint64 >> Utility.varIntLen) xs
+
+    /// Generic Dehydrate for all packed varint types, excepted for bool & signed:
+    ///   int32, int64, uint32, uint64, enum
+    let inline dehydratePackedVarint fieldNum xs =
+        dehydratePackedHelper
+            varIntListPackedLen
+            (uint64 >> WireFormat.encodeVarint)
+            fieldNum xs
+
+    let dehydratePackedBool fieldNum xs =
+        let packedLen = List.length
+        dehydratePackedHelper
+            List.length (* encodes to 1 byte per bool *)
+            (fromBool >> WireFormat.encodeVarint)
+            fieldNum xs
+
+    let dehydratePackedSInt32 fieldNum xs =
+        dehydratePackedHelper
+            varIntListPackedLen
+            (Utility.zigZag32 >> uint64 >> WireFormat.encodeVarint)
+            fieldNum xs
+
+    let dehydratePackedSInt64 fieldNum xs =
+        dehydratePackedHelper
+            varIntListPackedLen
+            (Utility.zigZag64 >> uint64 >> WireFormat.encodeVarint)
+            fieldNum xs
+
+    let inline fixedListPackedLen size = (List.length >> ((*) size))
+    let inline fixed32ListPackedLen xs = fixedListPackedLen 4 xs
+    let inline fixed64ListPackedLen xs = fixedListPackedLen 8 xs
+
+    let inline dehydratePackedFixed32 fieldNum xs =
+        dehydratePackedHelper
+            fixed32ListPackedLen
+            (uint32 >> WireFormat.encodeFixed32)
+            fieldNum xs
+
+    let inline dehydratePackedFixed64 fieldNum xs =
+        dehydratePackedHelper
+            fixed64ListPackedLen
+            (uint64 >> WireFormat.encodeFixed64)
+            fieldNum xs
+
+    let dehydratePackedSingle fieldNum xs =
+        dehydratePackedHelper
+            fixed32ListPackedLen
+            WireFormat.encodeSingle
+            fieldNum xs
+
+    let dehydratePackedDouble fieldNum xs =
+        dehydratePackedHelper
+            fixed64ListPackedLen
+            WireFormat.encodeDouble
+            fieldNum xs
+
+    let dehydratePackedSFixed32 fieldNum xs =
+        dehydratePackedHelper
+            fixed32ListPackedLen
+            (Utility.zigZag32 >> uint32 >> WireFormat.encodeFixed32)
+            fieldNum xs
+
+    let dehydratePackedSFixed64 fieldNum xs =
+        dehydratePackedHelper
+            fixed64ListPackedLen
+            (Utility.zigZag64 >> uint64 >> WireFormat.encodeFixed64)
+            fieldNum xs
 
     (* Dehydrate Message *)
     let inline dehydrateMessage fieldNum (o:^msg when ^msg : (member SerializeLengthDelimited : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer)) =

@@ -4,14 +4,6 @@ open Froto.Core
 open Froto.Core.WireFormat
 open Froto.Core.Encoding
 
-
-
-type ETest =
-    | Nada = 0
-    | One = 1
-    | Two = 2
-
-
 type Test () =
 
     inherit MessageBase()
@@ -20,7 +12,7 @@ type Test () =
     let mutable m_name = ""
     let mutable m_option = false
     let mutable m_test = ETest.Nada
-    let mutable m_packedFixed32 = Array.empty
+    let mutable m_packedFixed32 = List.empty
     let mutable m_repeatedInt32 = List.empty
 
     override x.DecoderRing =
@@ -54,7 +46,6 @@ type Test () =
         self.DeserializeLengthDelimited(buf) |> ignore
         self
         
-
     member x.ID = m_id
     member x.Name = m_name
     member x.bOption = m_option
@@ -62,6 +53,10 @@ type Test () =
     member x.PackedFixed32 = m_packedFixed32
     member x.RepeatedInt32 = m_repeatedInt32
 
+and ETest =
+    | Nada = 0
+    | One = 1
+    | Two = 2
 
 type OuterTest() =
     inherit MessageBase()
