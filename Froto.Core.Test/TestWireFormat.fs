@@ -1,4 +1,4 @@
-﻿module TestWireFormat
+﻿namespace TestWireFormat
 
 open Xunit
 open FsUnit.Xunit
@@ -9,11 +9,13 @@ open Froto.Core
 open Froto.Core.WireFormat
 open Froto.Core.Encoding
 
-type System.ArraySegment<'a>
-    with member x.ToArray() =
-                    x.Array.[ x.Offset .. x.Offset + x.Count - 1]
+module Helpers =
+    type System.ArraySegment<'a>
+        with member x.ToArray() =
+                        x.Array.[ x.Offset .. x.Offset + x.Count - 1]
 
 module Decode =
+    open Helpers
 
     type ZCR = ZeroCopyReadBuffer
 
@@ -119,6 +121,7 @@ module Decode =
         |> should equal [| 00uy; 01uy; 02uy |]
 
 module Encode =
+    open Helpers
 
     type ZCW = ZeroCopyWriteBuffer
 
@@ -194,7 +197,8 @@ module Encode =
         |> toArray
         |> should equal [| 0x05uy; 0x00uy; 0x01uy; 0x02uy; 0x03uy; 0x04uy |]
 
-module Read =
+module DecodeField =
+    open Helpers
 
     type ZCR = ZeroCopyReadBuffer
 
@@ -276,7 +280,8 @@ module Read =
         |> decodeField
         |> should equal (Fixed32 (9, 0x03020100u))
 
-module Write =
+module EncodeField =
+    open Helpers
 
     type ZCW = ZeroCopyWriteBuffer
 

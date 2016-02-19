@@ -6,11 +6,17 @@ open Froto.Core.WireFormat
 
 module Utility =
 
+    /// Encode SInt32
     let zigZag32 (n:int32) = (n <<< 1) ^^^ (n >>> 31)
+    /// Encode SInt64
     let zigZag64 (n:int64) = (n <<< 1) ^^^ (n >>> 63)
+
+    /// Decode SInt32
     let zagZig32 (n:int32) = int32(uint32 n >>> 1) ^^^ (if n&&&1  = 0  then 0  else -1 )
+    /// Decode SInt64
     let zagZig64 (n:int64) = int64(uint64 n >>> 1) ^^^ (if n&&&1L = 0L then 0L else -1L)
 
+    /// Calculate length when encoded as a Varint
     let varIntLen (v:uint64) =
         let rec loop acc len =
             let bMore = acc > 0x7FUL
@@ -19,6 +25,7 @@ module Utility =
             else len
         loop v 1
 
+    // Calculate field number length when encoded in a tag
     let tagLen (t:int32) =
         varIntLen ((uint64 t) <<< 3)
 
@@ -30,20 +37,20 @@ module Serializer =
 
     let internal raiseMismatch expected actual =
         let extractNumAndType = function
-            | RawField.Varint (n,_)  -> n, "VarInt"
+            | RawField.Varint (n,_)  -> n, "Varint"
             | RawField.Fixed32 (n,_) -> n, "Fixed32"
             | RawField.Fixed64 (n,_) -> n, "Fixed64"
             | RawField.LengthDelimited (n,_) -> n, "LengthDelimited"
         let (n, found) = actual |> extractNumAndType
         let s = sprintf "Deserialize failure: wiretype mismatch for field %d: expected %s, found %s" n expected found
-        raise <| ProtobufWireFormatException(s)
+        raise <| ProtobufSerializerException(s)
 
-    (* Deserialize from VarInt *)
+    (* Deserialize from Varint *)
     let helper_vi f fld = function
         | RawField.Varint (n, v) ->
             fld := f v
         | raw ->
-            raiseMismatch "VarInt" raw
+            raiseMismatch "Varint" raw
 
     let hydrateInt32  = helper_vi int32
     let hydrateInt64  = helper_vi int64
