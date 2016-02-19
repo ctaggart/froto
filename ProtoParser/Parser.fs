@@ -342,14 +342,16 @@ let pType : Parser<PType,State> =
     let toType s = typeMap.[s]
 
     let pPrimitiveType =
-        ( str "double"  <|> str "float"     <|>
-            str "int32"   <|> str "int64"     <|>
-            str "uint32"  <|> str "uint64"    <|>
-            str "sint32"  <|> str "sint64"    <|>
-            str "fixed32" <|> str "fixed64"   <|>
-            str "sfixed32"<|> str "sfixed64"  <|>
-            str "bool"    <|>
-            str "string"  <|> str "bytes"
+        ( choice
+            [ str "double"  ; str "float"     ;
+              str "int32"   ; str "int64"     ;
+              str "uint32"  ; str "uint64"    ;
+              str "sint32"  ; str "sint64"    ;
+              str "fixed32" ; str "fixed64"   ;
+              str "sfixed32"; str "sfixed64"  ;
+              str "bool"    ;
+              str "string"  ; str "bytes"
+            ]
         ) .>> ws |>> toType
 
     let pIdentType =
@@ -447,16 +449,18 @@ and internal pMessageStatement =
     let pMessageMessage =
         pMessageDef |>> TMessageMessage
 
-    (isProto2 >>. pGroup) // must be parsed first to avoid confusion
-    <|> pField
-    <|> pMessageEnum
-    <|> pMessageMessage
-    <|> (isProto2 >>. pMessageExtend)
-    <|> (isProto2 >>. pExtensions)
-    <|> pMessageOption
-    <|> pOneOf
-    <|> pMap
-    <|> pReserved
+    choice [
+        (isProto2 >>. pGroup) // must be parsed first to avoid confusion
+        pField
+        pMessageEnum
+        pMessageMessage
+        (isProto2 >>. pMessageExtend)
+        (isProto2 >>. pExtensions)
+        pMessageOption
+        pOneOf
+        pMap
+        pReserved
+        ]
 
 /// Parse message option: "option" (ident | "(" fullIdent ")" { "." ident }
 and pMessageOption =
@@ -517,14 +521,15 @@ and pMap =
     let toKType s = ktypeMap.[s]
 
     let pKeyType_ws =
-        (
-            str "int32"   <|> str "int64"     <|>
-            str "uint32"  <|> str "uint64"    <|>
-            str "sint32"  <|> str "sint64"    <|>
-            str "fixed32" <|> str "fixed64"   <|>
-            str "sfixed32"<|> str "sfixed64"  <|>
-            str "bool"    <|>
+        ( choice [
+            str "int32"   ; str "int64"     ;
+            str "uint32"  ; str "uint64"    ;
+            str "sint32"  ; str "sint64"    ;
+            str "fixed32" ; str "fixed64"   ;
+            str "sfixed32"; str "sfixed64"  ;
+            str "bool"    ;
             str "string"
+            ]
         ) .>> ws |>> toKType
 
     pipe4
@@ -635,14 +640,16 @@ let rec pProto =
     .>> eof
 
 and internal pProtoStatement =
+    choice [
         pSyntax
-    <|> pImport
-    <|> pPackage
-    <|> pOptionStatement
-    <|> pMessage
-    <|> pEnum
-    <|> (isProto2 >>. pExtend)
-    <|> pService
+        pImport
+        pPackage
+        pOptionStatement
+        pMessage
+        pEnum
+        (isProto2 >>. pExtend)
+        pService
+        ]
 
 // Resolve recursive parsers
 do pMessageDefR := pMessageDefImpl
