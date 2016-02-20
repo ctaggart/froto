@@ -56,7 +56,7 @@ Target "UnitTest" <| fun _ ->
             Parallel = ParallelMode.All
         })
         [   @"ProtoParser.Test\bin\Release\Froto.Parser.Test.dll"
-            @"Core.Test\bin\Release\Froto.Core.Test.dll"
+            @"Froto.Core.Test\bin\Release\Froto.Core.Test.dll"
             @"Roslyn.Test\bin\Release\Froto.Roslyn.Test.dll"
         ]
 
