@@ -1,4 +1,5 @@
-﻿module TestZeroCopyBuffer
+﻿[<Xunit.Trait("Kind", "Unit")>]
+module TestZeroCopyBuffer
 
 open Xunit
 open FsUnit.Xunit

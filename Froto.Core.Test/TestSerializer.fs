@@ -7,6 +7,7 @@ open System
 open Froto.Core
 open Froto.Core.Encoding
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Utility =
     open Froto.Core.Encoding.Utility
 
@@ -52,6 +53,7 @@ module Utility =
         tagLen 0x0F |> should equal 1
         tagLen 0x10 |> should equal 2
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Deserialize =
 
     open Froto.Core.Encoding.Serializer
@@ -375,6 +377,7 @@ module Deserialize =
         
 
     (* TODO: Tests to write
+        - Serialization Tests
         - Missing required field causes exception
         - Optional fields can be detected as ommitted
         - Enum properly has correct default (handle via codegen)

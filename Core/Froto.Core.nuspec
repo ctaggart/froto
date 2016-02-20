@@ -7,12 +7,12 @@
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/ctaggart/froto</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A parser for .proto files for Protocol Buffers.</description>
+    <description>A serailization library for Protocol Buffers.</description>
     @dependencies@
-    <tags>froto protobuf parser binary protocol buffers serialization deserialization</tags>
+    <tags>froto protobuf binary protocol buffers serialization deserialization</tags>
   </metadata>
   <files>
-    <file src="Froto.Parser.dll" target="lib\net45" />
-    <file src="Froto.Parser.pdb" target="lib\net45" />
+    <file src="Froto.Core.dll" target="lib\net45" />
+    <file src="Froto.Core.pdb" target="lib\net45" />
   </files>
 </package>

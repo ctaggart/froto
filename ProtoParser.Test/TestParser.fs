@@ -1,4 +1,4 @@
-﻿module TestParser
+﻿namespace TestParser
 
 open Xunit
 open FsUnit.Xunit
@@ -10,6 +10,7 @@ open FParsec
 open Froto.Parser.Proto
 open Froto.Parser.Ast
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Identifiers =
     [<Fact>]
     let ``Identifier can be parsed`` () =
@@ -53,6 +54,7 @@ module Identifiers =
         fun () -> parseString pGroupName_ws "myGroup" |> ignore
         |> should throw typeof<System.FormatException>
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Literals =
 
     [<Fact>]
@@ -166,6 +168,7 @@ module Literals =
         fun () -> parseString pStrLit @"'\009'" |> ignore
         |> should throw typeof<System.FormatException>
 
+[<Xunit.Trait("Kind", "Unit")>]
 module SyntaxStatement =
 
     [<Fact>]
@@ -183,6 +186,7 @@ module SyntaxStatement =
         fun () -> parseString pSyntax @"syntax = 'protox';" |> ignore
         |> should throw typeof<System.FormatException>
 
+[<Xunit.Trait("Kind", "Unit")>]
 module ImportStatement =
 
     [<Fact>]
@@ -200,6 +204,7 @@ module ImportStatement =
         parseString pImport @"import weak 'test.proto';"
         |> should equal (TImport ("test.proto", TWeak))
 
+[<Xunit.Trait("Kind", "Unit")>]
 module PackageStatement =
 
     [<Fact>]
@@ -207,6 +212,7 @@ module PackageStatement =
         parseString pPackage @"package abc.def;"
         |> should equal (TPackage "abc.def")
 
+[<Xunit.Trait("Kind", "Unit")>]
 module OptionStatement =
 
     [<Fact>]
@@ -259,6 +265,7 @@ module OptionStatement =
         parseString pOptionStatement @"option (test).field.more = true;"
         |> should equal (TOption ("test.field.more", TBoolLit true))
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Message =
 
     [<Fact>]
@@ -403,6 +410,7 @@ module Message =
                         ])
                 ]))
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Service =
 
     [<Fact>]
@@ -423,6 +431,7 @@ module Service =
                     TRpc ("TestMethod", "outer", false, "foo", false, [])
                 ]))
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Proto =
 
     [<Fact>]
@@ -595,6 +604,7 @@ module Proto =
         parseFile pProto "data/google/protobuf/descriptor.proto"
         |> ignore
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Proto3 =
 
     [<Fact>]
@@ -697,6 +707,7 @@ module Proto3 =
             """ |> ignore
         |> should throw typeof<System.FormatException>
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Proto2 =
 
     [<Fact>]

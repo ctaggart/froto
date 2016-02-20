@@ -14,6 +14,7 @@ module Helpers =
         with member x.ToArray() =
                         x.Array.[ x.Offset .. x.Offset + x.Count - 1]
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Decode =
     open Helpers
 
@@ -120,6 +121,7 @@ module Decode =
         |> toArray
         |> should equal [| 00uy; 01uy; 02uy |]
 
+[<Xunit.Trait("Kind", "Unit")>]
 module Encode =
     open Helpers
 
@@ -197,6 +199,7 @@ module Encode =
         |> toArray
         |> should equal [| 0x05uy; 0x00uy; 0x01uy; 0x02uy; 0x03uy; 0x04uy |]
 
+[<Xunit.Trait("Kind", "Unit")>]
 module DecodeField =
     open Helpers
 
@@ -286,6 +289,7 @@ module DecodeField =
         |> decodeField
         |> should equal (Fixed32 (9, 0x03020100u))
 
+[<Xunit.Trait("Kind", "Unit")>]
 module EncodeField =
     open Helpers
 

@@ -129,9 +129,9 @@
     <Compile Include="TestZeroCopyBuffer.fs" />
     <Compile Include="TestWireFormat.fs" />
     <Compile Include="TestSerializer.fs" />
+    <Compile Include="SampleProto.fs" />
     <Content Include="app.config" />
     <None Include="paket.references" />
-    <Compile Include="SampleProto.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
