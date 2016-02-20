@@ -46,6 +46,13 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Exe", "Exe\Exe.fsproj", "{F
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Core.Test", "Froto.Core.Test\Froto.Core.Test.fsproj", "{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "google", "google", "{E1A81C99-B921-4EAF-9912-2B2306779E22}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "protobuf", "protobuf", "{828E3BC0-8DF8-48B5-BA98-BDB8C108C25A}"
+	ProjectSection(SolutionItems) = preProject
+		test\google\protobuf\descriptor.proto = test\google\protobuf\descriptor.proto
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,5 +93,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{992FDC44-075B-4B9D-BFF4-0C34093627E6} = {2291EB39-A4CC-471C-BA12-1E58F298B395}
+		{E1A81C99-B921-4EAF-9912-2B2306779E22} = {992FDC44-075B-4B9D-BFF4-0C34093627E6}
+		{828E3BC0-8DF8-48B5-BA98-BDB8C108C25A} = {E1A81C99-B921-4EAF-9912-2B2306779E22}
 	EndGlobalSection
 EndGlobal

@@ -599,9 +599,18 @@ module Proto =
             ]
         )
 
+    open System.IO
+
+    /// gets the path for a test file based on the relative path from the executing assembly
+    let getTestFile file =
+         let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
+         let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
+         let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent).FullName
+         Path.Combine(solutionPath, Path.Combine("test",file))
+
     [<Fact>]
     let ``Parse Google protobuf 'descriptor.proto' without error`` () =
-        parseFile pProto "data/google/protobuf/descriptor.proto"
+        parseFile pProto <| getTestFile "google/protobuf/descriptor.proto"
         |> ignore
 
 [<Xunit.Trait("Kind", "Unit")>]

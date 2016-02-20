@@ -35,9 +35,6 @@
     <Compile Include="TestModel.fs" />
     <None Include="app.config" />
     <None Include="paket.references" />
-    <None Include="data\google\protobuf\descriptor.proto">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Numerics" />
