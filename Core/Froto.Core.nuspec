@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <metadata>
-    <id>Froto.Parser</id>
+    <id>Froto.Core</id>
     <version>0.0.0</version>
     <authors>Cameron Taggart, James Hugard</authors>
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
