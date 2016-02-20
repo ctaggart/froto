@@ -20,7 +20,7 @@ let getTestFile file =
      Path.Combine(solutionPath, Path.Combine("test",file))
 
 [<Fact>]
-let `` can parse SearchRequest proto`` () =
+let ``can parse SearchRequest proto`` () =
     let proto = getTestFile "SearchRequest.proto" |> parseFile 
     1 |> should equal proto.Sections.Length
     let messages = proto.Messages

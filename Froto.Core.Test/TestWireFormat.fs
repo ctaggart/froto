@@ -215,6 +215,12 @@ module DecodeField =
         |> decodeTag
         |> should equal (2, WireType.Fixed64)
 
+        [| 0xD2uy; 0x02uy |]
+        |> ZCR
+        |> decodeTag
+        |> should equal (42, WireType.LengthDelimited )
+
+
     [<Fact>]
     let ``Tag validated to range [1,2^28)`` () =
         

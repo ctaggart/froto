@@ -68,8 +68,8 @@ module Serializer =
         | raw ->
             raiseMismatch "Fixed32" raw
 
-    let hydrateFixed32  = helper_fx32 int32
-    let hydrateSFixed32 = helper_fx32 (int32 >> Utility.zagZig32)
+    let hydrateFixed32  = helper_fx32 uint32
+    let hydrateSFixed32 = helper_fx32 int32
     let hydrateSingle  =
         let aux (u:uint32) =
             // TODO: eliminate the Array allocation,
@@ -87,8 +87,8 @@ module Serializer =
         | raw ->
             raiseMismatch "Fixed64" raw
 
-    let hydrateFixed64  = helper_fx64 int64
-    let hydrateSFixed64 = helper_fx64 (int64 >> Utility.zagZig64)
+    let hydrateFixed64  = helper_fx64 uint64
+    let hydrateSFixed64 = helper_fx64 int64
     let hydrateDouble  =
         let aux (u:uint64) =
             // TODO: eliminate the Array allocation,
@@ -111,7 +111,7 @@ module Serializer =
         utf8.GetString(a.Array, a.Offset, a.Count)
 
     let internal toByteArray (a:System.ArraySegment<byte>) =
-        a.Array.[ a.Offset .. a.Offset + a.Count]
+        a.Array.[ a.Offset .. a.Offset + (a.Count-1)]
 
     let hydrateString = helper_bytes toString
     let hydrateBytes  = helper_bytes toByteArray
@@ -140,8 +140,8 @@ module Serializer =
     let inline hydratePackedEnum x    = helper_packed (decodeVarint >> int32 >> enum) x
     let hydratePackedFixed32  = helper_packed decodeFixed32
     let hydratePackedFixed64  = helper_packed decodeFixed64
-    let hydratePackedSFixed32 = helper_packed (decodeFixed32 >> int32 >> Utility.zagZig32)
-    let hydratePackedSFixed64 = helper_packed (decodeFixed64 >> int64 >> Utility.zagZig64)
+    let hydratePackedSFixed32 = helper_packed (decodeFixed32 >> int32)
+    let hydratePackedSFixed64 = helper_packed (decodeFixed64 >> int64)
     let hydratePackedSingle   = helper_packed decodeSingle
     let hydratePackedDouble   = helper_packed decodeDouble
 
@@ -156,8 +156,8 @@ module Serializer =
 
     let inline dehydrateFixed32  fldNum i = WireFormat.encodeFieldFixed32 fldNum (uint32 i)
     let inline dehydrateFixed64  fldNum i = WireFormat.encodeFieldFixed64 fldNum (uint64 i)
-    let inline dehydrateSFixed32 fldNum i = WireFormat.encodeFieldFixed32 fldNum (Utility.zigZag32 i |> uint32)
-    let inline dehydrateSFixed64 fldNum i = WireFormat.encodeFieldFixed64 fldNum (Utility.zigZag64 i |> uint64)
+    let inline dehydrateSFixed32 fldNum i = WireFormat.encodeFieldFixed32 fldNum (uint32 i)
+    let inline dehydrateSFixed64 fldNum i = WireFormat.encodeFieldFixed64 fldNum (uint64 i)
 
     let dehydrateSingle fldNum i = WireFormat.encodeFieldSingle fldNum i
     let dehydrateDouble fldNum i = WireFormat.encodeFieldDouble fldNum i
