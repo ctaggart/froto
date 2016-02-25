@@ -280,6 +280,174 @@ module Deserialize =
         vi |> hydratePackedDouble xs
         !xs |> should equal [ 0.0; 0.10; 0.0 ]
 
+[<Xunit.Trait("Kind", "Unit")>]
+module Serialize =
+    open Froto.Core.Encoding.Serializer
+
+    type ZCB = ZeroCopyWriteBuffer
+    let toArray(zcb:ZCB) = zcb.ToArray()
+
+    let fid = 1 // field ID
+
+    [<Fact>]
+    let ``Dehydrate integer varint`` () =
+        ZCB(2)
+        |> dehydrateVarint fid 2UL
+        |> toArray
+        |> should equal [| 0x08uy; 2uy |]
+
+    [<Fact>]
+    let ``Dehydrate SInt32 varint`` () =
+        ZCB(2)
+        |> dehydrateSInt32 fid 0
+        |> toArray
+        |> should equal [| 0x08uy; 0uy |]
+
+        ZCB(2)
+        |> dehydrateSInt32 fid -1
+        |> toArray
+        |> should equal [| 0x08uy; 1uy |]
+
+        ZCB(2)
+        |> dehydrateSInt32 fid 1
+        |> toArray
+        |> should equal [| 0x08uy; 2uy |]
+
+    [<Fact>]
+    let ``Dehydrate SInt64 varint`` () =
+        ZCB(2)
+        |> dehydrateSInt64 fid 0L
+        |> toArray
+        |> should equal [| 0x08uy; 0uy |]
+
+        ZCB(2)
+        |> dehydrateSInt64 fid -1L
+        |> toArray
+        |> should equal [| 0x08uy; 1uy |]
+
+        ZCB(2)
+        |> dehydrateSInt64 fid 1L
+        |> toArray
+        |> should equal [| 0x08uy; 2uy |]
+
+    [<Fact>]
+    let ``Dehydrate bool varint`` () =
+        ZCB(2)
+        |> dehydrateBool fid false
+        |> toArray
+        |> should equal [| 0x08uy; 0uy |]
+
+        ZCB(2)
+        |> dehydrateBool fid true
+        |> toArray
+        |> should equal [| 0x08uy; 1uy |]
+
+    [<Fact>]
+    let ``Dehydrate Fixed32`` () =
+        ZCB(5)
+        |> dehydrateFixed32 fid 5
+        |> toArray
+        |> should equal [| 0x08uy ||| 5uy; 5uy;0uy;0uy;0uy |]
+
+    [<Fact>]
+    let ``Dehydrate Fixed64`` () =
+        ZCB(9)
+        |> dehydrateFixed64 fid 5
+        |> toArray
+        |> should equal [| 0x08uy ||| 1uy; 5uy;0uy;0uy;0uy; 0uy;0uy;0uy;0uy |]
+
+    [<Fact>]
+    let ``Dehydrate Single`` () =
+        ZCB(5)
+        |> dehydrateSingle fid 2.0f
+        |> toArray
+        |> should equal [| 0x08uy ||| 5uy; 0uy; 0uy; 0b00000000uy; 0b01000000uy |]
+
+    [<Fact>]
+    let ``Dehydrate Double`` () =
+        ZCB(9)
+        |> dehydrateDouble fid 0.10
+        |> toArray
+        |> should equal [| 0x08uy ||| 1uy; 0x9Auy; 0x99uy; 0x99uy; 0x99uy; 0x99uy; 0x99uy; 0xB9uy; 0x3Fuy |]
+
+    [<Fact>]
+    let ``Dehydrate String`` () =
+        ZCB(6)
+        |> dehydrateString fid "0ABC"
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 4uy; 0x30uy; 0x41uy; 0x42uy; 0x43uy |]
+
+    [<Fact>]
+    let ``Dehydrate Bytes`` () =
+        ZCB(6)
+        |> dehydrateBytes fid (ArraySegment([| 3uy; 4uy; 5uy; 6uy; |]))
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 4uy; 3uy; 4uy; 5uy; 6uy |]
+
+    [<Fact>]
+    let ``Dehydrate Packed Varint`` () =
+        ZCB(8)
+        |> dehydratePackedVarint fid [ 0; 1; 128; 129 ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 6uy; 0uy; 1uy; 0x80uy; 0x01uy; 0x81uy; 0x01uy |]
+    
+    [<Fact>]
+    let ``Dehydrate Packed Bool`` () =
+        ZCB(5)
+        |> dehydratePackedBool fid [ false; true; false ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 3uy; 0uy; 1uy; 0uy |]
+
+    [<Fact>]
+    let ``Dehydrate Packed SInt32`` () =
+        ZCB(5)
+        |> dehydratePackedSInt32 fid [ 0; -1; 1 ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 3uy; 0uy; 1uy; 2uy |]
+
+    [<Fact>]
+    let ``Dehydrate Packed SInt64`` () =
+        ZCB(5)
+        |> dehydratePackedSInt64 fid [ 0L; -1L; 1L ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 3uy; 0uy; 1uy; 2uy |]
+
+    [<Fact>]
+    let ``Dehydrate Packed Fixed32`` () =
+        ZCB(10)
+        |> dehydratePackedFixed32 fid [ 0; -1 ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 8uy; 0x00uy;0x00uy;0x00uy;0x00uy; 0xFFuy;0xFFuy;0xFFuy;0xFFuy |]
+        
+
+    [<Fact>]
+    let ``Dehydrate Packed Fixed64`` () =
+        ZCB(18)
+        |> dehydratePackedFixed64 fid [ 0; -1 ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 16uy; 0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy; 0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy |]
+
+    [<Fact>]
+    let ``Dehydrate Packed Single`` () =
+        ZCB(10)
+        |> dehydratePackedSingle fid [ 0.0f; 2.0f ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 8uy; 0x00uy;0x00uy;0x00uy;0x00uy; 0uy;0uy;0b00000000uy;0b01000000uy |]
+        
+
+    [<Fact>]
+    let ``Dehydrate Packed Double`` () =
+        ZCB(18)
+        |> dehydratePackedDouble fid [ 0.0; 0.10 ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 16uy; 0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy; 0x9Auy;0x99uy;0x99uy;0x99uy;0x99uy;0x99uy;0xB9uy;0x3Fuy |]
+        
+
+[<Xunit.Trait("Kind", "Unit")>]
+module MessageSerialization =
+
+    let toArray (seg:ArraySegment<'a>) =
+        seg.Array.[ seg.Offset .. (seg.Count-1) ]
 
     type InnerMsg () =
         inherit MessageBase()
@@ -308,8 +476,13 @@ module Deserialize =
             self.DeserializeLengthDelimited(buf) |> ignore
             self
         
-        member x.ID = !m_id
-        member x.Name = !m_name
+        member x.ID
+            with get() = !m_id
+            and  set(v) = m_id := v
+
+        member x.Name
+            with get() = !m_name
+            and  set(v) = m_name := v
 
     [<Fact>]
     let ``Deserialize simple message`` () =
@@ -326,6 +499,22 @@ module Deserialize =
         msg.ID |> should equal 99
         msg.Name |> should equal "Test message"
 
+    [<Fact>]
+    let ``Serialize simple message`` () =
+        let msg = InnerMsg()
+        msg.ID <- 98
+        msg.Name <- "ABC0"
+        msg.Serialize()
+        |> toArray
+        |> should equal
+            [|
+                0x01uy<<<3 ||| 0uy; // tag: id=1; varint
+                98uy;               // value 98
+                0x02uy<<<3 ||| 2uy  // tag: id=2; length delim
+                4uy;                // length = 4
+                0x41uy; 0x42uy; 0x43uy; 0x30uy
+                                    // value "ABC0"
+            |]
 
     type OuterMsg () =
         inherit MessageBase()
@@ -353,14 +542,20 @@ module Deserialize =
             self.DeserializeLengthDelimited(buf) |> ignore
             self
 
-        member x.ID = !m_id
-        member x.Inner = !m_inner
+        member x.ID
+            with get() = !m_id
+            and  set(v) = m_id := v
+
+        member x.Inner
+            with get() = !m_inner
+            and  set(v) = m_inner := v
 
     [<Fact>]
-    let ``Deserialize nested message`` () =
+    let ``Deserialize compound message`` () =
         let buf =
-            [|  0x01uy<<<3 ||| 0uy;     // tag: fldnum=1, varint
-                21uy;                   // value 42
+            [|
+                0x01uy<<<3 ||| 0uy;     // tag: fldnum=1, varint
+                21uy;                   // value 21
                 0xD0uy ||| 2uy; 0x02uy; // tag: fldnum=42, length delim
                 16uy;                   // length 16
                 0x01uy<<<3 ||| 0uy;     // tag: fldnum=1; varint
@@ -375,10 +570,31 @@ module Deserialize =
         msg.Inner.ID |> should equal 99
         msg.Inner.Name |> should equal "Test message"
         
+    [<Fact>]
+    let ``Serialize compound message`` () =
+        let msg = OuterMsg()
+        msg.Inner <- InnerMsg()
+        msg.ID <- 5
+        msg.Inner.ID <- 6
+        msg.Inner.Name <- "ABC0"
+        msg.Serialize()
+        |> toArray
+        |> should equal
+            [|
+                0x01uy<<<3 ||| 0uy;     // tag: id=1; varint
+                5uy;                    // value 5
+                0xD0uy ||| 2uy; 0x02uy; // tag: fldnum=42, length delim
+                8uy;                    // length = 8
+                0x01uy<<<3 ||| 0uy;     // tag: id=1; varint
+                6uy;                    // value 6
+                0x02uy<<<3 ||| 2uy      // tag: id=2; length delim
+                4uy;                    // length = 4
+                0x41uy; 0x42uy; 0x43uy; 0x30uy
+                                        // value "ABC0"
+            |]
 
-    (* TODO: Tests to write
-        - Serialization Tests
+    (* TODO: Tests (and implementation) to write
         - Missing required field causes exception
-        - Optional fields can be detected as ommitted
+        - Optional fields can be detected as ommitted?
         - Enum properly has correct default (handle via codegen)
      *)

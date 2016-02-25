@@ -45,6 +45,8 @@ module Serializer =
         let s = sprintf "Deserialize failure: wiretype mismatch for field %d: expected %s, found %s" n expected found
         raise <| ProtobufSerializerException(s)
 
+//---- Deserialization
+
     (* Deserialize from Varint *)
     let helper_vi f fld = function
         | RawField.Varint (n, v) ->
@@ -149,6 +151,8 @@ module Serializer =
     ///   int32, int64, uint32, uint64, enum
     let inline dehydrateVarint fldNum i = WireFormat.encodeFieldVarint fldNum (uint64 i)
 
+//---- Serialization
+
     let dehydrateSInt32 fldNum i = WireFormat.encodeFieldVarint fldNum (Utility.zigZag32 i |> uint64)
     let dehydrateSInt64 fldNum i = WireFormat.encodeFieldVarint fldNum (Utility.zigZag64 i |> uint64)
 
@@ -156,8 +160,6 @@ module Serializer =
 
     let inline dehydrateFixed32  fldNum i = WireFormat.encodeFieldFixed32 fldNum (uint32 i)
     let inline dehydrateFixed64  fldNum i = WireFormat.encodeFieldFixed64 fldNum (uint64 i)
-    let inline dehydrateSFixed32 fldNum i = WireFormat.encodeFieldFixed32 fldNum (uint32 i)
-    let inline dehydrateSFixed64 fldNum i = WireFormat.encodeFieldFixed64 fldNum (uint64 i)
 
     let dehydrateSingle fldNum i = WireFormat.encodeFieldSingle fldNum i
     let dehydrateDouble fldNum i = WireFormat.encodeFieldDouble fldNum i
@@ -175,34 +177,37 @@ module Serializer =
         >> WireFormat.encodeVarint xslen
         >> flip (List.fold (fun buf x -> buf |> encFn x )) xs
 
-    let inline varIntListPackedLen (xs:'a list) =
-        List.sumBy (uint64 >> Utility.varIntLen) xs
+    let inline varIntListPackedLen encode (xs:'a list) =
+        List.sumBy (encode >> Utility.varIntLen) xs
 
     /// Generic Dehydrate for all packed varint types, excepted for bool & signed:
     ///   int32, int64, uint32, uint64, enum
     let inline dehydratePackedVarint fieldNum xs =
+        let encode = uint64
         dehydratePackedHelper
-            varIntListPackedLen
-            (uint64 >> WireFormat.encodeVarint)
+            (varIntListPackedLen encode)
+            (encode >> WireFormat.encodeVarint)
             fieldNum xs
 
     let dehydratePackedBool fieldNum xs =
-        let packedLen = List.length
+        let boolPackedLen = List.length
         dehydratePackedHelper
-            List.length (* encodes to 1 byte per bool *)
+            boolPackedLen (* encodes to 1 byte per bool *)
             (fromBool >> WireFormat.encodeVarint)
             fieldNum xs
 
     let dehydratePackedSInt32 fieldNum xs =
+        let encode = Utility.zigZag32 >> uint64
         dehydratePackedHelper
-            varIntListPackedLen
-            (Utility.zigZag32 >> uint64 >> WireFormat.encodeVarint)
+            (varIntListPackedLen encode)
+            (encode >> WireFormat.encodeVarint)
             fieldNum xs
 
     let dehydratePackedSInt64 fieldNum xs =
+        let encode = Utility.zigZag64 >> uint64
         dehydratePackedHelper
-            varIntListPackedLen
-            (Utility.zigZag64 >> uint64 >> WireFormat.encodeVarint)
+            (varIntListPackedLen encode)
+            (encode >> WireFormat.encodeVarint)
             fieldNum xs
 
     let inline fixedListPackedLen size = (List.length >> ((*) size))
@@ -233,18 +238,6 @@ module Serializer =
             WireFormat.encodeDouble
             fieldNum xs
 
-    let dehydratePackedSFixed32 fieldNum xs =
-        dehydratePackedHelper
-            fixed32ListPackedLen
-            (Utility.zigZag32 >> uint32 >> WireFormat.encodeFixed32)
-            fieldNum xs
-
-    let dehydratePackedSFixed64 fieldNum xs =
-        dehydratePackedHelper
-            fixed64ListPackedLen
-            (Utility.zigZag64 >> uint64 >> WireFormat.encodeFixed64)
-            fieldNum xs
-
     (* Dehydrate Message *)
     let inline dehydrateMessage fieldNum (o:^msg when ^msg : (member SerializeLengthDelimited : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer)) =
         let serializeMsg zcb = (^msg : (member SerializeLengthDelimited : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) (o,zcb))
@@ -265,6 +258,7 @@ module Serializer =
             zcb
         wrapperFn
 
+//---- Support for hydrating and dehydrating an entire class
 
 [<AbstractClass>]
 type MessageBase () =

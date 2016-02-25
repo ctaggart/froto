@@ -257,10 +257,10 @@ module DecodeField =
 
     [<Fact>]
     let ``Read varint field`` () =
-        [| 0x08uy; 1uy |]
+        [| 0x08uy; 2uy |]
         |> ZCR
         |> decodeField
-        |> should equal (Varint (1, 1UL))
+        |> should equal (Varint (1, 2UL))
 
     [<Fact>]
     let ``Read fixed64 field`` () =

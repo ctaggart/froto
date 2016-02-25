@@ -85,8 +85,11 @@ type ZeroCopyWriteBuffer (seg:ArraySegment<byte>) =
     member x.ToArray() =
         seg.Array.[ seg.Offset .. int x.Position - 1 ]
 
+    abstract WriteByte : byte -> unit
+    abstract WriteByteSegment : uint32 -> (ArraySegment<byte>->unit) -> unit
+
     /// Write one byte into the backing buffer.
-    member x.WriteByte b =
+    override x.WriteByte b =
         if x.Position < x.Limit then
             x.Array.[int x.Position] <- b
             x.Position <- x.Position + 1u
@@ -95,7 +98,7 @@ type ZeroCopyWriteBuffer (seg:ArraySegment<byte>) =
 
     /// Write 'len' bytes, via the caller supplied emplace function,
     /// directly into the backing buffer.
-    member x.WriteByteSegment (len:uint32) (emplace:ArraySegment<byte>->unit) =
+    override x.WriteByteSegment (len:uint32) (emplace:ArraySegment<byte>->unit) =
         if x.Position + len <= x.Limit then
             let buf = ArraySegment( x.Array, int x.Position, int len )
             emplace buf
@@ -113,10 +116,10 @@ type ZeroCopyWriteBuffer (seg:ArraySegment<byte>) =
 type NullWriteBuffer() =
     inherit ZeroCopyWriteBuffer(0)
 
-    member x.WriteByte b =
+    override x.WriteByte b =
         x.Position <- x.Position + 1u
 
-    member x.WriteByteSegment (len:uint32) (_:ArraySegment<byte>->unit) =
+    override x.WriteByteSegment (len:uint32) (_:ArraySegment<byte>->unit) =
         x.Position <- x.Position + len
 
     member x.Length = x.Position
