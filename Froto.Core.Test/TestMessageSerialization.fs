@@ -4,7 +4,6 @@ open Xunit
 open FsUnit.Xunit
 
 open System
-open Froto.Core
 open Froto.Core.Encoding
 
 [<Xunit.Trait("Kind", "Unit")>]
@@ -21,40 +20,34 @@ module MessageSerialization =
     let toArray (seg:ArraySegment<'a>) =
         seg.Array.[ seg.Offset .. (seg.Count-1) ]
 
-    type InnerMsg () =
+    type InnerMessage () =
         inherit MessageBase()
-
         let m_id = ref 0
         let m_name = ref ""
+        
+        member x.ID     with get() = !m_id and set(v) = m_id := v
+        member x.Name   with get() = !m_name and set(v) = m_name := v
+
+        override x.Clear() =
+            m_id := 0
+            m_name := ""
 
         override x.DecoderRing =
-            [ 1, m_id             |> Serializer.hydrateInt32
-              2, m_name           |> Serializer.hydrateString
+            [ 1, m_id   |> Serializer.hydrateInt32
+              2, m_name |> Serializer.hydrateString
             ]
             |> Map.ofList
 
-        override x.EncoderRing =
-            [ !m_id            |> Serializer.dehydrateVarint 1
-              !m_name          |> Serializer.dehydrateString 2
-            ]
+        override x.EncoderRing zcb =
+            let encode =
+                (!m_id     |> Serializer.dehydrateVarint 1) >>
+                (!m_name   |> Serializer.dehydrateString 2)
+            encode zcb
 
-        static member Deserialize buf =
-            let self = InnerMsg()
+        static member FromArraySegment (buf:ArraySegment<byte>) =
+            let self = InnerMessage()
             self.Deserialize(buf) |> ignore
             self
-
-        static member DeserializeLengthDelimited buf =
-            let self = InnerMsg()
-            self.DeserializeLengthDelimited(buf) |> ignore
-            self
-        
-        member x.ID
-            with get() = !m_id
-            and  set(v) = m_id := v
-
-        member x.Name
-            with get() = !m_name
-            and  set(v) = m_name := v
 
     [<Fact>]
     let ``Deserialize simple message`` () =
@@ -67,13 +60,13 @@ module MessageSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |] |> ArraySegment
-        let msg = InnerMsg.Deserialize(buf)
+        let msg = InnerMessage.FromArraySegment(buf)
         msg.ID |> should equal 99
         msg.Name |> should equal "Test message"
 
     [<Fact>]
     let ``Serialize simple message`` () =
-        let msg = InnerMsg()
+        let msg = InnerMessage()
         msg.ID <- 98
         msg.Name <- "ABC0"
         msg.Serialize()
@@ -88,47 +81,39 @@ module MessageSerialization =
                                     // value "ABC0"
             |]
 
-    type OuterMsg () =
+    type OuterMessage () =
         inherit MessageBase()
+        let m_id        = ref 0
+        let m_inner     = ref <| InnerMessage()
+        let m_hasMore   = ref false
 
-        let m_id    = ref 0
-        let m_inner = ref <| InnerMsg()
-        let m_hasMore  = ref false
+        member x.ID         with get() = !m_id and set(v) = m_id := v
+        member x.Inner      with get() = !m_inner and set(v) = m_inner := v
+        member x.HasMore    with get() = !m_hasMore and set(v) = m_hasMore := v
+
+        override x.Clear() =
+            m_id := 0
+            (!m_inner).Clear()
+            m_hasMore := false
 
         override x.DecoderRing =
-            [  1, m_id    |> Serializer.hydrateInt32;
-              42, m_inner |> Serializer.hydrateMessage (InnerMsg.Deserialize);
-              43, m_hasMore  |> Serializer.hydrateBool;
+            [  1, m_id      |> Serializer.hydrateInt32;
+              42, m_inner   |> Serializer.hydrateMessage (InnerMessage.FromArraySegment);
+              43, m_hasMore |> Serializer.hydrateBool;
             ]
             |> Map.ofList
 
-        override x.EncoderRing =
-            [ !m_id |> Serializer.dehydrateVarint 1
-              !m_inner |> Serializer.dehydrateMessage 42
-              !m_hasMore |> Serializer.dehydrateBool 43
-            ]
+        override x.EncoderRing zcb =
+            let encode =
+                (!m_id         |> Serializer.dehydrateVarint 1) >>
+                (!m_inner      |> Serializer.dehydrateMessage 42) >>
+                (!m_hasMore    |> Serializer.dehydrateBool 43)
+            encode zcb
 
-        static member Deserialize buf =
-            let self = OuterMsg()
+        static member FromArraySegment (buf:ArraySegment<byte>) =
+            let self = OuterMessage()
             self.Deserialize(buf) |> ignore
             self
-
-        static member DeserializeLengthDelimited buf =
-            let self = OuterMsg()
-            self.DeserializeLengthDelimited(buf) |> ignore
-            self
-
-        member x.ID
-            with get() = !m_id
-            and  set(v) = m_id := v
-
-        member x.Inner
-            with get() = !m_inner
-            and  set(v) = m_inner := v
-
-        member x.HasMore
-            with get() = !m_hasMore
-            and  set(v) = m_hasMore := v
 
     [<Fact>]
     let ``Deserialize compound message`` () =
@@ -147,15 +132,15 @@ module MessageSerialization =
                 0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
                 0x01uy;                 // value true
             |] |> ArraySegment
-        let msg = OuterMsg.Deserialize(buf)
+        let msg = OuterMessage.FromArraySegment(buf)
         msg.ID |> should equal 21
         msg.Inner.ID |> should equal 99
         msg.Inner.Name |> should equal "Test message"
         
     [<Fact>]
     let ``Serialize compound message`` () =
-        let msg = OuterMsg()
-        msg.Inner <- InnerMsg()
+        let msg = OuterMessage()
+        msg.Inner <- InnerMessage()
         msg.ID <- 5
         msg.Inner.ID <- 6
         msg.Inner.Name <- "ABC0"

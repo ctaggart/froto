@@ -292,19 +292,22 @@ type MessageBase () =
     let asArraySegment (zcb:ZeroCopyWriteBuffer) =
         zcb.AsArraySegment
 
+    let remainder (zcb:ZeroCopyReadBuffer) =
+        zcb.Remainder
+
+    /// Derrived classes must provide a Clear function, which resets all
+    /// members to their default values; generally, Zero(0) or Empty.
+    abstract Clear : Unit -> Unit
+
     /// Derrived classes must provide a DecoderRing property, which is used
     /// to map from a field number to a deserialization (hydration) function.
     /// This is a map, because Protobuf fields can appear in any order.
     abstract DecoderRing : Map<int,(RawField->unit)>
 
     /// Derrived classes must provide an EncoderRing property, which is used
-    /// to serialize the class.
-    ///
-    /// TODO: Consider changing this to a single function, rather than a list,
-    /// making the caller responsible for chaining the individual field
-    /// serializers.  Or, consider having the base class chain these into a
-    /// private cached function.
-    abstract EncoderRing : (ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) list
+    /// to serialize the class.  Generally, this single function chains
+    /// the serialization functions for all known members.
+    abstract EncoderRing : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer
 
     /// List of fields provided in the protobuf, but which were not found on
     /// the DecoderRing.  All these fields will be serialized to the buffer
@@ -317,24 +320,39 @@ type MessageBase () =
     ///
     /// The entire ArraySegment will be consumed, so must be of the right
     /// length to exactly contain the message.
-    ///
-    /// The buffer will be merged with any existing values: non-repeated
-    /// fields will replace any existing value, and repeated fields will be
-    /// appended to any existing values.
     member x.Deserialize (buf:System.ArraySegment<byte>) =
-        let zcb = ZeroCopyReadBuffer(buf)
-        seq {
-            while not zcb.IsEof do
-                yield WireFormat.decodeField zcb
-            }
-        |> Seq.iter x.DeserializeField
+        ZeroCopyReadBuffer(buf)
+        |> x.Deserialize
+        |> remainder
 
     /// Deserialize from an ArraySegment whose first value is a varint
     /// specifying the length of the message.
     ///
     /// Returns the remaining bytes in the buffer as an ArraySegment.
     member x.DeserializeLengthDelimited (buf:System.ArraySegment<byte>) =
-        let zcb = ZeroCopyReadBuffer(buf)
+        ZeroCopyReadBuffer(buf)
+        |> x.DeserializeLengthDelimited
+        |> remainder
+
+    /// Deserialize from a ZeroCopyReadBuffer.
+    ///
+    /// The entire ArraySegment will be consumed, so must be of the right
+    /// length to exactly contain the message.
+    member x.Deserialize (zcb:ZeroCopyReadBuffer) : ZeroCopyReadBuffer =
+        x.Clear()
+        seq {
+            while not zcb.IsEof do
+                yield WireFormat.decodeField zcb
+            }
+        |> Seq.iter x.DeserializeField
+        zcb
+
+    /// Deserialize from an ArraySegment whose first value is a varint
+    /// specifying the length of the message.
+    ///
+    /// Returns the remaining bytes in the buffer as an ArraySegment.
+    member x.DeserializeLengthDelimited (zcb:ZeroCopyReadBuffer) =
+        x.Clear()
         let len = zcb |> WireFormat.decodeVarint |> uint32
         let end_ = zcb.Position + len
         seq {
@@ -344,11 +362,7 @@ type MessageBase () =
         |> Seq.iter x.DeserializeField
         if end_ <> zcb.Position then
             raise <| ProtobufSerializerException("Incorrect length for length-delimited field")
-        zcb.Remainder
-
-    // TODO: Consider adding Deserialize overrides for ZeroCopyReadBuffer
-    //       HOWEVER, make sure the class code stays relatively simple.
-
+        zcb
 
     /// Return number of bytes needed to serialize the object
     ///
@@ -362,10 +376,9 @@ type MessageBase () =
     ///
     /// Will also serialize all fields stored on the UnknownFields list.
     member x.Serialize (zcb:ZeroCopyWriteBuffer) =
-        for fn in x.EncoderRing do
-            fn zcb |> ignore
-        x.SerializeUnknownFields zcb
         zcb
+        |> x.EncoderRing
+        |> x.SerializeUnknownFields
 
     /// Serialize the object by applying all functions on the EncoderRing.
     ///
@@ -435,3 +448,4 @@ type MessageBase () =
                 | RawField.Fixed64 (n,v) ->
                     zcb |> WireFormat.encodeFieldFixed64 n v
             |> ignore
+        zcb
