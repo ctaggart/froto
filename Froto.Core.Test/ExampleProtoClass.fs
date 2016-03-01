@@ -49,7 +49,7 @@ type InnerMessage () =
         
     static member FromArraySegment (buf:System.ArraySegment<byte>) =
         let self = InnerMessage()
-        self.Deserialize(buf) |> ignore
+        self.Merge(buf) |> ignore
         self
 
 and ETest =
@@ -79,6 +79,6 @@ type OuterMessage() =
 
     static member FromArraySegment (buf:System.ArraySegment<byte>) =
         let self = OuterMessage()
-        self.Deserialize(buf) |> ignore
+        self.Merge(buf) |> ignore
         self
 

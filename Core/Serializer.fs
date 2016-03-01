@@ -316,30 +316,15 @@ type MessageBase () =
         with get() = m_unknownFields
         and  set(v) = m_unknownFields <- v
 
-    /// Deserialize from an ArraySegment.
+    /// Merge from a serialized buffer.
     ///
-    /// The entire ArraySegment will be consumed, so must be of the right
+    /// Does not Clear() the object before merging, so fields which do
+    /// not appear in the buffer will remain untouched, and repeated
+    /// fields in the buffer will be added to any existing values.
+    ///
+    /// The entire buffer will be consumed, so must be of the right
     /// length to exactly contain the message.
-    member x.Deserialize (buf:System.ArraySegment<byte>) =
-        ZeroCopyReadBuffer(buf)
-        |> x.Deserialize
-        |> remainder
-
-    /// Deserialize from an ArraySegment whose first value is a varint
-    /// specifying the length of the message.
-    ///
-    /// Returns the remaining bytes in the buffer as an ArraySegment.
-    member x.DeserializeLengthDelimited (buf:System.ArraySegment<byte>) =
-        ZeroCopyReadBuffer(buf)
-        |> x.DeserializeLengthDelimited
-        |> remainder
-
-    /// Deserialize from a ZeroCopyReadBuffer.
-    ///
-    /// The entire ArraySegment will be consumed, so must be of the right
-    /// length to exactly contain the message.
-    member x.Deserialize (zcb:ZeroCopyReadBuffer) : ZeroCopyReadBuffer =
-        x.Clear()
+    member x.Merge (zcb:ZeroCopyReadBuffer) : ZeroCopyReadBuffer =
         seq {
             while not zcb.IsEof do
                 yield WireFormat.decodeField zcb
@@ -347,12 +332,15 @@ type MessageBase () =
         |> Seq.iter x.DeserializeField
         zcb
 
-    /// Deserialize from an ArraySegment whose first value is a varint
+    /// Merge from a buffer whose first value is a varint
     /// specifying the length of the message.
     ///
+    /// Does not Clear() the object before merging, so fields which do
+    /// not appear in the buffer will remain untouched, and repeated
+    /// fields in the buffer will be added to any existing values.
+    ///
     /// Returns the remaining bytes in the buffer as an ArraySegment.
-    member x.DeserializeLengthDelimited (zcb:ZeroCopyReadBuffer) =
-        x.Clear()
+    member x.MergeLengthDelimited (zcb:ZeroCopyReadBuffer) =
         let len = zcb |> WireFormat.decodeVarint |> uint32
         let end_ = zcb.Position + len
         seq {
@@ -363,6 +351,72 @@ type MessageBase () =
         if end_ <> zcb.Position then
             raise <| ProtobufSerializerException("Incorrect length for length-delimited field")
         zcb
+
+    /// Merge from an ArraySegment.
+    ///
+    /// Does not Clear() the object before merging, so fields which do
+    /// not appear in the buffer will remain untouched, and repeated
+    /// fields in the buffer will be added to any existing values.
+    ///
+    /// The entire ArraySegment will be consumed, so must be of the right
+    /// length to exactly contain the message.
+    member x.Merge (buf:System.ArraySegment<byte>) =
+        ZeroCopyReadBuffer(buf)
+        |> x.Merge
+        |> remainder
+
+    /// Merge from an ArraySegment whose first value is a varint
+    /// specifying the length of the message.
+    ///
+    /// Does not Clear() the object before merging, so fields which do
+    /// not appear in the buffer will remain untouched, and repeated
+    /// fields in the buffer will be added to any existing values.
+    ///
+    /// Returns the remaining bytes in the buffer as an ArraySegment.
+    member x.MergeLengthDelimited (buf:System.ArraySegment<byte>) =
+        ZeroCopyReadBuffer(buf)
+        |> x.MergeLengthDelimited
+        |> remainder
+
+    /// Deserialize from a serialized buffer.
+    ///
+    /// Clear()'s the object before deserializing.
+    ///
+    /// The entire buffer will be consumed, so must be of the right
+    /// length to exactly contain the message.
+    member x.Deserialize (zcb:ZeroCopyReadBuffer) : ZeroCopyReadBuffer =
+        x.Clear()
+        x.Merge(zcb)
+
+    /// Deserialize from a buffer whose first value is a varint
+    /// specifying the length of the message.
+    ///
+    /// Clear()'s the object before deserializing.
+    ///
+    /// Returns the remaining bytes in the buffer as an ArraySegment.
+    member x.DeserializeLengthDelimited (zcb:ZeroCopyReadBuffer) =
+        x.Clear()
+        x.MergeLengthDelimited(zcb)
+
+    /// Deserialize from an ArraySegment.
+    ///
+    /// Clear()'s the object before deserializing.
+    ///
+    /// The entire ArraySegment will be consumed, so must be of the right
+    /// length to exactly contain the message.
+    member x.Deserialize (buf:System.ArraySegment<byte>) =
+        x.Clear()
+        x.Deserialize(buf)
+
+    /// Deserialize from an ArraySegment whose first value is a varint
+    /// specifying the length of the message.
+    ///
+    /// Clear()'s the object before deserializing.
+    ///
+    /// Returns the remaining bytes in the buffer as an ArraySegment.
+    member x.DeserializeLengthDelimited (buf:System.ArraySegment<byte>) =
+        x.Clear()
+        x.DeserializeLengthDelimited(buf)
 
     /// Return number of bytes needed to serialize the object
     ///

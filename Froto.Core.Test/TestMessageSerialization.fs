@@ -11,10 +11,9 @@ module MessageSerialization =
 
 (* TODO:
     Write tests (and implementation) for:
-    - Proto2 required field missing causes exception
-    - Proto2 optional field modeled as Option (Some | None)
-    - Proto2 enum has correct default
     - Empty values are elided from serialized form
+    - Proto2 required field missing causes exception
+    - Proto2 enum has correct default (done via code-gen/Clear())
 *)
 
     let toArray (seg:ArraySegment<'a>) =
@@ -46,7 +45,7 @@ module MessageSerialization =
 
         static member FromArraySegment (buf:ArraySegment<byte>) =
             let self = InnerMessage()
-            self.Deserialize(buf) |> ignore
+            self.Merge(buf) |> ignore
             self
 
     [<Fact>]
@@ -112,7 +111,7 @@ module MessageSerialization =
 
         static member FromArraySegment (buf:ArraySegment<byte>) =
             let self = OuterMessage()
-            self.Deserialize(buf) |> ignore
+            self.Merge(buf) |> ignore
             self
 
     [<Fact>]
