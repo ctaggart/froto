@@ -11,9 +11,7 @@ module MessageSerialization =
 
 (* TODO:
     Write tests (and implementation) for:
-    - Empty values are elided from serialized form
     - Proto2 required field missing causes exception
-    - Proto2 enum has correct default (done via code-gen/Clear())
 *)
 
     let toArray (seg:ArraySegment<'a>) =
@@ -83,7 +81,7 @@ module MessageSerialization =
     type OuterMessage () =
         inherit MessageBase()
         let m_id        = ref 0
-        let m_inner     = ref <| InnerMessage()
+        let m_inner     = ref None
         let m_hasMore   = ref false
 
         member x.ID         with get() = !m_id and set(v) = m_id := v
@@ -92,12 +90,12 @@ module MessageSerialization =
 
         override x.Clear() =
             m_id := 0
-            (!m_inner).Clear()
+            m_inner := None
             m_hasMore := false
 
         override x.DecoderRing =
             [  1, m_id      |> Serializer.hydrateInt32;
-              42, m_inner   |> Serializer.hydrateMessage (InnerMessage.FromArraySegment);
+              42, m_inner   |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
               43, m_hasMore |> Serializer.hydrateBool;
             ]
             |> Map.ofList
@@ -105,7 +103,7 @@ module MessageSerialization =
         override x.EncoderRing zcb =
             let encode =
                 (!m_id         |> Serializer.dehydrateVarint 1) >>
-                (!m_inner      |> Serializer.dehydrateMessage 42) >>
+                (!m_inner      |> Serializer.dehydrateOptionalMessage 42) >>
                 (!m_hasMore    |> Serializer.dehydrateBool 43)
             encode zcb
 
@@ -133,16 +131,17 @@ module MessageSerialization =
             |] |> ArraySegment
         let msg = OuterMessage.FromArraySegment(buf)
         msg.ID |> should equal 21
-        msg.Inner.ID |> should equal 99
-        msg.Inner.Name |> should equal "Test message"
+        msg.Inner.IsSome |> should equal true
+        msg.Inner.Value.ID |> should equal 99
+        msg.Inner.Value.Name |> should equal "Test message"
         
     [<Fact>]
     let ``Serialize compound message`` () =
         let msg = OuterMessage()
-        msg.Inner <- InnerMessage()
+        msg.Inner <- Some(InnerMessage())
         msg.ID <- 5
-        msg.Inner.ID <- 6
-        msg.Inner.Name <- "ABC0"
+        msg.Inner.Value.ID <- 6
+        msg.Inner.Value.Name <- "ABC0"
         msg.HasMore <- true
         msg.Serialize()
         |> toArray

@@ -4,10 +4,11 @@ open Froto.Core.Encoding
 
 type InnerMessage () =
     inherit MessageBase()
+    let ETestDefault = ETest.One  // NOTE: Non-zero default is only supported in Proto2
     let m_id = ref 0
     let m_name = ref ""
     let m_option = ref false
-    let m_test = ref ETest.Nada
+    let m_test = ref ETestDefault
     let m_packedFixed32 = ref List.empty
     let m_repeatedInt32 = ref List.empty
 
@@ -22,7 +23,7 @@ type InnerMessage () =
         m_id := 0
         m_name := ""
         m_option := false
-        m_test := ETest.Nada
+        m_test := ETestDefault
         m_packedFixed32 := List.empty
         m_repeatedInt32 := List.empty
 
@@ -42,7 +43,7 @@ type InnerMessage () =
             (!m_id            |> Serializer.dehydrateVarint 1) >>
             (!m_name          |> Serializer.dehydrateString 2) >>
             (!m_option        |> Serializer.dehydrateBool 3) >>
-            (!m_test          |> Serializer.dehydrateVarint 4) >>
+            (!m_test          |> Serializer.dehydrateDefaultedVarint ETestDefault 4) >>
             (!m_packedFixed32 |> Serializer.dehydratePackedFixed32 5) >>
             (!m_repeatedInt32 |> Serializer.dehydrateRepeated Serializer.dehydrateVarint 6)
         encode zcb
@@ -59,22 +60,22 @@ and ETest =
 
 type OuterMessage() =
     inherit MessageBase()
-    let m_inner = ref <| InnerMessage()
+    let m_inner = ref None
 
     member x.Inner with get() = !m_inner and set(v) = m_inner := v
 
     override x.Clear() =
-        (!m_inner).Clear()
+        m_inner := None
 
     override x.DecoderRing =
         [
-            42, m_inner |> Serializer.hydrateMessage (InnerMessage.FromArraySegment)
+            42, m_inner |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment)
         ]
         |> Map.ofList
 
     override x.EncoderRing(zcb) =
         let encode =
-            (!m_inner |> Serializer.dehydrateMessage 42)
+            (!m_inner |> Serializer.dehydrateOptionalMessage 42)
         encode zcb
 
     static member FromArraySegment (buf:System.ArraySegment<byte>) =

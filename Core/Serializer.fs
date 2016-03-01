@@ -19,8 +19,24 @@ module Utility =
     /// Decode SInt64
     let zagZig64 (n:int64) = int64(uint64 n >>> 1) ^^^ (if n&&&1L = 0L then 0L else -1L)
 
-    /// Calculate length when encoded as a Varint
+    /// Calculate length when encoded as a Varint; if value is default, then length is 0
+    let varIntLenDefaulted d (v:uint64) =
+        if v = d
+        then 0
+        else
+            let rec loop acc len =
+                let bMore = acc > 0x7FUL
+                if bMore
+                then loop (acc >>> 7) (len+1)
+                else len
+            loop v 1
+
+    /// Calculate length when encoded as a Varint; if value is default, then length is 0
     let varIntLen (v:uint64) =
+        varIntLenDefaulted 0UL v
+
+    /// Calculate length when encoded as a Varint without a default; e.g., a packed field
+    let varIntLenNoDefault (v:uint64) =
         let rec loop acc len =
             let bMore = acc > 0x7FUL
             if bMore
@@ -28,9 +44,18 @@ module Utility =
             else len
         loop v 1
 
-    // Calculate field number length when encoded in a tag
+
+    /// Calculate field number length when encoded in a tag
     let tagLen (t:int32) =
-        varIntLen ((uint64 t) <<< 3)
+        varIntLenNoDefault ((uint64 t) <<< 3)
+
+    /// Apply a function to a Option value, if the value is Some.
+    let inline IfSome f opt =
+        match opt with
+        | None -> id
+        | Some(v) -> f v
+
+
 
 ///
 /// Serialization and Deserialization.
@@ -133,8 +158,8 @@ module Serializer =
 
     let hydrateString = helper_bytes toString
     let hydrateBytes  = helper_bytes toByteArray
-    // TODO: Can the following be made type safe?
     let hydrateMessage messageCtor = helper_bytes messageCtor
+    let hydrateOptionalMessage messageCtor = hydrateMessage (messageCtor >> Some)
 
     /// Helper to deserialize Packed Repeated from LengthDelimited.
     /// Since this is used by an inline function (hydratePackedEnum),
@@ -165,25 +190,47 @@ module Serializer =
     let hydratePackedSingle   = helper_packed decodeSingle
     let hydratePackedDouble   = helper_packed decodeDouble
 
-    /// Generic Dehydrate for all varint types, excepted for signed & bool:
-    ///   int32, int64, uint32, uint64, enum
-    let inline dehydrateVarint fldNum i = WireFormat.encodeFieldVarint fldNum (uint64 i)
-
 //---- Serialization
 
-    let dehydrateSInt32 fldNum i = WireFormat.encodeFieldVarint fldNum (Utility.zigZag32 i |> uint64)
-    let dehydrateSInt64 fldNum i = WireFormat.encodeFieldVarint fldNum (Utility.zigZag64 i |> uint64)
+    /// If value = default, then elide the field (don't serialize)
+    let inline elided d v f =
+        if v = d
+        then id
+        else f
 
-    let dehydrateBool fldNum b = dehydrateVarint fldNum (fromBool b)
+    /// Generic Dehydrate for all varint types, excepted for signed & bool:
+    ///   int32, int64, uint32, uint64, enum
+    let inline dehydrateDefaultedVarint d fldNum v = elided d v <| WireFormat.encodeFieldVarint fldNum (uint64 v)
+    let inline dehydrateNondefaultedVarint fldNum v = WireFormat.encodeFieldVarint fldNum (uint64 v)
 
-    let inline dehydrateFixed32  fldNum i = WireFormat.encodeFieldFixed32 fldNum (uint32 i)
-    let inline dehydrateFixed64  fldNum i = WireFormat.encodeFieldFixed64 fldNum (uint64 i)
+    let dehydrateDefaultedSInt32 d fldNum v = elided d v <| WireFormat.encodeFieldVarint fldNum (Utility.zigZag32 v |> uint64)
+    let dehydrateDefaultedSInt64 d fldNum v = elided d v <| WireFormat.encodeFieldVarint fldNum (Utility.zigZag64 v |> uint64)
+    let dehydrateDefaultedBool   d fldNum v = elided d v <| dehydrateNondefaultedVarint fldNum (fromBool v)
 
-    let dehydrateSingle fldNum i = WireFormat.encodeFieldSingle fldNum i
-    let dehydrateDouble fldNum i = WireFormat.encodeFieldDouble fldNum i
+    let inline dehydrateDefaultedFixed32  d fldNum v = elided d v <| WireFormat.encodeFieldFixed32 fldNum (uint32 v)
+    let inline dehydrateDefaultedFixed64  d fldNum v = elided d v <| WireFormat.encodeFieldFixed64 fldNum (uint64 v)
 
-    let dehydrateString fldNum s = WireFormat.encodeFieldString fldNum s
-    let dehydrateBytes  fldNum buf = WireFormat.encodeFieldBytes fldNum buf
+    let dehydrateDefaultedSingle d fldNum v = elided d v <| WireFormat.encodeFieldSingle fldNum v
+    let dehydrateDefaultedDouble d fldNum v = elided d v <| WireFormat.encodeFieldDouble fldNum v
+
+    let dehydrateDefaultedString d fldNum v = elided d v <| WireFormat.encodeFieldString fldNum v
+    let dehydrateDefaultedBytes  d fldNum v = elided d v <| WireFormat.encodeFieldBytes fldNum v
+
+    let inline dehydrateVarint fldNum (v:'a) = dehydrateDefaultedVarint (Unchecked.defaultof<'a>) fldNum v
+
+    let dehydrateSInt32 fldNum v = dehydrateDefaultedSInt32 0 fldNum v
+    let dehydrateSInt64 fldNum v = dehydrateDefaultedSInt64 0L fldNum v
+    let dehydrateBool   fldNum v = dehydrateDefaultedBool false fldNum v
+
+    let inline dehydrateFixed32 fldNum v = dehydrateDefaultedFixed32 0 fldNum v
+    let inline dehydrateFixed64 fldNum v = dehydrateDefaultedFixed64 0 fldNum v
+
+    let dehydrateSingle fldNum v = dehydrateDefaultedSingle 0.0f fldNum v
+    let dehydrateDouble fldNum v = dehydrateDefaultedDouble 0.0 fldNum v
+
+    let dehydrateString fldNum v = dehydrateDefaultedString "" fldNum v
+    let dehydrateBytes  fldNum v = dehydrateDefaultedBytes (ArraySegment ([||]:byte array)) fldNum v
+
 
     (* Dehydrate Repeated Packed Numeric Values *)
 
@@ -196,7 +243,7 @@ module Serializer =
         >> flip (List.fold (fun buf x -> buf |> encFn x )) xs
 
     let inline varIntListPackedLen encode (xs:'a list) =
-        List.sumBy (encode >> Utility.varIntLen) xs
+        List.sumBy (encode >> Utility.varIntLenNoDefault) xs
 
     /// Generic Dehydrate for all packed varint types, excepted for bool & signed:
     ///   int32, int64, uint32, uint64, enum
@@ -261,6 +308,9 @@ module Serializer =
         let serializeMsg zcb = (^msg : (member SerializeLengthDelimited : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) (o,zcb))
         WireFormat.encodeTag fieldNum WireType.LengthDelimited
         >> serializeMsg
+
+    let inline dehydrateOptionalMessage fieldNum (o:^msg option when ^msg : (member SerializeLengthDelimited : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer)) =
+        o |> Utility.IfSome (fun o -> dehydrateMessage fieldNum o)
 
     (* Repeated Field Helpers *)
     let hydrateRepeated<'a> (hydrater:'a ref -> RawField -> unit) propRef rawField =
@@ -452,7 +502,7 @@ type MessageBase () =
     /// length of the object as a varint.
     member x.SerializedLengthDelimitedLength =
         let len = x.SerializedLength
-        let lenlen = Utility.varIntLen (uint64 len)
+        let lenlen = Utility.varIntLenNoDefault (uint64 len)
         (uint32 lenlen) + len
 
     /// Serialize first the length as a varint, followed by the serialized

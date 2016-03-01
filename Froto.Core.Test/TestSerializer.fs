@@ -48,7 +48,7 @@ module Utility =
     [<Fact>]
     let ``Length when encoded to Varint`` () =
 
-        varIntLen      0UL |> should equal 1
+        varIntLen      0UL |> should equal 0
         varIntLen   0x7FUL |> should equal 1
         varIntLen   0x80UL |> should equal 2
         varIntLen 0x3FFFUL |> should equal 2
@@ -299,6 +299,11 @@ module Serialize =
     [<Fact>]
     let ``Dehydrate integer varint`` () =
         ZCB(2)
+        |> dehydrateVarint fid 0UL
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(2)
         |> dehydrateVarint fid 2UL
         |> toArray
         |> should equal [| 0x08uy; 2uy |]
@@ -308,7 +313,7 @@ module Serialize =
         ZCB(2)
         |> dehydrateSInt32 fid 0
         |> toArray
-        |> should equal [| 0x08uy; 0uy |]
+        |> should equal Array.empty
 
         ZCB(2)
         |> dehydrateSInt32 fid -1
@@ -325,7 +330,7 @@ module Serialize =
         ZCB(2)
         |> dehydrateSInt64 fid 0L
         |> toArray
-        |> should equal [| 0x08uy; 0uy |]
+        |> should equal Array.empty
 
         ZCB(2)
         |> dehydrateSInt64 fid -1L
@@ -342,7 +347,7 @@ module Serialize =
         ZCB(2)
         |> dehydrateBool fid false
         |> toArray
-        |> should equal [| 0x08uy; 0uy |]
+        |> should equal Array.empty
 
         ZCB(2)
         |> dehydrateBool fid true
@@ -390,6 +395,32 @@ module Serialize =
         |> dehydrateBytes fid (ArraySegment([| 3uy; 4uy; 5uy; 6uy; |]))
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 4uy; 3uy; 4uy; 5uy; 6uy |]
+
+
+    let ``Dehydrate with default value`` () =
+        // Verify non-default value results in an actual value
+        ZCB(2)
+        |> dehydrateDefaultedVarint 0UL fid 2UL
+        |> toArray
+        |> should equal [| 0x08uy; 2uy |]
+
+        // Now, check that default value result in an empty array (value is elided)
+        let checkGetsElided f =
+            ZCB(16)
+            |> f
+            |> toArray
+            |> should equal Array.empty
+        
+        checkGetsElided <| dehydrateDefaultedVarint 1UL fid 1UL
+        checkGetsElided <| dehydrateDefaultedSInt32 2 fid 2
+        checkGetsElided <| dehydrateDefaultedSInt64 3L fid 3L
+        checkGetsElided <| dehydrateDefaultedBool true fid true
+        checkGetsElided <| dehydrateDefaultedFixed32 4 fid 4
+        checkGetsElided <| dehydrateDefaultedFixed64 5L fid 5L
+        checkGetsElided <| dehydrateDefaultedSingle 0.60f fid 0.60f
+        checkGetsElided <| dehydrateDefaultedDouble 0.70 fid 0.70
+        checkGetsElided <| dehydrateDefaultedString "Hello" fid "Hello"
+        checkGetsElided <| dehydrateDefaultedBytes (ArraySegment([|8uy;9uy|])) fid (ArraySegment([|8uy;9uy|]))
 
     [<Fact>]
     let ``Dehydrate Packed Varint`` () =
