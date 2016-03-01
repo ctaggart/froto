@@ -311,13 +311,13 @@ module EncodeField =
         fun () -> buf |> encodeTag 1 WireType.Fixed64 |> ignore
         |> should not' (throw typeof<ProtobufWireFormatException>)
 
-        fun () -> buf |> encodeTag RawField.MaxTag WireType.Fixed64 |> ignore
+        fun () -> buf |> encodeTag RawField.MaxFieldNum WireType.Fixed64 |> ignore
         |> should not' (throw typeof<ProtobufWireFormatException>)
 
         fun () -> buf |> encodeTag 0 WireType.Fixed64 |> ignore
         |> should throw typeof<ProtobufWireFormatException>
 
-        fun () -> buf |> encodeTag (RawField.MaxTag+1) WireType.Fixed64 |> ignore
+        fun () -> buf |> encodeTag (RawField.MaxFieldNum+1) WireType.Fixed64 |> ignore
         |> should throw typeof<ProtobufWireFormatException>
 
         fun () -> buf |> encodeTag -1 WireType.Fixed64 |> ignore

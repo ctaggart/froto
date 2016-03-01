@@ -4,6 +4,9 @@ open System
 open Froto.Core
 open Froto.Core.WireFormat
 
+///
+/// Utility functions used by the serializer
+///
 module Utility =
 
     /// Encode SInt32
@@ -29,6 +32,18 @@ module Utility =
     let tagLen (t:int32) =
         varIntLen ((uint64 t) <<< 3)
 
+///
+/// Serialization and Deserialization.
+///
+/// This module contains support for writing (or generating) code which
+/// performs deserialization (hydration) and serialization (dehydration) of
+/// individual properties.  These can be used directly to create methods
+/// on classes, records, discriminated unions, etc.
+///
+/// In addition, an abstract base-class (MessageBase) is provided which
+/// defines a simple DSL for constructing Classes which model Protobuf
+/// Messages.
+///
 module Serializer =
 
     let inline internal flip f a b = f b a
@@ -47,7 +62,9 @@ module Serializer =
 
 //---- Deserialization
 
-    (* Deserialize from Varint *)
+    /// Helper to deserialize from Varint.
+    /// Since this is used by an inline function (hydrateEnum),
+    /// it cannot be marked "internal".
     let helper_vi f fld = function
         | RawField.Varint (n, v) ->
             fld := f v
@@ -63,7 +80,7 @@ module Serializer =
     let hydrateBool   = helper_vi toBool
     let inline hydrateEnum x  = helper_vi (int32 >> enum) x
 
-    (* hydrate from Fixed32 *)
+    /// Helper to deserialize from Fixed32
     let internal helper_fx32 f fld = function
         | RawField.Fixed32 (_, v) ->
             fld := f v
@@ -81,8 +98,7 @@ module Serializer =
             BitConverter.ToSingle(bytes,0)
         helper_fx32 aux
 
-
-    (* hydrate from Fixed64 *)
+    /// Helper to deserialize from Fixed64
     let internal helper_fx64 f fld = function
         | RawField.Fixed64 (_, v) ->
             fld := f v
@@ -101,7 +117,7 @@ module Serializer =
         helper_fx64 aux
 
 
-    (* hydrate from LengthDelimited *)
+    /// Helper to deserialize from a LengthDelimited
     let internal helper_bytes f fld = function
         | RawField.LengthDelimited (_, v) ->
             fld := f v
@@ -120,7 +136,9 @@ module Serializer =
     // TODO: Can the following be made type safe?
     let hydrateMessage messageCtor = helper_bytes messageCtor
 
-    (* hydrate Packed Repeated from LengthDelimited *)
+    /// Helper to deserialize Packed Repeated from LengthDelimited.
+    /// Since this is used by an inline function (hydratePackedEnum),
+    /// it cannot be marked "internal".
     let helper_packed f fld = function
         | RawField.LengthDelimited (_,v) ->
             fld := 
@@ -258,8 +276,14 @@ module Serializer =
             zcb
         wrapperFn
 
-//---- Support for hydrating and dehydrating an entire class
-
+///
+/// Abstract base class for Protobuf-serializable Messages.
+///
+/// This class provides a simple DSL for deriving your own serializable
+/// classes.  Such classes are best written in F#, due to the strong
+/// dependance on function currying (partial function application),
+/// especially in the DecoderRing and EncoderRing properties.
+///
 [<AbstractClass>]
 type MessageBase () =
 
@@ -268,9 +292,35 @@ type MessageBase () =
     let asArraySegment (zcb:ZeroCopyWriteBuffer) =
         zcb.AsArraySegment
 
+    /// Derrived classes must provide a DecoderRing property, which is used
+    /// to map from a field number to a deserialization (hydration) function.
+    /// This is a map, because Protobuf fields can appear in any order.
     abstract DecoderRing : Map<int,(RawField->unit)>
+
+    /// Derrived classes must provide an EncoderRing property, which is used
+    /// to serialize the class.
+    ///
+    /// TODO: Consider changing this to a single function, rather than a list,
+    /// making the caller responsible for chaining the individual field
+    /// serializers.  Or, consider having the base class chain these into a
+    /// private cached function.
     abstract EncoderRing : (ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) list
 
+    /// List of fields provided in the protobuf, but which were not found on
+    /// the DecoderRing.  All these fields will be serialized to the buffer
+    /// after all fields on the EncoderRing.
+    member x.UnknownFields
+        with get() = m_unknownFields
+        and  set(v) = m_unknownFields <- v
+
+    /// Deserialize from an ArraySegment.
+    ///
+    /// The entire ArraySegment will be consumed, so must be of the right
+    /// length to exactly contain the message.
+    ///
+    /// The buffer will be merged with any existing values: non-repeated
+    /// fields will replace any existing value, and repeated fields will be
+    /// appended to any existing values.
     member x.Deserialize (buf:System.ArraySegment<byte>) =
         let zcb = ZeroCopyReadBuffer(buf)
         seq {
@@ -278,62 +328,97 @@ type MessageBase () =
                 yield WireFormat.decodeField zcb
             }
         |> Seq.iter x.DeserializeField
-        zcb.Remainder
 
+    /// Deserialize from an ArraySegment whose first value is a varint
+    /// specifying the length of the message.
+    ///
+    /// Returns the remaining bytes in the buffer as an ArraySegment.
     member x.DeserializeLengthDelimited (buf:System.ArraySegment<byte>) =
         let zcb = ZeroCopyReadBuffer(buf)
         let len = zcb |> WireFormat.decodeVarint |> uint32
-        x.Deserialize( zcb.Remainder )
+        let end_ = zcb.Position + len
+        seq {
+            while zcb.Position < end_ do
+                yield WireFormat.decodeField zcb
+            }
+        |> Seq.iter x.DeserializeField
+        if end_ <> zcb.Position then
+            raise <| ProtobufSerializerException("Incorrect length for length-delimited field")
+        zcb.Remainder
 
+    // TODO: Consider adding Deserialize overrides for ZeroCopyReadBuffer
+    //       HOWEVER, make sure the class code stays relatively simple.
+
+
+    /// Return number of bytes needed to serialize the object
+    ///
+    /// @see SerializedLengthDelimitedLength
+    member x.SerializedLength =
+        let ncb = NullWriteBuffer()
+        ncb |> x.Serialize |> ignore
+        ncb.Length
+
+    /// Serialize the object by applying all functions on the EncoderRing.
+    ///
+    /// Will also serialize all fields stored on the UnknownFields list.
     member x.Serialize (zcb:ZeroCopyWriteBuffer) =
         for fn in x.EncoderRing do
             fn zcb |> ignore
         x.SerializeUnknownFields zcb
         zcb
 
+    /// Serialize the object by applying all functions on the EncoderRing.
+    ///
+    /// Will also serialize all fields stored on the UnknownFields list.
     member x.Serialize (buf:System.ArraySegment<byte>) =
         ZeroCopyWriteBuffer(buf)
         |> x.Serialize
         |> asArraySegment
 
-    member x.SerializedLength =
-        let ncb = NullWriteBuffer()
-        ncb |> x.Serialize |> ignore
-        ncb.Length
-
+    /// Serialize to a new byte array, and return as an ArraySegment.
     member x.Serialize() =
         Array.zeroCreate (int32 x.SerializedLength)
         |> ArraySegment
         |> x.Serialize
 
-    member x.SerializeLengthDelimited (zcb:ZeroCopyWriteBuffer) =
-        zcb
-        |> WireFormat.encodeVarint (uint64 x.SerializedLength)
-        |> x.Serialize
-
-    member x.SerializeLengthDelimited (buf:System.ArraySegment<byte>) =
-        ZeroCopyWriteBuffer(buf)
-        |> x.SerializeLengthDelimited
-        |> asArraySegment
-
+    /// Return number of bytes needed to serialize both the object and the
+    /// length of the object as a varint.
     member x.SerializedLengthDelimitedLength =
         let len = x.SerializedLength
         let lenlen = Utility.varIntLen (uint64 len)
         (uint32 lenlen) + len
 
+    /// Serialize first the length as a varint, followed by the serialized
+    /// object.
+    member x.SerializeLengthDelimited (zcb:ZeroCopyWriteBuffer) =
+        zcb
+        |> WireFormat.encodeVarint (uint64 x.SerializedLength)
+        |> x.Serialize
+
+    /// Serialize first the length as a varint, followed by the serialized
+    /// object.
+    member x.SerializeLengthDelimited (buf:System.ArraySegment<byte>) =
+        ZeroCopyWriteBuffer(buf)
+        |> x.SerializeLengthDelimited
+        |> asArraySegment
+
+    /// Serialize, to a new byte array, the length as a varint followed by
+    /// the serialized object, and return as an ArraySegment.
     member x.SerializeLengthDelimited() =
         Array.zeroCreate (int32 x.SerializedLengthDelimitedLength)
         |> ArraySegment
         |> x.SerializeLengthDelimited
 
-    member x.UnknownFields = m_unknownFields
-
+    /// Deserialize a single field, using the DecoderRing.
+    /// If the field number is not on the DecoderRing, then store the
+    /// RawField on the UnknownFields list.
     member private x.DeserializeField (field:Encoding.RawField) =
         let n = field.FieldNum
         match x.DecoderRing |> Map.tryFind n with
         | Some(deserializeFn)   -> deserializeFn field
         | None                  -> m_unknownFields <- field :: m_unknownFields
 
+    /// Serialize all unknown fields
     member private x.SerializeUnknownFields (zcb:ZeroCopyWriteBuffer) =
 
         let inline emplace (src:ArraySegment<byte>) (dst:ArraySegment<byte>) =

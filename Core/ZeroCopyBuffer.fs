@@ -19,9 +19,9 @@ open System
 
 type ZeroCopyBufferBase (seg:ArraySegment<byte>) =
 
-    member val internal Array = seg.Array with get
-    member val internal Position = uint32 seg.Offset with get,set
-    member val internal Limit = uint32 seg.Offset + uint32 seg.Count with get
+    member val Array = seg.Array with get
+    member val Position = uint32 seg.Offset with get,set
+    member val Limit = uint32 seg.Offset + uint32 seg.Count with get
 
     new ( backing : byte array ) =
         ZeroCopyBufferBase(ArraySegment(backing))
