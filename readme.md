@@ -7,19 +7,37 @@
  * https://github.com/mgravell/protobuf-net
 
 ## NuGet
- * [Froto.Parser](http://www.nuget.org/packages/Froto.Parser)
+ * [Froto.Parser](http://www.nuget.org/packages/Froto.Parser) - Protobuf Parser
+ * [Froto.Core](http://www.nuget.org/packages/Froto.Core) - Protobuf F# Serialization Framework and low-level WireFormat library.
 
 ## Build Environment Setup for Visual Studio
   * Install [Paket for Visual Studio](https://github.com/fsprojects/Paket.VisualStudio) from the "Tools/Extensions and Updates..." menu
   * Solution path cannot contain pound sign (#), such as ".../F#/froto/" [due to a .net limitation](http://stackoverflow.com/questions/9319656/how-to-encode-a-path-that-contains-a-hash)
 
 ## Status
- * 2016-01-26 Complete rewrite of parser to support full proto2 and proto3 syntax
- * 2014-02-28 Dusted off project and moved to GitHub
- * 2012-11-02 blog [Parsing a Protocol Buffers .proto File in F#](http://blog.ctaggart.com/2012/11/parsing-protocol-buffers-proto-file-in-f.html)
+ * v0.2.1 (2016-03-01) Added F# serialization framework to Core, w/full wire format support.
+ * v0.2.0 (2016-01-26) Complete rewrite of parser to support full proto2 and proto3 syntax
+ * v0.1.0 (2014-02-28) v0.1.0 Dusted off project and moved to GitHub
+ * v0.0.5 (2012-11-02) blog [Parsing a Protocol Buffers .proto File in F#](http://blog.ctaggart.com/2012/11/parsing-protocol-buffers-proto-file-in-f.html)
 
 ## Updating from Froto 0.1.0
 
+### Core
+ * WireFormat was rewritten to provide deserialization into Discriminated Union
+   cases, and serialization redone to minimize memory copying.
+
+  * Code depending on `Froto.Core.WireFormat` will need to be rewritten to
+    work with `Froto.Core.ZeroCopyReadBuffer` and `Froto.Core.ZeroCopyWriteBuffer`.
+  * Alternatively, the functions in the `Froto.Core.Encoding.Serializer`
+    module can provide a slightly higher level of abstraction; or, see next.
+
+ * Added a framework for easily constructing serializable class types.
+
+  * See `Froto.Core.Encoding.MessageBase` for an abstract base class which
+    provides the serialization framework, and see
+   `Froto.Core.Test/ExampleProtoClass.fs` for example usage.
+
+### Parser
  * The parser now generates an AST based on Discriminated Unions, rather than
    objects.  `Froto.Parser.Ast` (and the underlying parser) now support the full proto2
    and proto3 languages.
