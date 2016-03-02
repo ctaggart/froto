@@ -4,6 +4,7 @@ open Xunit
 open FsUnit.Xunit
 
 open System
+open Froto.Core
 open Froto.Core.Encoding
 
 [<Xunit.Trait("Kind", "Unit")>]
@@ -28,6 +29,11 @@ module MessageSerialization =
         override x.Clear() =
             m_id := 0
             m_name := ""
+
+        
+        override x.RequiredFields =
+            [ 1; 2 ]
+            |> Set.ofList
 
         override x.DecoderRing =
             [ 1, m_id   |> Serializer.hydrateInt32
@@ -60,6 +66,20 @@ module MessageSerialization =
         let msg = InnerMessage.FromArraySegment(buf)
         msg.ID |> should equal 99
         msg.Name |> should equal "Test message"
+
+    [<Fact>]
+    let ``Missing required field throws exception`` () =
+        let buf =
+            [|
+//                0x01uy<<<3 ||| 0uy; // tag: id=1; varint
+//                99uy;               // value 99
+                0x02uy<<<3 ||| 2uy  // tag: id=2; length delim
+                12uy;               // length = 12
+                0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
+                                    // value "Test message"
+            |] |> ArraySegment
+        fun () -> InnerMessage.FromArraySegment(buf) |> ignore
+        |> should throw typeof<Froto.Core.ProtobufSerializerException>
 
     [<Fact>]
     let ``Serialize simple message`` () =

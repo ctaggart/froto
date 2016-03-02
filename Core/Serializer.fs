@@ -359,12 +359,43 @@ type MessageBase () =
     /// the serialization functions for all known members.
     abstract EncoderRing : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer
 
+    /// Derrived classes MAY provide a list of required fields; when either
+    /// merging or deserializing, all of these fields MUST be present in the
+    /// serialized message, otherwise an exception will be thrown.
+    abstract RequiredFields : Set<FieldNum>
+    override x.RequiredFields = Set.empty
+
     /// List of fields provided in the protobuf, but which were not found on
     /// the DecoderRing.  All these fields will be serialized to the buffer
     /// after all fields on the EncoderRing.
     member x.UnknownFields
         with get() = m_unknownFields
         and  set(v) = m_unknownFields <- v
+
+    // Internal helper
+    member private x.MergeWhile (predicate:ZeroCopyReadBuffer->bool) (zcb:ZeroCopyReadBuffer) =
+        if Set.isEmpty x.RequiredFields then
+            seq {
+                while predicate zcb do
+                    yield WireFormat.decodeField zcb
+                }
+            |> Seq.iter x.DeserializeField
+            zcb
+        else
+            let mutable foundFields = Set.empty
+            seq {
+                while predicate zcb do
+                    let rawField = WireFormat.decodeField zcb
+                    let fieldId = rawField.FieldNum
+                    foundFields <- foundFields |> Set.add fieldId
+                    yield rawField
+                }
+            |> Seq.iter x.DeserializeField
+            let missingFields = (x.RequiredFields - foundFields)
+            if Set.isEmpty missingFields
+            then zcb
+            else raise <| ProtobufSerializerException(sprintf "Missing required fields %A" missingFields)
+
 
     /// Merge from a serialized buffer.
     ///
@@ -375,12 +406,8 @@ type MessageBase () =
     /// The entire buffer will be consumed, so must be of the right
     /// length to exactly contain the message.
     member x.Merge (zcb:ZeroCopyReadBuffer) : ZeroCopyReadBuffer =
-        seq {
-            while not zcb.IsEof do
-                yield WireFormat.decodeField zcb
-            }
-        |> Seq.iter x.DeserializeField
         zcb
+        |> x.MergeWhile (fun zcb -> not zcb.IsEof)
 
     /// Merge from a buffer whose first value is a varint
     /// specifying the length of the message.
@@ -393,14 +420,8 @@ type MessageBase () =
     member x.MergeLengthDelimited (zcb:ZeroCopyReadBuffer) =
         let len = zcb |> WireFormat.decodeVarint |> uint32
         let end_ = zcb.Position + len
-        seq {
-            while zcb.Position < end_ do
-                yield WireFormat.decodeField zcb
-            }
-        |> Seq.iter x.DeserializeField
-        if end_ <> zcb.Position then
-            raise <| ProtobufSerializerException("Incorrect length for length-delimited field")
         zcb
+        |> x.MergeWhile (fun zcb -> zcb.Position < end_)
 
     /// Merge from an ArraySegment.
     ///

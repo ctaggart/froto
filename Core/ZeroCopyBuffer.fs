@@ -27,7 +27,7 @@ type ZeroCopyBufferBase (seg:ArraySegment<byte>) =
         ZeroCopyBufferBase(ArraySegment(backing))
 
     member x.IsEof
-        with get() = x.Position = x.Limit
+        with get() = x.Position >= x.Limit
 
 /// Readable ZeroCopyBuffer (see @ZeroCopyBufferBase)
 type ZeroCopyReadBuffer (seg:ArraySegment<byte>) =
