@@ -23,13 +23,19 @@
 ## Updating from Froto 0.1.0
 
 ### Core
- * WireFormat was rewritten to provide deserialization into Discriminated Union
-   cases, and serialization redone to minimize memory copying.
+ * `Froto.Core` was reworked to provide serialization and deserialization of
+   all supported wire types and to minimize buffer copying.
 
-  * Code depending on `Froto.Core.WireFormat` will need to be rewritten to
-    work with `Froto.Core.ZeroCopyReadBuffer` and `Froto.Core.ZeroCopyWriteBuffer`.
+  * Code depending on `Froto.Core.IO` will need to be rewritten to use the
+    following modules and types:
+     - `Froto.Core.WireFormat`
+     - `Froto.Core.Encoding.RawField`
+     - `Froto.Core.ZeroCopyBuffer` and subclasses
+
   * Alternatively, the functions in the `Froto.Core.Encoding.Serializer`
-    module can provide a slightly higher level of abstraction; or, see next.
+    module can provide a slightly higher level of abstraction.
+
+  * Or, see next.
 
  * Added a framework for easily constructing serializable class types.
 
