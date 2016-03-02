@@ -10,11 +10,6 @@ open Froto.Core.Encoding
 [<Xunit.Trait("Kind", "Unit")>]
 module MessageSerialization =
 
-(* TODO:
-    Write tests (and implementation) for:
-    - Proto2 required field missing causes exception
-*)
-
     let toArray (seg:ArraySegment<'a>) =
         seg.Array.[ seg.Offset .. (seg.Count-1) ]
 
