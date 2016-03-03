@@ -1,8 +1,12 @@
+### 0.2.1 _ 2016-03
+  * [#19](https://github.com/ctaggart/froto/issues/19) Improve support for serialization/deserialization
+
 ### 0.2.0 _ 2016-02 under construction
+ 
   * [#6](https://github.com/ctaggart/froto/issues/6) Add support for proto3 language
   * [#8](https://github.com/ctaggart/froto/issues/8) Strict/complete proto2 compliance
-  * [#9](https://github.com/ctaggart/froto/issues/9) updated build & dependencies
-    * switched from Apache 2 to MIT license
+  * [#9](https://github.com/ctaggart/froto/issues/9) Updated build & dependencies 
+  * switched from Apache 2 to MIT license
 
 ### 0.1.0 _ 2014
   * moved project to GitHub https://github.com/ctaggart/froto

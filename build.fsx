@@ -40,6 +40,7 @@ Target "AssemblyInfo" <| fun _ ->
         Attribute.Version assemblyVersion 
         Attribute.InformationalVersion iv.String ]
     common |> CreateFSharpAssemblyInfo "ProtoParser/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "Core/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Exe/AssemblyInfo.fs"
 
@@ -55,6 +56,7 @@ Target "UnitTest" <| fun _ ->
             Parallel = ParallelMode.All
         })
         [   @"ProtoParser.Test\bin\Release\Froto.Parser.Test.dll"
+            @"Froto.Core.Test\bin\Release\Froto.Core.Test.dll"
             @"Roslyn.Test\bin\Release\Froto.Roslyn.Test.dll"
         ]
 
@@ -65,6 +67,7 @@ Target "SourceLink" <| fun _ ->
         let url = "https://raw.githubusercontent.com/ctaggart/froto/{0}/%var2%"
         SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
     sourceIndex "ProtoParser/Froto.Parser.fsproj" None
+    sourceIndex "Core/Froto.Core.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
     sourceIndex "Exe/Exe.fsproj" None
 
@@ -84,6 +87,20 @@ Target "NuGet" <| fun _ ->
                 ] 
         }]
     }) "ProtoParser/Froto.Parser.nuspec"
+
+    NuGet (fun p -> 
+    { p with
+        Version = buildVersion
+        WorkingDir = "Core/bin/Release"
+        OutputPath = "bin"
+        DependenciesByFramework =
+        [{ 
+            FrameworkVersion = "net45"
+            Dependencies = 
+                [
+                ] 
+        }]
+    }) "Core/Froto.Core.nuspec"
 
     NuGet (fun p -> 
     { p with
