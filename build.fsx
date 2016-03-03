@@ -16,7 +16,7 @@ let isVersionTag tag = Version.TryParse tag |> fst
 let hasRepoVersionTag = isAppVeyorBuild && AppVeyorEnvironment.RepoTag && isVersionTag AppVeyorEnvironment.RepoTagName
 let assemblyVersion = if hasRepoVersionTag then AppVeyorEnvironment.RepoTagName else release.NugetVersion
 let buildDate = DateTime.UtcNow
-let buildVersion = 
+let buildVersion =
     if hasRepoVersionTag then assemblyVersion
     else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion (Int32.Parse(AppVeyorEnvironment.BuildNumber).ToString("000"))
     else sprintf "%s-a%s" assemblyVersion (buildDate.ToString "yyMMddHHmm")
@@ -26,7 +26,7 @@ MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Mini
 Target "BuildVersion" <| fun _ ->
     Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" buildVersion) |> ignore
 
-Target "Clean" <| fun _ -> !! "**/bin/" ++ "**/obj/" |> DeleteDirs 
+Target "Clean" <| fun _ -> !! "**/bin/" ++ "**/obj/" |> DeleteDirs
 
 Target "AssemblyInfo" <| fun _ ->
     let iv = Text.StringBuilder() // json
@@ -36,8 +36,8 @@ Target "AssemblyInfo" <| fun _ ->
         iv.Appendf ",\\\"gitCommit\\\":\\\"%s\\\"" AppVeyor.AppVeyorEnvironment.RepoCommit
         iv.Appendf ",\\\"gitBranch\\\":\\\"%s\\\"" AppVeyor.AppVeyorEnvironment.RepoBranch
     iv.Appendf "}"
-    let common = [ 
-        Attribute.Version assemblyVersion 
+    let common = [
+        Attribute.Version assemblyVersion
         Attribute.InformationalVersion iv.String ]
     common |> CreateFSharpAssemblyInfo "ProtoParser/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Core/AssemblyInfo.fs"
@@ -49,16 +49,25 @@ Target "Build" <| fun _ ->
 
 Target "UnitTest" <| fun _ ->
     CreateDir "bin"
-    xUnit2 (fun p -> 
+    let dlls =
+        // Mono can't load .NET 4.5.2 yet
+        if isMono then
+            [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
+                @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
+                //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+            ]
+        else
+            [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
+                @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
+                @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+            ]
+    xUnit2 (fun p ->
         { p with
             IncludeTraits = ["Kind", "Unit"]
-            XmlOutputPath = Some @"bin\UnitTest.xml"
+            XmlOutputPath = Some @"bin/UnitTest.xml"
             Parallel = ParallelMode.All
         })
-        [   @"ProtoParser.Test\bin\Release\Froto.Parser.Test.dll"
-            @"Froto.Core.Test\bin\Release\Froto.Core.Test.dll"
-            @"Roslyn.Test\bin\Release\Froto.Roslyn.Test.dll"
-        ]
+        dlls
 
 Target "SourceLink" <| fun _ ->
     let sourceIndex proj pdb =
@@ -73,52 +82,52 @@ Target "SourceLink" <| fun _ ->
 
 Target "NuGet" <| fun _ ->
     CreateDir "bin"
-    NuGet (fun p -> 
+    NuGet (fun p ->
     { p with
         Version = buildVersion
         WorkingDir = "ProtoParser/bin/Release"
         OutputPath = "bin"
         DependenciesByFramework =
-        [{ 
+        [{
             FrameworkVersion = "net45"
-            Dependencies = 
+            Dependencies =
                 [
                 "FParsec", GetPackageVersion "./packages/" "FParsec"
-                ] 
+                ]
         }]
     }) "ProtoParser/Froto.Parser.nuspec"
 
-    NuGet (fun p -> 
+    NuGet (fun p ->
     { p with
         Version = buildVersion
         WorkingDir = "Core/bin/Release"
         OutputPath = "bin"
         DependenciesByFramework =
-        [{ 
+        [{
             FrameworkVersion = "net45"
-            Dependencies = 
+            Dependencies =
                 [
-                ] 
+                ]
         }]
     }) "Core/Froto.Core.nuspec"
 
-    NuGet (fun p -> 
+    NuGet (fun p ->
     { p with
         Version = buildVersion
         WorkingDir = "Roslyn/bin/Release"
         OutputPath = "bin"
         DependenciesByFramework =
-        [{ 
+        [{
             FrameworkVersion = "net45"
-            Dependencies = 
+            Dependencies =
                 [
                 "Froto.Parser", sprintf "[%s]" buildVersion // exact version
                 "Microsoft.CodeAnalysis.CSharp.Workspaces", GetPackageVersion "./packages/" "Microsoft.CodeAnalysis.CSharp.Workspaces"
-                ] 
+                ]
         }]
     }) "Roslyn/Froto.Roslyn.nuspec"
 
-    NuGet (fun p -> 
+    NuGet (fun p ->
     { p with
         Version = buildVersion
         WorkingDir = "Exe/bin/Release"
@@ -126,13 +135,14 @@ Target "NuGet" <| fun _ ->
     }) "Exe/Froto.nuspec"
 
 // chain targets together only on AppVeyor
-let (==>) a b = a =?> (b, isAppVeyorBuild)
+//let (==>) a b = a =?> (b, isAppVeyorBuild)
 
-"BuildVersion"
-==> "AssemblyInfo"
+"Clean"
+=?> ("BuildVersion", isAppVeyorBuild)
+=?> ("AssemblyInfo", isAppVeyorBuild)
 ==> "Build"
 ==> "UnitTest"
-==> "SourceLink"
+=?> ("SourceLink", isAppVeyorBuild)
 ==> "NuGet"
 
 RunTargetOrDefault "NuGet"

@@ -21,12 +21,18 @@ module CU = CompilationUnitSyntax
 module NS = NamespaceDeclarationSyntax
 module CD = ClassDeclarationSyntax
 
+let isMono = System.Type.GetType "Mono.Runtime" |> isNull |> not
+
 /// gets the path for a test file based on the relative path from the executing assembly
 let getTestFile file =
-     let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
-     let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
-     let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent).FullName
-     Path.Combine(solutionPath, Path.Combine("test",file))
+    let solutionPath =
+        if isMono then
+            "../../../"
+        else
+            let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
+            let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
+            (assemblyPath.Parent.Parent.Parent.Parent).FullName
+    Path.Combine(solutionPath, Path.Combine("test",file))
 
 [<Fact>]
 let ``test creating a type`` () =
