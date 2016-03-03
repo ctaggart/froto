@@ -49,16 +49,25 @@ Target "Build" <| fun _ ->
 
 Target "UnitTest" <| fun _ ->
     CreateDir "bin"
+    let dlls =
+        // Mono can't load .NET 4.5.2 yet
+        if isMono then
+            [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
+                @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
+                //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+            ]
+        else
+            [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
+                @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
+                @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+            ]
     xUnit2 (fun p ->
         { p with
             IncludeTraits = ["Kind", "Unit"]
             XmlOutputPath = Some @"bin/UnitTest.xml"
             Parallel = ParallelMode.All
         })
-        [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
-            @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
-            @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
-        ]
+        dlls
 
 Target "SourceLink" <| fun _ ->
     let sourceIndex proj pdb =
