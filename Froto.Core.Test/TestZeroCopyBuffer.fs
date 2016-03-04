@@ -15,7 +15,7 @@ type System.ArraySegment<'a>
 
 [<Fact>]
 let ``Can read bytes`` () =
-    let zc = ZeroCopyReadBuffer( [| 3uy; 2uy; 1uy |] )
+    let zc = ZeroCopyBuffer( [| 3uy; 2uy; 1uy |] )
 
     let a = zc.ReadByte()
     a |> should equal 3uy
@@ -31,7 +31,7 @@ let ``Can read bytes`` () =
 
 [<Fact>]
 let ``Can read range`` () =
-    let zc = ZeroCopyReadBuffer([| 3uy; 2uy; 1uy |])
+    let zc = ZeroCopyBuffer([| 3uy; 2uy; 1uy |])
 
     let r = zc.ReadByteSegment(2u)
     r.Count |> should equal 2
@@ -52,7 +52,7 @@ let ``Can read range`` () =
 
 [<Fact>]
 let ``Can write bytes`` () =
-    let zc = ZeroCopyWriteBuffer([| 3uy; 2uy; 1uy |])
+    let zc = ZeroCopyBuffer([| 3uy; 2uy; 1uy |])
 
     zc.WriteByte(42uy)
     zc.WriteByte(43uy)
@@ -77,7 +77,7 @@ let ``Can write range`` () =
     let emplace (dest:ArraySegment<byte>) =
         Array.Copy( xs, 0L, dest.Array, int64 dest.Offset, int64 len)
 
-    let zc = ZeroCopyWriteBuffer(256)
+    let zc = ZeroCopyBuffer(256)
     zc.WriteByteSegment (uint32 len) emplace
 
     zc.ToArray()

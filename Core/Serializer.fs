@@ -168,7 +168,7 @@ module Serializer =
         | RawField.LengthDelimited (_,v) ->
             fld := 
                 [
-                    let s = ZeroCopyReadBuffer(v)
+                    let s = ZeroCopyBuffer(v)
                     while not s.IsEof do
                         yield (f s)
                 ]
@@ -304,12 +304,12 @@ module Serializer =
             fieldNum xs
 
     (* Dehydrate Message *)
-    let inline dehydrateMessage fieldNum (o:^msg when ^msg : (member SerializeLengthDelimited : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer)) =
-        let serializeMsg zcb = (^msg : (member SerializeLengthDelimited : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) (o,zcb))
+    let inline dehydrateMessage fieldNum (o:^msg when ^msg : (member SerializeLengthDelimited : ZeroCopyBuffer -> ZeroCopyBuffer)) =
+        let serializeMsg zcb = (^msg : (member SerializeLengthDelimited : ZeroCopyBuffer -> ZeroCopyBuffer) (o,zcb))
         WireFormat.encodeTag fieldNum WireType.LengthDelimited
         >> serializeMsg
 
-    let inline dehydrateOptionalMessage fieldNum (o:^msg option when ^msg : (member SerializeLengthDelimited : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer)) =
+    let inline dehydrateOptionalMessage fieldNum (o:^msg option when ^msg : (member SerializeLengthDelimited : ZeroCopyBuffer -> ZeroCopyBuffer)) =
         o |> Utility.IfSome (fun o -> dehydrateMessage fieldNum o)
 
     (* Repeated Field Helpers *)
@@ -318,9 +318,9 @@ module Serializer =
         hydrater (ref element) rawField
         propRef := element :: !propRef
 
-    let dehydrateRepeated<'a> (dehydrater:FieldNum -> 'a -> ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) (fldNum:int32) (vs:'a list) : (ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer) =
+    let dehydrateRepeated<'a> (dehydrater:FieldNum -> 'a -> ZeroCopyBuffer -> ZeroCopyBuffer) (fldNum:int32) (vs:'a list) : (ZeroCopyBuffer -> ZeroCopyBuffer) =
         let dh = flip (dehydrater fldNum)
-        let wrapperFn (zcb:ZeroCopyWriteBuffer) =
+        let wrapperFn (zcb:ZeroCopyBuffer) =
             vs
             |> List.iter (dh zcb >> ignore)
             zcb
@@ -332,17 +332,17 @@ module Serializer =
 /// This class provides a simple DSL for deriving your own serializable
 /// classes.  Such classes are best written in F#, due to the strong
 /// dependance on function currying (partial function application),
-/// especially in the DecoderRing and EncoderRing properties.
+/// especially in the DecoderRing and Encode properties.
 ///
 [<AbstractClass>]
 type MessageBase () =
 
     let mutable m_unknownFields = List.empty
 
-    let asArraySegment (zcb:ZeroCopyWriteBuffer) =
+    let asArraySegment (zcb:ZeroCopyBuffer) =
         zcb.AsArraySegment
 
-    let remainder (zcb:ZeroCopyReadBuffer) =
+    let remainder (zcb:ZeroCopyBuffer) =
         zcb.Remainder
 
     /// Derrived classes must provide a Clear function, which resets all
@@ -354,10 +354,10 @@ type MessageBase () =
     /// This is a map, because Protobuf fields can appear in any order.
     abstract DecoderRing : Map<int,(RawField->unit)>
 
-    /// Derrived classes must provide an EncoderRing property, which is used
+    /// Derrived classes must provide an Encode method, which is used
     /// to serialize the class.  Generally, this single function chains
     /// the serialization functions for all known members.
-    abstract EncoderRing : ZeroCopyWriteBuffer -> ZeroCopyWriteBuffer
+    abstract Encode : ZeroCopyBuffer -> ZeroCopyBuffer
 
     /// Derrived classes MAY provide a list of required fields; when either
     /// merging or deserializing, all of these fields MUST be present in the
@@ -367,13 +367,13 @@ type MessageBase () =
 
     /// List of fields provided in the protobuf, but which were not found on
     /// the DecoderRing.  All these fields will be serialized to the buffer
-    /// after all fields on the EncoderRing.
+    /// after all fields on the Encode.
     member x.UnknownFields
         with get() = m_unknownFields
         and  set(v) = m_unknownFields <- v
 
     // Internal helper
-    member private x.MergeWhile (predicate:ZeroCopyReadBuffer->bool) (zcb:ZeroCopyReadBuffer) =
+    member private x.MergeWhile (predicate:ZeroCopyBuffer->bool) (zcb:ZeroCopyBuffer) =
         if Set.isEmpty x.RequiredFields then
             seq {
                 while predicate zcb do
@@ -405,7 +405,7 @@ type MessageBase () =
     ///
     /// The entire buffer will be consumed, so must be of the right
     /// length to exactly contain the message.
-    member x.Merge (zcb:ZeroCopyReadBuffer) : ZeroCopyReadBuffer =
+    member x.Merge (zcb:ZeroCopyBuffer) : ZeroCopyBuffer =
         zcb
         |> x.MergeWhile (fun zcb -> not zcb.IsEof)
 
@@ -417,7 +417,7 @@ type MessageBase () =
     /// fields in the buffer will be added to any existing values.
     ///
     /// Returns the remaining bytes in the buffer as an ArraySegment.
-    member x.MergeLengthDelimited (zcb:ZeroCopyReadBuffer) =
+    member x.MergeLengthDelimited (zcb:ZeroCopyBuffer) =
         let len = zcb |> WireFormat.decodeVarint |> uint32
         let end_ = zcb.Position + len
         zcb
@@ -432,7 +432,7 @@ type MessageBase () =
     /// The entire ArraySegment will be consumed, so must be of the right
     /// length to exactly contain the message.
     member x.Merge (buf:System.ArraySegment<byte>) =
-        ZeroCopyReadBuffer(buf)
+        ZeroCopyBuffer(buf)
         |> x.Merge
         |> remainder
 
@@ -445,7 +445,7 @@ type MessageBase () =
     ///
     /// Returns the remaining bytes in the buffer as an ArraySegment.
     member x.MergeLengthDelimited (buf:System.ArraySegment<byte>) =
-        ZeroCopyReadBuffer(buf)
+        ZeroCopyBuffer(buf)
         |> x.MergeLengthDelimited
         |> remainder
 
@@ -455,7 +455,7 @@ type MessageBase () =
     ///
     /// The entire buffer will be consumed, so must be of the right
     /// length to exactly contain the message.
-    member x.Deserialize (zcb:ZeroCopyReadBuffer) : ZeroCopyReadBuffer =
+    member x.Deserialize (zcb:ZeroCopyBuffer) : ZeroCopyBuffer =
         x.Clear()
         x.Merge(zcb)
 
@@ -465,7 +465,7 @@ type MessageBase () =
     /// Clear()'s the object before deserializing.
     ///
     /// Returns the remaining bytes in the buffer as an ArraySegment.
-    member x.DeserializeLengthDelimited (zcb:ZeroCopyReadBuffer) =
+    member x.DeserializeLengthDelimited (zcb:ZeroCopyBuffer) =
         x.Clear()
         x.MergeLengthDelimited(zcb)
 
@@ -497,19 +497,19 @@ type MessageBase () =
         ncb |> x.Serialize |> ignore
         ncb.Length
 
-    /// Serialize the object by applying all functions on the EncoderRing.
+    /// Serialize the object by applying all functions on the Encode.
     ///
     /// Will also serialize all fields stored on the UnknownFields list.
-    member x.Serialize (zcb:ZeroCopyWriteBuffer) =
+    member x.Serialize (zcb:ZeroCopyBuffer) =
         zcb
-        |> x.EncoderRing
+        |> x.Encode
         |> x.SerializeUnknownFields
 
-    /// Serialize the object by applying all functions on the EncoderRing.
+    /// Serialize the object by applying all functions on the Encode.
     ///
     /// Will also serialize all fields stored on the UnknownFields list.
     member x.Serialize (buf:System.ArraySegment<byte>) =
-        ZeroCopyWriteBuffer(buf)
+        ZeroCopyBuffer(buf)
         |> x.Serialize
         |> asArraySegment
 
@@ -528,7 +528,7 @@ type MessageBase () =
 
     /// Serialize first the length as a varint, followed by the serialized
     /// object.
-    member x.SerializeLengthDelimited (zcb:ZeroCopyWriteBuffer) =
+    member x.SerializeLengthDelimited (zcb:ZeroCopyBuffer) =
         zcb
         |> WireFormat.encodeVarint (uint64 x.SerializedLength)
         |> x.Serialize
@@ -536,7 +536,7 @@ type MessageBase () =
     /// Serialize first the length as a varint, followed by the serialized
     /// object.
     member x.SerializeLengthDelimited (buf:System.ArraySegment<byte>) =
-        ZeroCopyWriteBuffer(buf)
+        ZeroCopyBuffer(buf)
         |> x.SerializeLengthDelimited
         |> asArraySegment
 
@@ -557,7 +557,7 @@ type MessageBase () =
         | None                  -> m_unknownFields <- field :: m_unknownFields
 
     /// Serialize all unknown fields
-    member private x.SerializeUnknownFields (zcb:ZeroCopyWriteBuffer) =
+    member private x.SerializeUnknownFields (zcb:ZeroCopyBuffer) =
 
         let inline emplace (src:ArraySegment<byte>) (dst:ArraySegment<byte>) =
             Array.Copy(src.Array, src.Offset, dst.Array, dst.Offset, src.Count)

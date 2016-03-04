@@ -18,7 +18,7 @@ module Helpers =
 module Decode =
     open Helpers
 
-    type ZCR = ZeroCopyReadBuffer
+    type ZCR = ZeroCopyBuffer
 
     let toArray (a:ArraySegment<byte>) =
         a.ToArray()
@@ -125,7 +125,7 @@ module Decode =
 module Encode =
     open Helpers
 
-    type ZCW = ZeroCopyWriteBuffer
+    type ZCW = ZeroCopyBuffer
 
     let toArray (a:ZCW) =
         a.ToArray()
@@ -176,13 +176,13 @@ module Encode =
     let ``Encode Single and Double`` () =
         ZCW(4)
             |> encodeSingle 2.0f
-            |> ZeroCopyReadBuffer
+            |> ZeroCopyBuffer
             |> decodeSingle
             |> should equal 2.0f
 
         ZCW(8)
             |> encodeDouble 0.10
-            |> ZeroCopyReadBuffer
+            |> ZeroCopyBuffer
             |> decodeDouble
             |> should equal 0.10
 
@@ -203,7 +203,7 @@ module Encode =
 module DecodeField =
     open Helpers
 
-    type ZCR = ZeroCopyReadBuffer
+    type ZCR = ZeroCopyBuffer
 
     [<Fact>]
     let ``Read tag`` () =
@@ -293,7 +293,7 @@ module DecodeField =
 module EncodeField =
     open Helpers
 
-    type ZCW = ZeroCopyWriteBuffer
+    type ZCW = ZeroCopyBuffer
 
     let toArray (a:ZCW) = a.ToArray()
 
