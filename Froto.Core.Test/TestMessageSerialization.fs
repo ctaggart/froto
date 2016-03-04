@@ -17,30 +17,33 @@ module MessageSerialization =
         inherit MessageBase()
         let m_id = ref 0
         let m_name = ref ""
-        
-        member x.ID     with get() = !m_id and set(v) = m_id := v
-        member x.Name   with get() = !m_name and set(v) = m_name := v
 
-        override x.Clear() =
-            m_id := 0
-            m_name := ""
-
-        
-        override x.RequiredFields =
+        let m_requiredFields =
             [ 1; 2 ]
             |> Set.ofList
 
-        override x.DecoderRing =
+        let m_decoderRing =
             [ 1, m_id   |> Serializer.hydrateInt32
               2, m_name |> Serializer.hydrateString
             ]
             |> Map.ofList
+        
+        override x.Clear() =
+            m_id := 0
+            m_name := ""
 
-        override x.EncoderRing zcb =
+        override x.Encode zcb =
             let encode =
                 (!m_id     |> Serializer.dehydrateVarint 1) >>
                 (!m_name   |> Serializer.dehydrateString 2)
             encode zcb
+        override x.RequiredFields = m_requiredFields
+        override x.DecoderRing = m_decoderRing
+
+        (* Accessors *)
+        member x.ID     with get() = !m_id and set(v) = m_id := v
+        member x.Name   with get() = !m_name and set(v) = m_name := v
+        (* /Accessors *)
 
         static member FromArraySegment (buf:ArraySegment<byte>) =
             let self = InnerMessage()
@@ -99,28 +102,29 @@ module MessageSerialization =
         let m_inner     = ref None
         let m_hasMore   = ref false
 
-        member x.ID         with get() = !m_id and set(v) = m_id := v
-        member x.Inner      with get() = !m_inner and set(v) = m_inner := v
-        member x.HasMore    with get() = !m_hasMore and set(v) = m_hasMore := v
-
-        override x.Clear() =
-            m_id := 0
-            m_inner := None
-            m_hasMore := false
-
-        override x.DecoderRing =
+        let m_decoderRing =
             [  1, m_id      |> Serializer.hydrateInt32;
               42, m_inner   |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
               43, m_hasMore |> Serializer.hydrateBool;
             ]
             |> Map.ofList
 
-        override x.EncoderRing zcb =
+        override x.Clear() =
+            m_id := 0
+            m_inner := None
+            m_hasMore := false
+
+        override x.DecoderRing = m_decoderRing
+        override x.Encode zcb =
             let encode =
                 (!m_id         |> Serializer.dehydrateVarint 1) >>
                 (!m_inner      |> Serializer.dehydrateOptionalMessage 42) >>
                 (!m_hasMore    |> Serializer.dehydrateBool 43)
             encode zcb
+
+        member x.ID         with get() = !m_id and set(v) = m_id := v
+        member x.Inner      with get() = !m_inner and set(v) = m_inner := v
+        member x.HasMore    with get() = !m_hasMore and set(v) = m_hasMore := v
 
         static member FromArraySegment (buf:ArraySegment<byte>) =
             let self = OuterMessage()

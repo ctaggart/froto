@@ -291,7 +291,7 @@ module Deserialize =
 module Serialize =
     open Froto.Core.Encoding.Serializer
 
-    type ZCB = ZeroCopyWriteBuffer
+    type ZCB = ZeroCopyBuffer
     let toArray(zcb:ZCB) = zcb.ToArray()
 
     let fid = 1 // field ID

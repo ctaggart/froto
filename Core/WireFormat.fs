@@ -8,18 +8,18 @@ let MAX_FIELD_LEN = 64u * 1024u * 1024u
 
 
 /// Decode a varint-encoded uint64 (1-9 bytes)
-let decodeVarint (src:ZeroCopyReadBuffer) =
+let decodeVarint (src:ZeroCopyBuffer) =
 
     // note: can't remember if using the outer `src` will cause a new
     // lambda to be created (on each call) to capture `src`, so be
     // safe and pass it in as a parameter.
-    let getNext (src:ZeroCopyReadBuffer) =
+    let getNext (src:ZeroCopyBuffer) =
         let b = src.ReadByte()
         let bMore = (b &&& 0x80uy) <> 0uy
         let lower7 = uint64 (b &&& 0x7Fuy)
         (bMore,lower7)
 
-    let rec loop acc n (src:ZeroCopyReadBuffer) =
+    let rec loop acc n (src:ZeroCopyBuffer) =
         let maxLen = 9
         if n <= maxLen then
             let bMore,lower7 = getNext src
@@ -33,7 +33,7 @@ let decodeVarint (src:ZeroCopyReadBuffer) =
 
     loop 0UL 0 src
 
-let rec internal decodeFixedLoop acc len n (src:ZeroCopyReadBuffer) =
+let rec internal decodeFixedLoop acc len n (src:ZeroCopyBuffer) =
     if n < len
     then
         let byt = src.ReadByte()
@@ -79,9 +79,9 @@ let decodeLengthDelimited src =
         raise <| ProtobufWireFormatException( "Maximum field length exceeded" )
 
 /// Encode uint64 as a varint (1-9 bytes)
-let encodeVarint (u:uint64) (dest:ZeroCopyWriteBuffer) =
+let encodeVarint (u:uint64) (dest:ZeroCopyBuffer) =
 
-    let rec loop acc (dest:ZeroCopyWriteBuffer) =
+    let rec loop acc (dest:ZeroCopyBuffer) =
         let bMore  = acc > 0x7FUL
         let lower7 = byte ( acc &&& 0x7FUL )
         let b = if not bMore
@@ -96,7 +96,7 @@ let encodeVarint (u:uint64) (dest:ZeroCopyWriteBuffer) =
     dest
 
 /// Encode uint32 as fixed32 (4 bytes)
-let encodeFixed32 (u:uint32) (dest:ZeroCopyWriteBuffer) =
+let encodeFixed32 (u:uint32) (dest:ZeroCopyBuffer) =
     dest.WriteByte (byte u)
     dest.WriteByte (byte (u >>> 8))
     dest.WriteByte (byte (u >>> 16))
@@ -141,7 +141,7 @@ let encodeDouble (d:double) =
 ///     functions; several serialization functions are then chained together to
 ///     produce a single function which serializes the entire Message.
 /// </param>
-let encodeLengthDelimited (len:uint32) (emplace:ArraySegment<byte>->unit) (dest:ZeroCopyWriteBuffer) =
+let encodeLengthDelimited (len:uint32) (emplace:ArraySegment<byte>->unit) (dest:ZeroCopyBuffer) =
     dest |> encodeVarint (uint64 len) |> ignore
     dest.WriteByteSegment len emplace
     dest
