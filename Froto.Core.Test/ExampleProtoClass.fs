@@ -2,6 +2,33 @@
 
 open Froto.Core.Encoding
 
+(*
+    // Example proto definition
+
+    syntax = "proto3";
+
+    message InnerMessage {
+        int32 id = 1;
+        string name = 2;
+        bool option = 3;
+        ETest test = 4; // note: forward reference
+        repeated fixed32 packedFixed32 = 5 [packed = true];
+        repeated int32 repeatedInt32 = 6;
+        }
+
+    enum ETest {
+        Nada = 0;
+        One = 1;
+        Two = 2;
+        }
+
+    message OuterMessage {
+        int32 id = 1;
+        InnerMessage inner = 42;
+        bool has_more = 43;
+        }
+ *)
+
 type InnerMessage () =
     inherit MessageBase()
     let ETestDefault = ETest.One  // NOTE: Non-zero default is only supported in Proto2
@@ -60,22 +87,32 @@ and ETest =
 
 type OuterMessage() =
     inherit MessageBase()
+    let m_id = ref 0
     let m_inner = ref None
+    let m_hasMore = ref false
 
+    member x.Id with get() = !m_id and set(v) = m_id := v
     member x.Inner with get() = !m_inner and set(v) = m_inner := v
+    member x.HasMore with get() = !m_hasMore and set(v) = m_hasMore := v
 
     override x.Clear() =
+        m_id := 0
         m_inner := None
+        m_hasMore := false
 
     override x.DecoderRing =
         [
-            42, m_inner |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment)
+             1, m_id |> Serializer.hydrateInt32;
+            42, m_inner |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
+            43, m_hasMore |> Serializer.hydrateBool;
         ]
         |> Map.ofList
 
     override x.EncoderRing(zcb) =
         let encode =
-            (!m_inner |> Serializer.dehydrateOptionalMessage 42)
+            (!m_id |> Serializer.dehydrateVarint 1) >>
+            (!m_inner |> Serializer.dehydrateOptionalMessage 42) >>
+            (!m_hasMore |> Serializer.dehydrateBool 43)
         encode zcb
 
     static member FromArraySegment (buf:System.ArraySegment<byte>) =
