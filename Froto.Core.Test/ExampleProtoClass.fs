@@ -102,7 +102,6 @@ type OuterMessage() =
         m_hasMore := false
 
     override x.DecoderRing =
-    let m_decoderRing =
         [
              1, m_id |> Serializer.hydrateInt32;
             42, m_inner |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
@@ -110,19 +109,12 @@ type OuterMessage() =
         ]
         |> Map.ofList
 
-    override x.Clear() =
-        m_inner := None
-
-    override x.DecoderRing = m_decoderRing
-
     override x.Encode(zcb) =
         let encode =
             (!m_id |> Serializer.dehydrateVarint 1) >>
             (!m_inner |> Serializer.dehydrateOptionalMessage 42) >>
             (!m_hasMore |> Serializer.dehydrateBool 43)
         encode zcb
-
-    member x.Inner with get() = !m_inner and set(v) = m_inner := v
 
     static member FromArraySegment (buf:System.ArraySegment<byte>) =
         let self = OuterMessage()
