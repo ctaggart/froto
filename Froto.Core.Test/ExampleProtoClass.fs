@@ -54,7 +54,7 @@ type InnerMessage () =
     member x.Name           with get() = !m_name and set(v) = m_name := v
     member x.bOption        with get() = !m_option and set(v) = m_option := v
     member x.Test           with get() = !m_test and set(v) = m_test := v
-    member x.PackedFixed32  with get() =  !m_packedFixed32 and set(v) = m_packedFixed32 := v
+    member x.PackedFixed32  with get() = !m_packedFixed32 and set(v) = m_packedFixed32 := v
     member x.RepeatedInt32  with get() = !m_repeatedInt32 and set(v) = m_repeatedInt32 := v
 
     override x.Clear() =
@@ -66,6 +66,7 @@ type InnerMessage () =
         m_repeatedInt32 := List.empty
 
     override x.DecoderRing = m_decoderRing
+
     override x.Encode(zcb) =
         let encode =
             (!m_id            |> Serializer.dehydrateVarint 1) >>
@@ -92,6 +93,14 @@ type OuterMessage() =
     let m_inner = ref None
     let m_hasMore = ref false
 
+    let m_decoderRing =
+        [
+             1, m_id |> Serializer.hydrateInt32;
+            42, m_inner |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
+            43, m_hasMore |> Serializer.hydrateBool;
+        ]
+        |> Map.ofList
+
     member x.Id with get() = !m_id and set(v) = m_id := v
     member x.Inner with get() = !m_inner and set(v) = m_inner := v
     member x.HasMore with get() = !m_hasMore and set(v) = m_hasMore := v
@@ -101,13 +110,7 @@ type OuterMessage() =
         m_inner := None
         m_hasMore := false
 
-    override x.DecoderRing =
-        [
-             1, m_id |> Serializer.hydrateInt32;
-            42, m_inner |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
-            43, m_hasMore |> Serializer.hydrateBool;
-        ]
-        |> Map.ofList
+    override x.DecoderRing = m_decoderRing
 
     override x.Encode(zcb) =
         let encode =
