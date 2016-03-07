@@ -182,6 +182,22 @@ let internal cvtServices =
         | _ -> None
     )
 
+let internal cvtRootEnums =
+    List.choose (
+        function
+        | TEnum (ident, stmts) ->
+            let items =
+                stmts
+                |> List.choose (
+                    function
+                    | TEnumOption _ -> None
+                    | TEnumField (ident, v, _) -> Some(ProtoEnumItem(ident,v))
+                    )
+            ProtoEnum(ident, items)
+            |> Some
+        | _ -> None
+        )
+
 type ProtoFile (sections:PStatement list) =
     member val Sections = sections with get
     member x.Imports    = cvtImports x.Sections
@@ -196,6 +212,7 @@ type ProtoFile (sections:PStatement list) =
             | _ -> None)
         |> List.map cvtOpt
     member x.Services   = cvtServices x.Sections
+    member x.Enums   = cvtRootEnums x.Sections
 
     static member ParseString( s ) =
         let stmts = parseString pProto s

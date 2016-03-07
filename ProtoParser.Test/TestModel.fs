@@ -114,3 +114,9 @@ let ``can parse riak proto`` () =
     23 |> should equal kv.Sections.Length
     let search = getTestFile "riak_search.proto" |> parseFile
     6 |> should equal search.Sections.Length
+
+[<Fact>]
+let ``can parse enum proto`` () =
+    let proto = getTestFile "protoenum.proto" |> parseFile
+    1 |> should equal proto.Enums.Length
+    3 |> should equal proto.Enums.[0].Items.Length
