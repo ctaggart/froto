@@ -34,6 +34,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{992FDC44-0
 		test\javatutorial.proto = test\javatutorial.proto
 		test\nwind.proto = test\nwind.proto
 		test\person.proto = test\person.proto
+		test\protoenum.proto = test\protoenum.proto
 		test\protooptions.proto = test\protooptions.proto
 		test\riak.proto = test\riak.proto
 		test\riak_kv.proto = test\riak_kv.proto
