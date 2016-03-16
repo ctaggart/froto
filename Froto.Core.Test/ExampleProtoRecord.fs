@@ -64,9 +64,11 @@ type InnerRecord =
                     6, Serializer.hydrateRepeated Serializer.hydrateInt32Delegate &repeatedInt32
                 ]
                 |> Map.ofList
-
             ()
-
+            // TODO: Continue the code here.  Need to call the decoder ring
+            // and construct the record.  Also, move decoder ring to a
+            // static, rather than construct a new one every Deserialize
+            // call.
 
 type InnerMessage () =
     inherit MessageBase()
