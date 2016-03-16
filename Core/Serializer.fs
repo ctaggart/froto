@@ -90,62 +90,62 @@ module Serializer =
     /// Helper to deserialize from Varint.
     /// Since this is used by an inline function (hydrateEnum),
     /// it cannot be marked "internal".
-    let helper_vi f fld = function
+    let helper_vi f (result:byref<'a>) = function
         | RawField.Varint (n, v) ->
-            fld := f v
+            result <- f v
         | raw ->
             raiseMismatch "Varint" raw
 
-    let hydrateInt32  = helper_vi int32
-    let hydrateInt64  = helper_vi int64
-    let hydrateUInt32 = helper_vi uint32
-    let hydrateUInt64 = helper_vi uint64
-    let hydrateSInt32 = helper_vi (int32 >> Utility.zagZig32)
-    let hydrateSInt64 = helper_vi (int64 >> Utility.zagZig64)
-    let hydrateBool   = helper_vi toBool
-    let inline hydrateEnum x  = helper_vi (int32 >> enum) x
+    let hydrateInt32 (result:byref<int32>)    = helper_vi int32 &result
+    let hydrateInt64 (result:byref<int64>)    = helper_vi int64 &result
+    let hydrateUInt32 (result:byref<uint32>)  = helper_vi uint32 &result
+    let hydrateUInt64 (result:byref<uint64>)  = helper_vi uint64 &result
+    let hydrateSInt32 (result:byref<int32>)   = helper_vi (int32 >> Utility.zagZig32) &result
+    let hydrateSInt64 (result:byref<int64>)   = helper_vi (int64 >> Utility.zagZig64) &result
+    let hydrateBool (result:byref<bool>)      = helper_vi toBool &result
+    let inline hydrateEnum (result:byref<'a>) = helper_vi (int32 >> enum) &result
 
     /// Helper to deserialize from Fixed32
-    let internal helper_fx32 f fld = function
+    let internal helper_fx32 f (result:byref<'a>) = function
         | RawField.Fixed32 (_, v) ->
-            fld := f v
+            result <- f v
         | raw ->
             raiseMismatch "Fixed32" raw
 
-    let hydrateFixed32  = helper_fx32 uint32
-    let hydrateSFixed32 = helper_fx32 int32
-    let hydrateSingle  =
+    let hydrateFixed32  (result:byref<uint32>) = helper_fx32 uint32 &result
+    let hydrateSFixed32 (result:byref<int32>)  = helper_fx32 int32 &result
+    let hydrateSingle   (result:byref<Single>) =
         let aux (u:uint32) =
             // TODO: eliminate the Array allocation,
             //       perhaps using CIL (MSIL) to load float from a register
             let bytes = BitConverter.GetBytes(u)
             if not BitConverter.IsLittleEndian then Array.Reverse bytes
             BitConverter.ToSingle(bytes,0)
-        helper_fx32 aux
+        helper_fx32 aux &result
 
     /// Helper to deserialize from Fixed64
-    let internal helper_fx64 f fld = function
+    let internal helper_fx64 f (fld:byref<'a>) = function
         | RawField.Fixed64 (_, v) ->
-            fld := f v
+            fld <- f v
         | raw ->
             raiseMismatch "Fixed64" raw
 
-    let hydrateFixed64  = helper_fx64 uint64
-    let hydrateSFixed64 = helper_fx64 int64
-    let hydrateDouble  =
+    let hydrateFixed64  (result:byref<uint64>) = helper_fx64 uint64 &result
+    let hydrateSFixed64 (result:byref<int64>) = helper_fx64 int64 &result
+    let hydrateDouble   (result:byref<Double>) =
         let aux (u:uint64) =
             // TODO: eliminate the Array allocation,
             //       perhaps using CIL (MSIL) to load float from a register
             let bytes = BitConverter.GetBytes(u)
             if not BitConverter.IsLittleEndian then Array.Reverse bytes
             BitConverter.ToDouble(bytes,0)
-        helper_fx64 aux
+        helper_fx64 aux &result
 
 
     /// Helper to deserialize from a LengthDelimited
-    let internal helper_bytes f fld = function
+    let internal helper_bytes f (fld:byref<'a>) = function
         | RawField.LengthDelimited (_, v) ->
-            fld := f v
+            fld <- f v
         | raw ->
             raiseMismatch "LengthDelimited" raw
 
@@ -156,17 +156,19 @@ module Serializer =
     let internal toByteArray (a:System.ArraySegment<byte>) =
         a.Array.[ a.Offset .. a.Offset + (a.Count-1)]
 
-    let hydrateString = helper_bytes toString
-    let hydrateBytes  = helper_bytes toByteArray
-    let hydrateMessage messageCtor = helper_bytes messageCtor
-    let hydrateOptionalMessage messageCtor = hydrateMessage (messageCtor >> Some)
+    let hydrateString (result:byref<string>) = helper_bytes toString &result
+    let hydrateBytes  (result:byref<byte array>) = helper_bytes toByteArray &result
+    let hydrateMessage messageCtor (result:byref<'a>) =
+        helper_bytes messageCtor &result
+    let hydrateOptionalMessage messageCtor (result:byref<'a option>) =
+        hydrateMessage (messageCtor >> Some) &result
 
     /// Helper to deserialize Packed Repeated from LengthDelimited.
     /// Since this is used by an inline function (hydratePackedEnum),
     /// it cannot be marked "internal".
-    let helper_packed f fld = function
+    let helper_packed f (result:byref<'a list>) = function
         | RawField.LengthDelimited (_,v) ->
-            fld := 
+            result <-
                 [
                     let s = ZeroCopyBuffer(v)
                     while not s.IsEof do
@@ -175,20 +177,20 @@ module Serializer =
         | raw ->
             raiseMismatch "LengthDelimited" raw
 
-    let hydratePackedInt32    = helper_packed (decodeVarint >> int32)
-    let hydratePackedInt64    = helper_packed (decodeVarint >> int64)
-    let hydratePackedUInt32   = helper_packed (decodeVarint >> uint32)
-    let hydratePackedUInt64   = helper_packed (decodeVarint >> uint64)
-    let hydratePackedSInt32   = helper_packed (decodeVarint >> int32 >> Utility.zagZig32)
-    let hydratePackedSInt64   = helper_packed (decodeVarint >> int64 >> Utility.zagZig64)
-    let hydratePackedBool     = helper_packed (decodeVarint >> toBool)
-    let inline hydratePackedEnum x    = helper_packed (decodeVarint >> int32 >> enum) x
-    let hydratePackedFixed32  = helper_packed decodeFixed32
-    let hydratePackedFixed64  = helper_packed decodeFixed64
-    let hydratePackedSFixed32 = helper_packed (decodeFixed32 >> int32)
-    let hydratePackedSFixed64 = helper_packed (decodeFixed64 >> int64)
-    let hydratePackedSingle   = helper_packed decodeSingle
-    let hydratePackedDouble   = helper_packed decodeDouble
+    let hydratePackedInt32    (result:byref<int32 list>) = helper_packed (decodeVarint >> int32) &result
+    let hydratePackedInt64    (result:byref<int64 list>) = helper_packed (decodeVarint >> int64) &result
+    let hydratePackedUInt32   (result:byref<uint32 list>) = helper_packed (decodeVarint >> uint32) &result
+    let hydratePackedUInt64   (result:byref<uint64 list>) = helper_packed (decodeVarint >> uint64) &result
+    let hydratePackedSInt32   (result:byref<int32 list>) = helper_packed (decodeVarint >> int32 >> Utility.zagZig32) &result
+    let hydratePackedSInt64   (result:byref<int64 list>) = helper_packed (decodeVarint >> int64 >> Utility.zagZig64) &result
+    let hydratePackedBool     (result:byref<bool list>) = helper_packed (decodeVarint >> toBool) &result
+    let inline hydratePackedEnum (result:byref<'a list>) = helper_packed (decodeVarint >> int32 >> enum) &result
+    let hydratePackedFixed32  (result:byref<uint32 list>) = helper_packed decodeFixed32 &result
+    let hydratePackedFixed64  (result:byref<uint64 list>) = helper_packed decodeFixed64 &result
+    let hydratePackedSFixed32 (result:byref<int32 list>) = helper_packed (decodeFixed32 >> int32) &result
+    let hydratePackedSFixed64 (result:byref<int64 list>) = helper_packed (decodeFixed64 >> int64) &result
+    let hydratePackedSingle   (result:byref<Single list>) = helper_packed decodeSingle &result
+    let hydratePackedDouble   (result:byref<Double list>) = helper_packed decodeDouble &result
 
 //---- Serialization
 
@@ -313,10 +315,33 @@ module Serializer =
         o |> Utility.IfSome (fun o -> dehydrateMessage fieldNum o)
 
     (* Repeated Field Helpers *)
-    let hydrateRepeated<'a> (hydrater:'a ref -> RawField -> unit) propRef rawField =
-        let element = Unchecked.defaultof<'a>
-        hydrater (ref element) rawField
-        propRef := element :: !propRef
+    type RepeatDelegate<'result,'value> = delegate of byref<'result> * 'value -> unit
+    type RepeatMessageDelegate<'ctor,'result,'value> = delegate of 'ctor * byref<'result> * 'value -> unit
+
+    let hydrateInt32Delegate  = RepeatDelegate( fun result field -> hydrateInt32 &result field )
+    let hydrateInt64Delegate  = RepeatDelegate( fun result field -> hydrateInt64 &result field )
+    let hydrateUInt32Delegate = RepeatDelegate( fun result field -> hydrateUInt32 &result field )
+    let hydrateUInt64Delegate = RepeatDelegate( fun result field -> hydrateUInt64 &result field )
+    let hydrateSInt32Delegate = RepeatDelegate( fun result field -> hydrateSInt32 &result field )
+    let hydrateSInt64Delegate = RepeatDelegate( fun result field -> hydrateSInt64 &result field )
+    let hydrateBoolDelegate   = RepeatDelegate( fun result field -> hydrateBool &result field )
+// TODO Figure out how to fix this...
+//    let hydrateEnumDelegate   = RepeatDelegate( fun result field -> hydrateEnum &result field )
+    let hydrateFixed32Delegate  = RepeatDelegate( fun result field -> hydrateFixed32 &result field )
+    let hydrateSFixed32Delegate = RepeatDelegate( fun result field -> hydrateSFixed32 &result field )
+    let hydrateSingleDelegate   = RepeatDelegate( fun result field -> hydrateSingle &result field )
+    let hydrateFixed64Delegate  = RepeatDelegate( fun result field -> hydrateFixed64 &result field )
+    let hydrateSFixed64Delegate = RepeatDelegate( fun result field -> hydrateSFixed64 &result field )
+    let hydrateDoubleDelegate   = RepeatDelegate( fun result field -> hydrateDouble &result field )
+    let hydrateStringDelegate   = RepeatDelegate( fun result field -> hydrateString &result field )
+    let hydrateBytesDelegate    = RepeatDelegate( fun result field -> hydrateBytes &result field )
+    let hydrateMessageDelegate  = RepeatMessageDelegate( fun ctor result field -> hydrateMessage ctor &result field )
+    let hydrateOptionalMessageDelegate  = RepeatMessageDelegate( fun ctor result field -> hydrateOptionalMessage ctor &result field )
+
+    let hydrateRepeated (hydrater:RepeatDelegate<'a,RawField>) (propRef:byref<'a list>) rawField =
+        let mutable element = Unchecked.defaultof<'a>
+        hydrater.Invoke( &element, rawField )
+        propRef <- element :: propRef
 
     let dehydrateRepeated<'a> (dehydrater:FieldNum -> 'a -> ZeroCopyBuffer -> ZeroCopyBuffer) (fldNum:int32) (vs:'a list) : (ZeroCopyBuffer -> ZeroCopyBuffer) =
         let dh = flip (dehydrater fldNum)

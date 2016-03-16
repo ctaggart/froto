@@ -1,5 +1,6 @@
-﻿module SampleProto
+﻿module ExampleProtoRecord
 
+open Froto.Core
 open Froto.Core.Encoding
 
 (*
@@ -28,6 +29,44 @@ open Froto.Core.Encoding
         bool has_more = 43;
         }
  *)
+
+type ETest =
+    | Nada = 0
+    | One = 1
+    | Two = 2
+
+
+type InnerRecord =
+    {
+        Id : int32
+        Name : string
+        Option : bool
+        Test : ETest
+        PackedFixed32 : int32 list
+        RepeatedInt32 : int32 list
+    }
+    with
+        static member Deserialize( zcb : ZeroCopyBuffer ) =
+            let mutable id = 0
+            let mutable name = ""
+            let mutable option = false
+            let mutable test = ETest.Nada
+            let mutable packedFixed32 = List.empty
+            let mutable repeatedInt32 = List.empty
+
+            let decoder_ring =
+                [
+                    1, Serializer.hydrateInt32 &id
+                    2, Serializer.hydrateString &name
+                    3, Serializer.hydrateBool &option
+                    4, Serializer.hydrateEnum &test
+                    5, Serializer.hydratePackedFixed32 &packedFixed32
+                    6, Serializer.hydrateRepeated Serializer.hydrateInt32Delegate &repeatedInt32
+                ]
+                |> Map.ofList
+
+            ()
+
 
 type InnerMessage () =
     inherit MessageBase()
@@ -81,11 +120,6 @@ type InnerMessage () =
         self.Merge(buf) |> ignore
         self
 
-and ETest =
-    | Nada = 0
-    | One = 1
-    | Two = 2
-
 type OuterMessage() =
     inherit MessageBase()
     let mutable m_id = 0
@@ -111,7 +145,7 @@ type OuterMessage() =
 
     override x.Encode(zcb) =
         let encode =
-            (Serializer.dehydrateVarint 1 m_id) >>
+            (Serializer.dehydrateVarint 1 m_id ) >>
             (Serializer.dehydrateOptionalMessage 42 m_inner) >>
             (Serializer.dehydrateBool 43 m_hasMore)
         encode zcb
