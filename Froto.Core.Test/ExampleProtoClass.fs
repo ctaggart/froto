@@ -46,7 +46,7 @@ type InnerMessage () =
             3, m_option         |> Serializer.hydrateBool
             4, m_test           |> Serializer.hydrateEnum
             5, m_packedFixed32  |> Serializer.hydratePackedFixed32
-            6, m_repeatedInt32  |> Serializer.hydrateRepeated Serializer.hydrateInt32
+            6, m_repeatedInt32  |> Serializer.hydrateOneRepeatedInstance Serializer.hydrateInt32
         ]
         |> Map.ofList
 

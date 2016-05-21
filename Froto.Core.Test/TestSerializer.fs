@@ -287,6 +287,20 @@ module Deserialize =
         vi |> hydratePackedDouble xs
         !xs |> should equal [ 0.0; 0.10; 0.0 ]
 
+    [<Fact>]
+    let ``Hydrate repeated field`` () =
+        let xs = ref List.empty
+
+        let buf = [| 0x41uy; 0x42uy; 0x43uy; 0x34uy; 0x32uy |]
+        let vi = RawField.LengthDelimited (1, ArraySegment(buf))
+        vi |> hydrateOneRepeatedInstance hydrateString xs
+
+        let buf = [| 0x41uy; 0x42uy; 0x43uy; 0x34uy; 0x30uy |]
+        let vi = RawField.LengthDelimited (1, ArraySegment(buf))
+        vi |> hydrateOneRepeatedInstance hydrateString xs
+
+        !xs |> should equal [ "ABC42"; "ABC40" ]
+
 [<Xunit.Trait("Kind", "Unit")>]
 module Serialize =
     open Froto.Core.Encoding.Serializer
@@ -479,5 +493,13 @@ module Serialize =
         |> dehydratePackedDouble fid [ 0.0; 0.10 ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 16uy; 0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy; 0x9Auy;0x99uy;0x99uy;0x99uy;0x99uy;0x99uy;0xB9uy;0x3Fuy |]
-        
+
+    [<Fact>]
+    let ``Dehydrate Repeated Field`` () =
+        ZCB(12)
+        |> dehydrateRepeated dehydrateString fid [ "0ABC"; "CBA0" ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 4uy; 0x30uy; 0x41uy; 0x42uy; 0x43uy;
+                           0x08uy ||| 2uy; 4uy; 0x43uy; 0x42uy; 0x41uy; 0x30uy |]
+
 
