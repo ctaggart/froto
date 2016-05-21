@@ -313,10 +313,17 @@ module Serializer =
         o |> Utility.IfSome (fun o -> dehydrateMessage fieldNum o)
 
     (* Repeated Field Helpers *)
-    let hydrateRepeated<'a> (hydrater:'a ref -> RawField -> unit) propRef rawField =
-        let element = Unchecked.defaultof<'a>
-        hydrater (ref element) rawField
-        propRef := element :: !propRef
+    let hydrateOneRepeatedInstance<'a> (hydrater:'a ref -> RawField -> unit) propRef rawField =
+        let element = ref Unchecked.defaultof<'a>
+        hydrater element rawField
+        propRef := !propRef @ [ !element ]  // <---- ARRRGH! BUG: O(n^2) complexity!
+            // Not sure how to fix this.
+            // Problem is that repeated fields must be kept in order, but they
+            // can appear loose anywhere in the serialized data.  Idomatic F#
+            // would reverse the existing list (or empty) before merge/deserialization,
+            // add items to the head, then reverse the list again as a post-
+            // process step.  However, that means adding a pair of before/after
+            // methods to the generated class, thus making it more complex.
 
     let dehydrateRepeated<'a> (dehydrater:FieldNum -> 'a -> ZeroCopyBuffer -> ZeroCopyBuffer) (fldNum:int32) (vs:'a list) : (ZeroCopyBuffer -> ZeroCopyBuffer) =
         let dh = flip (dehydrater fldNum)
