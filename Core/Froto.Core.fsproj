@@ -35,7 +35,9 @@
     <Compile Include="ZeroCopyBuffer.fs" />
     <Compile Include="EncodingTypes.fs" />
     <Compile Include="WireFormat.fs" />
-    <Compile Include="Serializer.fs" />
+    <Compile Include="Utility.fs" />
+    <Compile Include="RecordSerializer.fs" />
+    <Compile Include="ClassSerializer.fs" />
     <None Include="Froto.Core.nuspec" />
     <None Include="paket.references" />
   </ItemGroup>

@@ -23,8 +23,8 @@ module MessageSerialization =
             |> Set.ofList
 
         let m_decoderRing =
-            [ 1, m_id   |> Serializer.hydrateInt32
-              2, m_name |> Serializer.hydrateString
+            [ 1, m_id   |> ClassSerializer.hydrateInt32
+              2, m_name |> ClassSerializer.hydrateString
             ]
             |> Map.ofList
         
@@ -39,8 +39,8 @@ module MessageSerialization =
         override x.DecoderRing = m_decoderRing
         override x.Encode zcb =
             let encode =
-                (!m_id     |> Serializer.dehydrateVarint 1) >>
-                (!m_name   |> Serializer.dehydrateString 2)
+                (!m_id     |> ClassSerializer.dehydrateVarint 1) >>
+                (!m_name   |> ClassSerializer.dehydrateString 2)
             encode zcb
 
         static member FromArraySegment (buf:ArraySegment<byte>) =
@@ -101,9 +101,9 @@ module MessageSerialization =
         let m_hasMore   = ref false
 
         let m_decoderRing =
-            [  1, m_id      |> Serializer.hydrateInt32;
-              42, m_inner   |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
-              43, m_hasMore |> Serializer.hydrateBool;
+            [  1, m_id      |> ClassSerializer.hydrateInt32;
+              42, m_inner   |> ClassSerializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
+              43, m_hasMore |> ClassSerializer.hydrateBool;
             ]
             |> Map.ofList
 
@@ -119,9 +119,9 @@ module MessageSerialization =
         override x.DecoderRing = m_decoderRing
         override x.Encode zcb =
             let encode =
-                (!m_id         |> Serializer.dehydrateVarint 1) >>
-                (!m_inner      |> Serializer.dehydrateOptionalMessage 42) >>
-                (!m_hasMore    |> Serializer.dehydrateBool 43)
+                (!m_id         |> ClassSerializer.dehydrateVarint 1) >>
+                (!m_inner      |> ClassSerializer.dehydrateOptionalMessage 42) >>
+                (!m_hasMore    |> ClassSerializer.dehydrateBool 43)
             encode zcb
 
         static member FromArraySegment (buf:ArraySegment<byte>) =

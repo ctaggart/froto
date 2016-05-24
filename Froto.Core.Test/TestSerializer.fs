@@ -63,7 +63,7 @@ module Utility =
 [<Xunit.Trait("Kind", "Unit")>]
 module Deserialize =
 
-    open Froto.Core.Encoding.Serializer
+    open Froto.Core.Encoding.ClassSerializer
 
     type ETestEnum =
         | ZERO = 0
@@ -303,7 +303,7 @@ module Deserialize =
 
 [<Xunit.Trait("Kind", "Unit")>]
 module Serialize =
-    open Froto.Core.Encoding.Serializer
+    open Froto.Core.Encoding.ClassSerializer
 
     type ZCB = ZeroCopyBuffer
     let toArray(zcb:ZCB) = zcb.ToArray()

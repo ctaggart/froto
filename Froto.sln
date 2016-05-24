@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Parser", "ProtoParser\Froto.Parser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
 EndProject
@@ -22,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		build.fsx = build.fsx
 		paket.dependencies = paket.dependencies
 		paket.lock = paket.lock
+		Performance1.psess = Performance1.psess
 		readme.md = readme.md
 		release_notes.md = release_notes.md
 	EndProjectSection
@@ -55,6 +56,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "protobuf", "protobuf", "{82
 	EndProjectSection
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

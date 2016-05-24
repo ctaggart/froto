@@ -41,12 +41,12 @@ type InnerMessage () =
 
     let m_decoderRing =
         [
-            1, m_id             |> Serializer.hydrateInt32
-            2, m_name           |> Serializer.hydrateString
-            3, m_option         |> Serializer.hydrateBool
-            4, m_test           |> Serializer.hydrateEnum
-            5, m_packedFixed32  |> Serializer.hydratePackedFixed32
-            6, m_repeatedInt32  |> Serializer.hydrateOneRepeatedInstance Serializer.hydrateInt32
+            1, m_id             |> ClassSerializer.hydrateInt32
+            2, m_name           |> ClassSerializer.hydrateString
+            3, m_option         |> ClassSerializer.hydrateBool
+            4, m_test           |> ClassSerializer.hydrateEnum
+            5, m_packedFixed32  |> ClassSerializer.hydratePackedFixed32
+            6, m_repeatedInt32  |> ClassSerializer.hydrateOneRepeatedInstance ClassSerializer.hydrateInt32
         ]
         |> Map.ofList
 
@@ -69,12 +69,12 @@ type InnerMessage () =
 
     override x.Encode(zcb) =
         let encode =
-            (!m_id            |> Serializer.dehydrateVarint 1) >>
-            (!m_name          |> Serializer.dehydrateString 2) >>
-            (!m_option        |> Serializer.dehydrateBool 3) >>
-            (!m_test          |> Serializer.dehydrateDefaultedVarint ETestDefault 4) >>
-            (!m_packedFixed32 |> Serializer.dehydratePackedFixed32 5) >>
-            (!m_repeatedInt32 |> Serializer.dehydrateRepeated Serializer.dehydrateVarint 6)
+            (!m_id            |> ClassSerializer.dehydrateVarint 1) >>
+            (!m_name          |> ClassSerializer.dehydrateString 2) >>
+            (!m_option        |> ClassSerializer.dehydrateBool 3) >>
+            (!m_test          |> ClassSerializer.dehydrateDefaultedVarint ETestDefault 4) >>
+            (!m_packedFixed32 |> ClassSerializer.dehydratePackedFixed32 5) >>
+            (!m_repeatedInt32 |> ClassSerializer.dehydrateRepeated ClassSerializer.dehydrateVarint 6)
         encode zcb
         
     static member FromArraySegment (buf:System.ArraySegment<byte>) =
@@ -95,9 +95,9 @@ type OuterMessage() =
 
     let m_decoderRing =
         [
-             1, m_id |> Serializer.hydrateInt32;
-            42, m_inner |> Serializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
-            43, m_hasMore |> Serializer.hydrateBool;
+             1, m_id |> ClassSerializer.hydrateInt32;
+            42, m_inner |> ClassSerializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
+            43, m_hasMore |> ClassSerializer.hydrateBool;
         ]
         |> Map.ofList
 
@@ -114,9 +114,9 @@ type OuterMessage() =
 
     override x.Encode(zcb) =
         let encode =
-            (!m_id |> Serializer.dehydrateVarint 1) >>
-            (!m_inner |> Serializer.dehydrateOptionalMessage 42) >>
-            (!m_hasMore |> Serializer.dehydrateBool 43)
+            (!m_id |> ClassSerializer.dehydrateVarint 1) >>
+            (!m_inner |> ClassSerializer.dehydrateOptionalMessage 42) >>
+            (!m_hasMore |> ClassSerializer.dehydrateBool 43)
         encode zcb
 
     static member FromArraySegment (buf:System.ArraySegment<byte>) =
@@ -133,7 +133,7 @@ module PerformanceTest =
     let ``Test Serialization and Deserialization Performance`` () =
         let xs =
             [
-                for id = 1 to 1000 do
+                for id = 1 to 1000000 do
                     let inner = InnerMessage()
                     inner.ID <- 1
                     inner.Name <- "Jerry Smith"
