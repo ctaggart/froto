@@ -130,10 +130,10 @@
     <Compile Include="TestWireFormat.fs" />
     <Compile Include="TestSerializer.fs" />
     <Compile Include="TestMessageSerialization.fs" />
+    <Compile Include="ExampleProtoRecord.fs" />
     <Compile Include="ExampleProtoClass.fs" />
     <Content Include="app.config" />
     <None Include="paket.references" />
-    <Compile Include="ExampleProtoRecord.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Data.TypeProviders" />

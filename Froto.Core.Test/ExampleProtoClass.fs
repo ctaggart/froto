@@ -133,7 +133,7 @@ module PerformanceTest =
     let ``Test Serialization and Deserialization Performance`` () =
         let xs =
             [
-                for id = 1 to 1000000 do
+                for id = 1 to 1000 do
                     let inner = InnerMessage()
                     inner.ID <- 1
                     inner.Name <- "Jerry Smith"
