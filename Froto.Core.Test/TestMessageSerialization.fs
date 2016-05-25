@@ -5,6 +5,7 @@ open FsUnit.Xunit
 
 open System
 open Froto.Core
+open Froto.Core.ClassModel
 open Froto.Core.Hydration
 
 [<Xunit.Trait("Kind", "Unit")>]

@@ -1,4 +1,4 @@
-﻿namespace Froto.Core
+﻿namespace Froto.Core.ClassModel
 
 open System
 open Froto.Core

@@ -1,6 +1,7 @@
 ﻿module SampleProto
 
 open Froto.Core
+open Froto.Core.ClassModel
 open Froto.Core.Hydration
 
 (*

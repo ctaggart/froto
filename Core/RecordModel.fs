@@ -2,7 +2,7 @@
 
 /// Record Serialization support functions
 ///
-module RecordSerializer =
+module RecordModel =
 
     open System
     open Froto.Core
