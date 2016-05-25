@@ -7,7 +7,6 @@ open System
 
 open Froto.Core
 open Froto.Core.WireFormat
-open Froto.Core.Encoding
 
 module Helpers =
     type System.ArraySegment<'a>

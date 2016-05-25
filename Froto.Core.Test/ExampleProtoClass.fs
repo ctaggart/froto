@@ -1,6 +1,7 @@
 ﻿module SampleProto
 
-open Froto.Core.Encoding
+open Froto.Core
+open Froto.Core.Hydration
 
 (*
     // Example proto definition
@@ -29,53 +30,50 @@ open Froto.Core.Encoding
         }
  *)
 
-type InnerMessage () =
+type InnerMessage () as self =
     inherit MessageBase()
     let ETestDefault = ETest.One  // NOTE: Non-zero default is only supported in Proto2
-    let m_id = ref 0
-    let m_name = ref ""
-    let m_option = ref false
-    let m_test = ref ETestDefault
-    let m_packedFixed32 = ref List.empty
-    let m_repeatedInt32 = ref List.empty
 
-    let m_decoderRing =
+    member val Id = 0 with get,set
+    member val Name = "" with get,set
+    member val Option = false with get,set
+    member val Test = ETestDefault with get,set
+    member val PackedFixed32 = ResizeArray() with get,set
+    member val RepeatedInt32 = ResizeArray() with get,set
+
+    override x.Clear() =
+        x.Id <- 0
+        x.Name <- ""
+        x.Option <- false
+        x.Test <- ETestDefault
+        x.PackedFixed32 <- ResizeArray()
+        x.RepeatedInt32 <- ResizeArray()
+
+    override x.DecoderRing = 
         [
-            1, m_id             |> ClassSerializer.hydrateInt32
-            2, m_name           |> ClassSerializer.hydrateString
-            3, m_option         |> ClassSerializer.hydrateBool
-            4, m_test           |> ClassSerializer.hydrateEnum
-            5, m_packedFixed32  |> ClassSerializer.hydratePackedFixed32
-            6, m_repeatedInt32  |> ClassSerializer.hydrateOneRepeatedInstance ClassSerializer.hydrateInt32
+            1, fun rawField -> self.Id          <- hydrateInt32 rawField
+            2, fun rawField -> self.Name        <- hydrateString rawField
+            3, fun rawField -> self.Option      <- hydrateBool rawField
+            4, fun rawField -> self.Test        <- hydrateEnum rawField
+            5, fun rawField -> self.PackedFixed32.Clear()
+                               self.PackedFixed32.AddRange( List.rev <| hydratePackedFixed32 rawField )
+            6, fun rawField -> self.RepeatedInt32.Add(hydrateInt32 rawField)
         ]
         |> Map.ofList
 
-    member x.ID             with get() = !m_id and set(v) = m_id := v
-    member x.Name           with get() = !m_name and set(v) = m_name := v
-    member x.bOption        with get() = !m_option and set(v) = m_option := v
-    member x.Test           with get() = !m_test and set(v) = m_test := v
-    member x.PackedFixed32  with get() = !m_packedFixed32 and set(v) = m_packedFixed32 := v
-    member x.RepeatedInt32  with get() = !m_repeatedInt32 and set(v) = m_repeatedInt32 := v
-
-    override x.Clear() =
-        m_id := 0
-        m_name := ""
-        m_option := false
-        m_test := ETestDefault
-        m_packedFixed32 := List.empty
-        m_repeatedInt32 := List.empty
-
-    override x.DecoderRing = m_decoderRing
-
     override x.Encode(zcb) =
         let encode =
-            (!m_id            |> ClassSerializer.dehydrateVarint 1) >>
-            (!m_name          |> ClassSerializer.dehydrateString 2) >>
-            (!m_option        |> ClassSerializer.dehydrateBool 3) >>
-            (!m_test          |> ClassSerializer.dehydrateDefaultedVarint ETestDefault 4) >>
-            (!m_packedFixed32 |> ClassSerializer.dehydratePackedFixed32 5) >>
-            (!m_repeatedInt32 |> ClassSerializer.dehydrateRepeated ClassSerializer.dehydrateVarint 6)
+            (x.Id            |> dehydrateVarint 1) >>
+            (x.Name          |> dehydrateString 2) >>
+            (x.Option        |> dehydrateBool 3) >>
+            (x.Test          |> dehydrateDefaultedVarint ETestDefault 4) >>
+            (x.PackedFixed32 |> Seq.toList |> dehydratePackedFixed32 5) >>
+            (x.RepeatedInt32 |> Seq.toList |> dehydrateRepeated dehydrateVarint 6)
         encode zcb
+        // Note: The Seq.toList above is less efficient than passing in a ResizeArray
+        // However, that means duplicating all the dehydratePackedXXX functions with
+        // a version that works on ResizeArray.  Having these methods use a Seq would
+        // would be less efficient for cases that pass in a List.
         
     static member FromArraySegment (buf:System.ArraySegment<byte>) =
         let self = InnerMessage()
@@ -87,36 +85,31 @@ and ETest =
     | One = 1
     | Two = 2
 
-type OuterMessage() =
+type OuterMessage() as self =
     inherit MessageBase()
-    let m_id = ref 0
-    let m_inner = ref None
-    let m_hasMore = ref false
 
-    let m_decoderRing =
+    member val Id = 0 with get,set
+    member val Inner = None with get,set
+    member val HasMore = false with get,set
+
+    override x.Clear() =
+        x.Id <- 0
+        x.Inner <- None
+        x.HasMore <- false
+
+    override x.DecoderRing =
         [
-             1, m_id |> ClassSerializer.hydrateInt32;
-            42, m_inner |> ClassSerializer.hydrateOptionalMessage (InnerMessage.FromArraySegment);
-            43, m_hasMore |> ClassSerializer.hydrateBool;
+            1,  fun rawField -> self.Id         <- hydrateInt32 rawField
+            42, fun rawField -> self.Inner      <- hydrateOptionalMessage (InnerMessage.FromArraySegment) rawField
+            43, fun rawField -> self.HasMore    <- hydrateBool rawField
         ]
         |> Map.ofList
 
-    member x.Id with get() = !m_id and set(v) = m_id := v
-    member x.Inner with get() = !m_inner and set(v) = m_inner := v
-    member x.HasMore with get() = !m_hasMore and set(v) = m_hasMore := v
-
-    override x.Clear() =
-        m_id := 0
-        m_inner := None
-        m_hasMore := false
-
-    override x.DecoderRing = m_decoderRing
-
     override x.Encode(zcb) =
         let encode =
-            (!m_id |> ClassSerializer.dehydrateVarint 1) >>
-            (!m_inner |> ClassSerializer.dehydrateOptionalMessage 42) >>
-            (!m_hasMore |> ClassSerializer.dehydrateBool 43)
+            (x.Id |> dehydrateVarint 1) >>
+            (x.Inner |> dehydrateOptionalMessage 42) >>
+            (x.HasMore |> dehydrateBool 43)
         encode zcb
 
     static member FromArraySegment (buf:System.ArraySegment<byte>) =
@@ -135,12 +128,12 @@ module PerformanceTest =
             [
                 for id = 1 to 1000 do
                     let inner = InnerMessage()
-                    inner.ID <- 1
+                    inner.Id <- 1
                     inner.Name <- "Jerry Smith"
-                    inner.bOption <- true
+                    inner.Option <- true
                     inner.Test <- ETest.Two
-                    inner.PackedFixed32 <- [1u; 2u; 3u; 4u]
-                    inner.RepeatedInt32 <- [5;6;7;8;9]
+                    inner.PackedFixed32.AddRange([1u; 2u; 3u; 4u])
+                    inner.RepeatedInt32.AddRange([5;6;7;8;9])
                     yield inner
             ]
 

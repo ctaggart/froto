@@ -1,9 +1,8 @@
 ﻿module SampleProtoRecord
 
 module SampleNamespace =
-    open Froto.Core
-    open Froto.Core.Encoding.Utility
-    open Froto.Core.Encoding.RecordSerializer
+    open Froto.Core.RecordSerializer
+    open Froto.Core.Hydration
 
     type ETest =
         | Nada = 0
@@ -69,7 +68,7 @@ module PerformanceTest =
 
     open Xunit
     open FsUnit.Xunit
-    open Froto.Core.Encoding.RecordSerializer
+    open Froto.Core.RecordSerializer
     open SampleNamespace
 
     [<Fact>]

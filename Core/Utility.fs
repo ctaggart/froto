@@ -1,8 +1,4 @@
-﻿namespace Froto.Core.Encoding
-
-open System
-open Froto.Core
-open Froto.Core.WireFormat
+﻿namespace Froto.Core
 
 ///
 /// Utility functions used by the serializer
@@ -73,3 +69,10 @@ module Utility =
         let end_ = zcb.Position + len
         zcb
         |>  decodeWhile (fun zcb -> zcb.Position < end_)
+
+
+    /// Flip first two parameters and apply a function.
+    /// Useful for returning a curried function that (partially) applies
+    /// the second parameter, but leaves the first parameter free.
+    let inline flip f a b = f b a
+
