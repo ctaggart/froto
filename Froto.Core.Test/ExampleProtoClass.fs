@@ -76,9 +76,9 @@ type InnerMessage () as self =
         // a version that works on ResizeArray.  Having these methods use a Seq would
         // would be less efficient for cases that pass in a List.
         
-    static member FromArraySegment (buf:System.ArraySegment<byte>) =
+    static member FromZeroCopyBuffer (zcb:ZeroCopyBuffer) =
         let self = InnerMessage()
-        self.Merge(buf) |> ignore
+        self.Merge(zcb) |> ignore
         self
 
 and ETest =
@@ -101,7 +101,7 @@ type OuterMessage() as self =
     override x.DecoderRing =
         [
             1,  fun rawField -> self.Id         <- hydrateInt32 rawField
-            42, fun rawField -> self.Inner      <- hydrateOptionalMessage (InnerMessage.FromArraySegment) rawField
+            42, fun rawField -> self.Inner      <- hydrateOptionalMessage InnerMessage.FromZeroCopyBuffer rawField
             43, fun rawField -> self.HasMore    <- hydrateBool rawField
         ]
         |> Map.ofList
@@ -109,7 +109,7 @@ type OuterMessage() as self =
     override x.Encode(zcb) =
         let encode =
             (x.Id |> dehydrateVarint 1) >>
-            (x.Inner |> dehydrateOptionalMessage 42) >>
+            (x.Inner |> dehydrateOptionalMessage serializeClassLengthDelimited 42) >>
             (x.HasMore |> dehydrateBool 43)
         encode zcb
 

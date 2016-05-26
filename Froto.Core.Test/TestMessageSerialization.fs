@@ -5,11 +5,12 @@ open FsUnit.Xunit
 
 open System
 open Froto.Core
-open Froto.Core.ClassModel
 open Froto.Core.Hydration
 
 [<Xunit.Trait("Kind", "Unit")>]
-module MessageSerialization =
+module ClassSerialization =
+
+    open Froto.Core.ClassModel
 
     let toArray (seg:ArraySegment<'a>) =
         seg.Array.[ seg.Offset .. (seg.Count-1) ]
@@ -40,10 +41,11 @@ module MessageSerialization =
                 (x.Name   |> dehydrateString 2)
             encode zcb
 
-        static member FromArraySegment (buf:ArraySegment<byte>) =
+        static member FromZeroCopyBuffer (zcb:ZeroCopyBuffer) =
             let self = InnerMessage()
-            self.Merge(buf) |> ignore
+            self.Merge(zcb) |> ignore
             self
+
 
     [<Fact>]
     let ``Deserialize simple message`` () =
@@ -56,7 +58,7 @@ module MessageSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |] |> ArraySegment
-        let msg = InnerMessage.FromArraySegment(buf)
+        let msg = InnerMessage.FromZeroCopyBuffer(ZeroCopyBuffer buf)
         msg.Id |> should equal 99
         msg.Name |> should equal "Test message"
 
@@ -71,7 +73,7 @@ module MessageSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |] |> ArraySegment
-        fun () -> InnerMessage.FromArraySegment(buf) |> ignore
+        fun () -> InnerMessage.FromZeroCopyBuffer(ZeroCopyBuffer buf) |> ignore
         |> should throw typeof<Froto.Core.ProtobufSerializerException>
 
     [<Fact>]
@@ -105,7 +107,7 @@ module MessageSerialization =
 
         override x.DecoderRing =
             [ 1 , fun rawField -> self.Id      <- hydrateInt32 rawField
-              42, fun rawField -> self.Inner   <- hydrateOptionalMessage (InnerMessage.FromArraySegment) rawField
+              42, fun rawField -> self.Inner   <- hydrateOptionalMessage InnerMessage.FromZeroCopyBuffer rawField
               43, fun rawField -> self.HasMore <- hydrateBool rawField
             ]
             |> Map.ofList
@@ -113,7 +115,7 @@ module MessageSerialization =
         override x.Encode zcb =
             let encode =
                 (x.Id         |> dehydrateVarint 1) >>
-                (x.Inner      |> dehydrateOptionalMessage 42) >>
+                (x.Inner      |> dehydrateOptionalMessage serializeClassLengthDelimited 42) >>
                 (x.HasMore    |> dehydrateBool 43)
             encode zcb
 
@@ -153,6 +155,200 @@ module MessageSerialization =
         msg.Inner.Value.Id <- 6
         msg.Inner.Value.Name <- "ABC0"
         msg.HasMore <- true
+        msg.Serialize()
+        |> toArray
+        |> should equal
+            [|
+                0x01uy<<<3 ||| 0uy;     // tag: id=1; varint
+                5uy;                    // value 5
+                0xD0uy ||| 2uy; 0x02uy; // tag: fldnum=42, length delim
+                8uy;                    // length = 8
+                0x01uy<<<3 ||| 0uy;     // tag: id=1; varint
+                6uy;                    // value 6
+                0x02uy<<<3 ||| 2uy;     // tag: id=2; length delim
+                4uy;                    // length = 4
+                0x41uy; 0x42uy; 0x43uy; 0x30uy;
+                                        // value "ABC0"
+                0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
+                0x01uy;                 // value true
+            |]
+
+[<Xunit.Trait("Kind", "Unit")>]
+module RecordSerialization =
+
+    open Froto.Core.RecordModel
+
+    let toArray (seg:ArraySegment<'a>) =
+        seg.Array.[ seg.Offset .. (seg.Count-1) ]
+
+    type InnerMessage  = {
+        id : int32
+        name : string
+        }
+        with
+            static member Default = {
+                id = 0
+                name = ""
+                }
+
+            member m.Serialize () =
+                Array.zeroCreate (serializedLength m |> int32)
+                |> ZeroCopyBuffer
+                |> serialize m
+                |> ZeroCopyBuffer.asArraySegment
+
+            member m.SerializeLengthDelimited () =
+                Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
+                |> ZeroCopyBuffer
+                |> serializeLengthDelimited m
+
+            static member Deserialize (buf:ArraySegment<byte>) =
+                buf
+                |> ZeroCopyBuffer
+                |> deserialize InnerMessage.Default
+
+            static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
+                buf
+                |> ZeroCopyBuffer
+                |> deserializeLengthDelimited InnerMessage.Default
+       
+            member m.Serializer zcb =
+                (m.id            |> dehydrateVarint 1) >>
+                (m.name          |> dehydrateString 2)
+                <| zcb
+
+            member m.DecoderRing =
+                [
+                    1, fun m rawField -> { m with id = rawField |> hydrateInt32 } : InnerMessage
+                    2, fun m rawField -> { m with name = rawField |> hydrateString } : InnerMessage
+                ]
+                |> Map.ofList
+
+            static member DecodeFixup m = m
+
+    [<Fact>]
+    let ``Deserialize simple message`` () =
+        let buf =
+            [|
+                0x01uy<<<3 ||| 0uy; // tag: id=1; varint
+                99uy;               // value 99
+                0x02uy<<<3 ||| 2uy  // tag: id=2; length delim
+                12uy;               // length = 12
+                0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
+                                    // value "Test message"
+            |] |> ArraySegment
+        let msg = buf |> InnerMessage.Deserialize
+        msg.id |> should equal 99
+        msg.name |> should equal "Test message"
+
+    [<Fact>]
+    let ``Missing required field throws exception`` () =
+        let buf =
+            [|
+//                0x01uy<<<3 ||| 0uy; // tag: id=1; varint
+//                99uy;               // value 99
+                0x02uy<<<3 ||| 2uy  // tag: id=2; length delim
+                12uy;               // length = 12
+                0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
+                                    // value "Test message"
+            |] |> ArraySegment
+        fun () -> InnerMessage.Deserialize(buf) |> ignore
+        |> should throw typeof<Froto.Core.ProtobufSerializerException>
+
+    [<Fact>]
+    let ``Serialize simple message`` () =
+        let msg = { InnerMessage.Default with
+                        id = 98
+                        name = "ABC0" }
+        msg.Serialize()
+        |> toArray
+        |> should equal
+            [|
+                0x01uy<<<3 ||| 0uy; // tag: id=1; varint
+                98uy;               // value 98
+                0x02uy<<<3 ||| 2uy  // tag: id=2; length delim
+                4uy;                // length = 4
+                0x41uy; 0x42uy; 0x43uy; 0x30uy
+                                    // value "ABC0"
+            |]
+
+    type OuterMessage = {
+        id : int32
+        inner : InnerMessage option
+        hasMore : bool
+        }
+        with
+            static member Default = {
+                id = 0
+                inner = None
+                hasMore = false
+                }
+
+            member m.Serialize () =
+                Array.zeroCreate (serializedLength m |> int32)
+                |> ZeroCopyBuffer
+                |> serialize m
+                |> ZeroCopyBuffer.asArraySegment
+
+            member m.SerializeLengthDelimited () =
+                Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
+                |> ZeroCopyBuffer
+                |> serializeLengthDelimited m
+
+            static member Deserialize (buf:ArraySegment<byte>) =
+                buf
+                |> ZeroCopyBuffer
+                |> deserialize OuterMessage.Default
+
+            static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
+                buf
+                |> ZeroCopyBuffer
+                |> deserializeLengthDelimited OuterMessage.Default
+
+            member m.Serializer zcb =
+                (m.id         |> dehydrateVarint 1) >>
+                (m.inner      |> dehydrateOptionalMessage serializeLengthDelimited 42) >>
+                (m.hasMore    |> dehydrateBool 43)
+                <| zcb
+
+            member m.DecoderRing =
+                [ 1 , fun m rawField -> { m with id      = hydrateInt32 rawField } : OuterMessage
+                  42, fun m rawField -> { m with inner   = hydrateOptionalMessage (deserialize InnerMessage.Default) rawField } : OuterMessage
+                  43, fun m rawField -> { m with hasMore = hydrateBool rawField } : OuterMessage
+                ]
+                |> Map.ofList
+
+            static member DecodeFixup m = m
+
+    [<Fact>]
+    let ``Deserialize compound message`` () =
+        let buf =
+            [|
+                0x01uy<<<3 ||| 0uy;     // tag: fldnum=1, varint
+                21uy;                   // value 21
+                0xD0uy ||| 2uy; 0x02uy; // tag: fldnum=42, length delim
+                16uy;                   // length 16
+                0x01uy<<<3 ||| 0uy;     // tag: fldnum=1; varint
+                99uy;                   // value 99
+                0x02uy<<<3 ||| 2uy;     // tag: fldnum=2; length delim
+                12uy;                   // length = 12
+                0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
+                                        // value "Test message"
+                0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
+                0x01uy;                 // value true
+            |] |> ArraySegment
+        let msg = buf |> OuterMessage.Deserialize
+        msg.id |> should equal 21
+        msg.inner.IsSome |> should equal true
+        msg.inner.Value.id |> should equal 99
+        msg.inner.Value.name |> should equal "Test message"
+        
+    [<Fact>]
+    let ``Serialize compound message`` () =
+        let msg = { OuterMessage.Default with
+                        id = 5
+                        inner = Some { InnerMessage.Default with id=6; name = "ABC0" }
+                        hasMore = true }
         msg.Serialize()
         |> toArray
         |> should equal

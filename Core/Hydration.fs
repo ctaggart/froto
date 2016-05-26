@@ -103,7 +103,7 @@ module Hydration =
 
     let hydrateString = helper_bytes toString
     let hydrateBytes  = helper_bytes toByteArray
-    let hydrateMessage messageCtor = helper_bytes messageCtor
+    let hydrateMessage messageCtor = helper_bytes (ZeroCopyBuffer >> messageCtor)
     let hydrateOptionalMessage messageCtor = hydrateMessage (messageCtor >> Some)
 
     /// Helper to deserialize Packed Repeated from LengthDelimited.
@@ -248,13 +248,6 @@ module Hydration =
             fieldNum xs
 
     (* Dehydrate Message *)
-    let inline dehydrateMessage fieldNum (o:^msg when ^msg : (member SerializeLengthDelimited : ZeroCopyBuffer -> ZeroCopyBuffer)) =
-        let serializeMsg zcb = (^msg : (member SerializeLengthDelimited : ZeroCopyBuffer -> ZeroCopyBuffer) (o,zcb))
-        WireFormat.encodeTag fieldNum WireType.LengthDelimited
-        >> serializeMsg
-
-    let inline dehydrateOptionalMessage fieldNum (o:^msg option when ^msg : (member SerializeLengthDelimited : ZeroCopyBuffer -> ZeroCopyBuffer)) =
-        o |> IfSome (fun o -> dehydrateMessage fieldNum o)
 
     (* Repeated Field Helpers *)
     let dehydrateRepeated<'a> (dehydrater:FieldNum -> 'a -> ZeroCopyBuffer -> ZeroCopyBuffer) (fldNum:int32) (vs:'a list) : (ZeroCopyBuffer -> ZeroCopyBuffer) =
@@ -265,3 +258,13 @@ module Hydration =
             zcb
         wrapperFn
 
+    let dehydrateMessage (fn:'m -> ZeroCopyBuffer -> ZeroCopyBuffer) fieldNum m =
+        WireFormat.encodeTag fieldNum WireType.LengthDelimited
+        >> fn m
+
+    let dehydrateOptionalMessage (fn:'m -> ZeroCopyBuffer -> ZeroCopyBuffer) fieldNum (m:'m option) =
+        m |> IfSome (fun o -> dehydrateMessage fn fieldNum o)
+
+    let inline serializeClassLengthDelimited (o:^msg when ^msg : (member SerializeLengthDelimited : ZeroCopyBuffer -> ZeroCopyBuffer)) =
+        let serializeMsg zcb = (^msg : (member SerializeLengthDelimited : ZeroCopyBuffer -> ZeroCopyBuffer) (o,zcb))
+        serializeMsg

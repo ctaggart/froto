@@ -63,11 +63,15 @@ type ZeroCopyBuffer (seg:ArraySegment<byte>) =
         else
             raise <| ProtobufWireFormatException("Read past end of protobuf buffer")
 
-    // Return portion of buffer written as an ArraySegment
+    /// Return portion of buffer written as an ArraySegment
     member x.AsArraySegment
         with get() = ArraySegment( seg.Array, seg.Offset, int m_position - seg.Offset )
 
-    // Return portion of buffer written as an Array (mainly for testing)
+    /// Return portion of buffeer writteen as an ArraySegment
+    static member asArraySegment (zcb:ZeroCopyBuffer) =
+        zcb.AsArraySegment
+
+    /// Return portion of buffer written as an Array (mainly for testing)
     member x.ToArray() =
         seg.Array.[ seg.Offset .. int m_position - 1 ]
 

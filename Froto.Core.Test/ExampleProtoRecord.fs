@@ -1,6 +1,8 @@
 ﻿module SampleProtoRecord
 
 module SampleNamespace =
+    open System
+    open Froto.Core
     open Froto.Core.RecordModel
     open Froto.Core.Hydration
 
@@ -29,15 +31,26 @@ module SampleNamespace =
                 repeatedInt32=[]
             }
 
-            member m.Serialize zcb                      = zcb |> serialize m
-            member m.Deserialize zcb                    = zcb |> deserialize m
-            member m.SerializeLengthDelimited zcb       = zcb |> serializeLengthDelimited m
-            member m.DeserializeLengthDelimited zcb     = zcb |> deserializeLengthDelimited m
+            member m.Serialize () =
+                Array.zeroCreate (serializedLength m |> int32)
+                |> ZeroCopyBuffer
+                |> serialize m
+                |> ZeroCopyBuffer.asArraySegment
 
-            member m.SerializeWithUnknowns unks zcb                 = zcb |> serializeWithUnknowns m unks
-            member m.DeserializeWithUnknowns zcb                    = zcb |> deserializeWithUnknowns m
-            member m.SerializeLengthDelimitedWithUnknowns unks zcb  = zcb |> serializeLengthDelimitedWithUnknowns m unks
-            member m.DeserializeLengthDelimitedWithUnknowns zcb     = zcb |> deserializeLengthDelimitedWithUnknowns m
+            member m.SerializeLengthDelimited () =
+                Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
+                |> ZeroCopyBuffer
+                |> serializeLengthDelimited m
+
+            static member Deserialize (buf:ArraySegment<byte>) =
+                buf
+                |> ZeroCopyBuffer
+                |> deserialize InnerSample.Default
+
+            static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
+                buf
+                |> ZeroCopyBuffer
+                |> deserializeLengthDelimited InnerSample.Default
                 
             member m.Serializer zcb =
                 (m.id            |> dehydrateVarint 1) >>
@@ -50,12 +63,12 @@ module SampleNamespace =
 
             member m.DecoderRing =
                 [
-                    1, fun m rawField -> { m with id = rawField |> hydrateInt32 }
-                    2, fun m rawField -> { m with name = rawField |> hydrateString }
-                    3, fun m rawField -> { m with option = rawField |> hydrateBool }
-                    4, fun m rawField -> { m with test = rawField |> hydrateEnum }
-                    5, fun m rawField -> { m with packedFixed32 = rawField |> hydratePackedFixed32 }
-                    6, fun m rawField -> { m with repeatedInt32 = (rawField |> hydrateInt32) :: m.repeatedInt32 }
+                    1, fun m rawField -> { m with id = rawField |> hydrateInt32 } : InnerSample
+                    2, fun m rawField -> { m with name = rawField |> hydrateString } : InnerSample
+                    3, fun m rawField -> { m with option = rawField |> hydrateBool } : InnerSample
+                    4, fun m rawField -> { m with test = rawField |> hydrateEnum } : InnerSample
+                    5, fun m rawField -> { m with packedFixed32 = rawField |> hydratePackedFixed32 } : InnerSample
+                    6, fun m rawField -> { m with repeatedInt32 = (rawField |> hydrateInt32) :: m.repeatedInt32 } : InnerSample
                 ]
                 |> Map.ofList
 
