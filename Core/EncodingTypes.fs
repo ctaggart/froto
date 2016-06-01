@@ -34,3 +34,10 @@ type RawField =
         // Need a place to hang this, because it cannot go on FieldNum
         // (a type alias cannot have methods or properties).
         static member MaxFieldNum = (2<<<28) - 1
+
+        member x.WireType =
+            match x with
+            | Varint _ -> WireType.Varint
+            | Fixed32 _ -> WireType.Fixed32
+            | Fixed64 _ -> WireType.Fixed64
+            | LengthDelimited _ -> WireType.LengthDelimited

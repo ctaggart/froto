@@ -184,11 +184,15 @@ module RecordSerialization =
     type InnerMessage  = {
         id : int32
         name : string
+        _foundFieldNums : Set<FieldNum>
+        _unknownFields : RawField list
         }
         with
             static member Default = {
                 id = 0
                 name = ""
+                _foundFieldNums = Set.empty
+                _unknownFields = List.empty
                 }
 
             member m.Serialize () =
@@ -212,19 +216,33 @@ module RecordSerialization =
                 |> ZeroCopyBuffer
                 |> deserializeLengthDelimited InnerMessage.Default
        
-            member m.Serializer zcb =
+            static member Serializer (m, zcb) =
                 (m.id            |> dehydrateVarint 1) >>
                 (m.name          |> dehydrateString 2)
                 <| zcb
 
-            member m.DecoderRing =
+            static member DecoderRing =
                 [
+                    0, fun m rawField -> { m with _unknownFields = rawField :: m._unknownFields } : InnerMessage
                     1, fun m rawField -> { m with id = rawField |> hydrateInt32 } : InnerMessage
                     2, fun m rawField -> { m with name = rawField |> hydrateString } : InnerMessage
                 ]
                 |> Map.ofList
 
-            static member DecodeFixup m = m
+            static member RememberFound (m,found) =
+                { m with _foundFieldNums = m._foundFieldNums |> Set.add found }
+
+            static member DecodeFixup m =
+                { m with _unknownFields = List.rev m._unknownFields }
+
+            static member RequiredFields =
+                [ 1; 2 ] |> Set.ofList
+
+            static member FoundFields m =
+                m._foundFieldNums
+
+            static member UnknownFields m =
+                m._unknownFields
 
     [<Fact>]
     let ``Deserialize simple message`` () =
@@ -305,20 +323,23 @@ module RecordSerialization =
                 |> ZeroCopyBuffer
                 |> deserializeLengthDelimited OuterMessage.Default
 
-            member m.Serializer zcb =
+            static member Serializer (m, zcb) =
                 (m.id         |> dehydrateVarint 1) >>
                 (m.inner      |> dehydrateOptionalMessage serializeLengthDelimited 42) >>
                 (m.hasMore    |> dehydrateBool 43)
                 <| zcb
 
-            member m.DecoderRing =
+            static member DecoderRing =
                 [ 1 , fun m rawField -> { m with id      = hydrateInt32 rawField } : OuterMessage
-                  42, fun m rawField -> { m with inner   = hydrateOptionalMessage (deserialize InnerMessage.Default) rawField } : OuterMessage
+                  42, fun m rawField -> { m with inner   = Some <| deserializeFromRawField InnerMessage.Default rawField } : OuterMessage
                   43, fun m rawField -> { m with hasMore = hydrateBool rawField } : OuterMessage
                 ]
                 |> Map.ofList
 
+            static member RememberFound (m,_) = m
             static member DecodeFixup m = m
+            static member RequiredFields = Set.empty
+            static member FoundFields _ = Set.empty
 
     [<Fact>]
     let ``Deserialize compound message`` () =

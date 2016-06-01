@@ -231,3 +231,9 @@ module WireFormat =
             len
             (fun dest -> utf8.GetBytes( s, 0, s.Length, dest.Array, dest.Offset) |> ignore)
 
+    /// Encode a raw field
+    let encodeFieldRaw = function
+        | Varint (n,v) -> encodeFieldVarint n v
+        | Fixed32 (n,v) -> encodeFieldFixed32 n v
+        | Fixed64 (n,v) -> encodeFieldFixed64 n v
+        | LengthDelimited (n,v) -> encodeFieldBytes n v

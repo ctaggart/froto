@@ -20,6 +20,8 @@ module SampleNamespace =
         test : ETest
         packedFixed32 : uint32 list
         repeatedInt32 : int32 list
+        _unknownFields : RawField list
+        _foundFields : Set<FieldNum>
         }
         with
             static member Default = {
@@ -29,6 +31,8 @@ module SampleNamespace =
                 test=ETest.Nada
                 packedFixed32=[]
                 repeatedInt32=[]
+                _unknownFields=List.empty
+                _foundFields=Set.empty
             }
 
             member m.Serialize () =
@@ -52,17 +56,19 @@ module SampleNamespace =
                 |> ZeroCopyBuffer
                 |> deserializeLengthDelimited InnerSample.Default
                 
-            member m.Serializer zcb =
-                (m.id            |> dehydrateVarint 1) >>
-                (m.name          |> dehydrateString 2) >>
-                (m.option        |> dehydrateBool 3) >>
-                (m.test          |> dehydrateDefaultedVarint ETestDefault 4) >>
-                (m.packedFixed32 |> dehydratePackedFixed32 5) >>
-                (m.repeatedInt32 |> dehydrateRepeated dehydrateVarint 6)
+            static member Serializer (m, zcb) =
+                (m.id             |> dehydrateVarint 1) >>
+                (m.name           |> dehydrateString 2) >>
+                (m.option         |> dehydrateBool 3) >>
+                (m.test           |> dehydrateDefaultedVarint ETestDefault 4) >>
+                (m.packedFixed32  |> dehydratePackedFixed32 5) >>
+                (m.repeatedInt32  |> dehydrateRepeated dehydrateVarint 6) >>
+                (m._unknownFields |> dehydrateRawFields )
                 <| zcb
 
-            member m.DecoderRing =
+            static member DecoderRing =
                 [
+                    0, fun m rawField -> { m with _unknownFields = rawField :: m._unknownFields }
                     1, fun m rawField -> { m with id = rawField |> hydrateInt32 } : InnerSample
                     2, fun m rawField -> { m with name = rawField |> hydrateString } : InnerSample
                     3, fun m rawField -> { m with option = rawField |> hydrateBool } : InnerSample
@@ -72,10 +78,24 @@ module SampleNamespace =
                 ]
                 |> Map.ofList
 
+            static member RememberFound (m,found) =
+                { m with _foundFields = m._foundFields |> Set.add found }
+
             static member DecodeFixup m =
                 { m with
                     packedFixed32 = List.rev m.packedFixed32
-                    repeatedInt32 = List.rev m.repeatedInt32 }
+                    repeatedInt32 = List.rev m.repeatedInt32
+                    _unknownFields = List.rev m._unknownFields }
+
+            static member RequiredFields =
+                [ 1; 2 ] |> Set.ofList
+
+            static member FoundFields m =
+                m._foundFields
+
+            static member UnknownFields m =
+                m._unknownFields
+
 
 module PerformanceTest =
 
@@ -96,6 +116,8 @@ module PerformanceTest =
                         test = ETest.Two
                         packedFixed32 = [1u; 2u; 3u; 4u]
                         repeatedInt32 = [5;6;7;8;9]
+                        _unknownFields = List.empty
+                        _foundFields = Set.empty
                         }
                     yield inner
             ]

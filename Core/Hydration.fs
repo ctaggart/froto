@@ -136,6 +136,10 @@ module Hydration =
 
 //---- Serialization
 
+    let dehydrateRawFields fieldList zcb =
+        fieldList
+        |> List.fold (fun zcb field -> WireFormat.encodeFieldRaw field zcb) zcb
+
     /// If value = default, then elide the field (don't serialize)
     let inline elided d v f =
         if v = d

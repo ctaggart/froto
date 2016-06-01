@@ -9,13 +9,15 @@ module RecordModel =
     open Froto.Core.Utility
 
 (* Serialize *)
-    let inline serialize (m:^msg when ^msg : (member Serializer : ZeroCopyBuffer -> ZeroCopyBuffer ) ) zcb =
-        let serialize m zcb = (^msg : (member Serializer : ZeroCopyBuffer -> ZeroCopyBuffer) (m, zcb) )
+    let inline serialize m zcb =
+        let serialize m zcb =
+            (^msg : (static member Serializer : ^msg * ZeroCopyBuffer -> ZeroCopyBuffer) (m, zcb) )
         zcb
         |> serialize m
 
-    let inline serializedLength (m:^msg when ^msg : (member Serializer : ZeroCopyBuffer -> ZeroCopyBuffer ) ) =
-        let serialize m zcb = (^msg : (member Serializer : ZeroCopyBuffer -> ZeroCopyBuffer) (m, zcb) )
+    let inline serializedLength m =
+        let serialize m zcb =
+            (^msg : (static member Serializer : ^msg * ZeroCopyBuffer -> ZeroCopyBuffer) (m, zcb) )
         let nwb = NullWriteBuffer()
         nwb |> serialize m |> ignore
         nwb.Length
@@ -72,28 +74,49 @@ module RecordModel =
         |> serializeWithUnknowns m unks
 
 (* Deserialize *)
-    let findDecoders decoderRing decodeUnknown (field:RawField) =
+
+    let inline decoderRing (m:^msg) =
+        (^msg : (static member DecoderRing: Map<int,^msg -> RawField -> ^msg>) () )
+    
+    let inline requiredFields (m:^msg) =
+        (^msg : (static member RequiredFields: Set<FieldNum>) () )
+
+    let inline foundFields (m:^msg) =
+        (^msg : (static member FoundFields: ^msg -> Set<FieldNum>) (m) )
+
+    let inline rememberFound (m:^msg) fieldNum =
+        (^msg : (static member RememberFound : ^msg -> FieldNum -> ^msg) (m,fieldNum) )
+
+    let inline decodeFixup (m:^msg) =
+        (^msg : (static member DecodeFixup : ^msg -> ^msg) (m) )
+
+    let inline fetchDecoder decoderRing (field:RawField) =
+        let decode decoder m (rawField:RawField) =
+            let m = rememberFound m (rawField.FieldNum)
+            in decoder m rawField
+
         let n = field.FieldNum
         match decoderRing |> Map.tryFind n with
-        | Some(decode) -> (decode, field)
-        | None -> (decodeUnknown, field)
+        | Some(decoder) -> (decode decoder, field)
+        | None ->
+            match decoderRing |> Map.tryFind 0 with
+            | Some(decoder) -> (decode decoder, field)
+            | None ->
+                raise <| ProtobufSerializerException(sprintf "Invalid decoder ring; encountered unknown field '%d' and ring must include an entry for field number 0 to handle unknown fields" n)
 
-    let hydrate decoderRing decodeUnknown msgAcc fields =
+    let inline hydrate decoderRing state fields =
         fields
-        |> Seq.map (findDecoders decoderRing decodeUnknown)
-        |> Seq.fold (fun acc (fn, fld) -> fn acc fld) msgAcc
+        |> Seq.map (fetchDecoder decoderRing)
+        |> Seq.fold (fun acc (fn, fld) -> fn acc fld) state
 
-
-    let inline deserializeFields (m:^msg when ^msg : (member DecoderRing : Map<int,^msg -> RawField -> ^msg>)) fields =
-        let decoderRing = (^msg : (member DecoderRing: Map<int,^msg -> RawField -> ^msg>) (m) )
-        let ignoreUnknown m fld = m
-        let result =
-            hydrate decoderRing ignoreUnknown m fields
-        result
-
-    let inline decodeFixup (m:^msg when ^msg : (static member DecodeFixup : ^msg -> ^msg)) =
-        let decodeFixup m = (^msg : (static member DecodeFixup : ^msg -> ^msg) (m) )
-        decodeFixup m
+    let inline deserializeFields m fields =
+        let m = hydrate (decoderRing m) m fields
+        let missingFields = (requiredFields m) - (foundFields m)
+        if Set.isEmpty missingFields
+        then
+            m
+        else
+            raise <| ProtobufSerializerException(sprintf "Missing required fields %A" missingFields)
 
     let inline deserializeLengthDelimited m zcb =
         zcb
@@ -107,27 +130,13 @@ module RecordModel =
         |> deserializeFields m
         |> decodeFixup
 
-
-    let inline deserializeFieldsWithUnknowns (m:^msg when ^msg : (member DecoderRing : Map<int,^msg -> RawField -> ^msg>)) fields =
-        let decoderRing = (^msg : (member DecoderRing: Map<int,^msg -> RawField -> ^msg>) (m) )
-        let unks = ref List.empty
-        let captureUnknown m fld =
-            unks := fld :: !unks
-            m
-        let result =
-            hydrate decoderRing captureUnknown m fields
-        (result, List.rev !unks)
-
-    let inline deserializeLengthDelimitedWithUnknowns m zcb =
-        let (m,unks) =
-            zcb
-            |> decodeLengthDelimited
-            |> deserializeFieldsWithUnknowns m
-        (decodeFixup m, unks)
-
-    let inline deserializeWithUnknowns m zcb =
-        let (m,unks) =
-            zcb
-            |> decodeBuffer
-            |> deserializeFieldsWithUnknowns m
-        (decodeFixup m, unks)
+    let inline deserializeFromRawField m (rawField:RawField) =
+        let buf = 
+            match rawField with
+            | LengthDelimited (fieldId, buf) ->
+                buf
+            | _ ->
+                raise <| ProtobufSerializerException(sprintf "Expected LengthDelimited field, found %s" (rawField.GetType().Name) )
+        buf
+        |> ZeroCopyBuffer
+        |> deserialize m
