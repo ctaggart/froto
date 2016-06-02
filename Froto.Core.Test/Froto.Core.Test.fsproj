@@ -134,6 +134,7 @@
     <Compile Include="ExampleProtoClass.fs" />
     <Content Include="app.config" />
     <None Include="paket.references" />
+    <Compile Include="ExampleProtoClassNew.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Data.TypeProviders" />

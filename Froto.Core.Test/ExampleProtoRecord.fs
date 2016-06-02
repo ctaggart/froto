@@ -35,27 +35,6 @@ module SampleNamespace =
                 _foundFields=Set.empty
             }
 
-            member m.Serialize () =
-                Array.zeroCreate (serializedLength m |> int32)
-                |> ZeroCopyBuffer
-                |> serialize m
-                |> ZeroCopyBuffer.asArraySegment
-
-            member m.SerializeLengthDelimited () =
-                Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
-                |> ZeroCopyBuffer
-                |> serializeLengthDelimited m
-
-            static member Deserialize (buf:ArraySegment<byte>) =
-                buf
-                |> ZeroCopyBuffer
-                |> deserialize InnerSample.Default
-
-            static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
-                buf
-                |> ZeroCopyBuffer
-                |> deserializeLengthDelimited InnerSample.Default
-                
             static member Serializer (m, zcb) =
                 (m.id             |> dehydrateVarint 1) >>
                 (m.name           |> dehydrateString 2) >>
@@ -96,6 +75,28 @@ module SampleNamespace =
             static member UnknownFields m =
                 m._unknownFields
 
+            member m.Serialize () =
+                Array.zeroCreate (serializedLength m |> int32)
+                |> ZeroCopyBuffer
+                |> serialize m
+                |> ZeroCopyBuffer.asArraySegment
+
+            member m.SerializeLengthDelimited () =
+                Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
+                |> ZeroCopyBuffer
+                |> serializeLengthDelimited m
+
+            static member Deserialize (buf:ArraySegment<byte>) =
+                buf
+                |> ZeroCopyBuffer
+                |> deserialize InnerSample.Default
+
+            static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
+                buf
+                |> ZeroCopyBuffer
+                |> deserializeLengthDelimited InnerSample.Default
+                
+
 
 module PerformanceTest =
 
@@ -108,7 +109,7 @@ module PerformanceTest =
     let ``Test Serialization and Deserialization Performance`` () =
         let xs =
             [
-                for id = 1 to 1000 do
+                for id = 1 to 1000000 do
                     let inner = {
                         id=1
                         name="Jerry Smith"
