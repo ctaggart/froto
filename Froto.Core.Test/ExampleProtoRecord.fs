@@ -109,7 +109,7 @@ module PerformanceTest =
     let ``Test Serialization and Deserialization Performance`` () =
         let xs =
             [
-                for id = 1 to 1000000 do
+                for id = 1 to 1000 do
                     let inner = {
                         id=1
                         name="Jerry Smith"

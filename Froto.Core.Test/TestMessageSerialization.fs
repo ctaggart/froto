@@ -10,41 +10,72 @@ open Froto.Core.Hydration
 [<Xunit.Trait("Kind", "Unit")>]
 module ClassSerialization =
 
-    open Froto.Core.ClassModel
+    open Froto.Core.RecordModel
 
     let toArray (seg:ArraySegment<'a>) =
         seg.Array.[ seg.Offset .. (seg.Count-1) ]
 
-    type InnerMessage () as self =
-        inherit MessageBase()
-
+    type InnerMessage () =
         member val Id = 0 with get,set
         member val Name = "" with get,set
+        member val _FoundFields = Set.empty with get,set
 
-        override x.Clear() =
+        member x.Clear() =
             x.Id <- 0
             x.Name <- ""
 
-        override x.RequiredFields =
-            [ 1; 2 ]
-            |> Set.ofList
+        static member Serializer (m:InnerMessage, zcb) =
+            (m.Id             |> dehydrateVarint 1) >>
+            (m.Name           |> dehydrateString 2)
+            <| zcb
 
-        override x.DecoderRing =
-            [ 1, fun rawField -> self.Id <- hydrateInt32 rawField
-              2, fun rawField -> self.Name <- hydrateString rawField
+        static member DecoderRing = 
+            [
+                1, fun (m:InnerMessage) rawField -> m.Id          <- hydrateInt32 rawField ; m
+                2, fun (m:InnerMessage) rawField -> m.Name        <- hydrateString rawField ; m
             ]
             |> Map.ofList
-        
-        override x.Encode zcb =
-            let encode =
-                (x.Id     |> dehydrateVarint 1) >>
-                (x.Name   |> dehydrateString 2)
-            encode zcb
 
-        static member FromZeroCopyBuffer (zcb:ZeroCopyBuffer) =
-            let self = InnerMessage()
-            self.Merge(zcb) |> ignore
-            self
+        static member RememberFound (m:InnerMessage, found) =
+            m._FoundFields <- m._FoundFields.Add( found )
+            m
+
+        static member DecodeFixup (m:InnerMessage) =
+            m
+
+        static member RequiredFields =
+            [ 1; 2 ] |> Set.ofList
+
+        static member FoundFields (m:InnerMessage) =
+            m._FoundFields
+
+        static member UnknownFields (m:InnerMessage) =
+            List.empty
+
+        member m.Serialize () =
+            Array.zeroCreate (serializedLength m |> int32)
+            |> ZeroCopyBuffer
+            |> serialize m
+            |> ZeroCopyBuffer.asArraySegment
+
+        member m.SerializeLengthDelimited () =
+            Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
+            |> ZeroCopyBuffer
+            |> serializeLengthDelimited m
+
+        static member Deserialize (buf:ArraySegment<byte>) =
+            buf
+            |> ZeroCopyBuffer
+            |> deserialize (InnerMessage())
+
+        static member Deserialize (rawField:RawField) =
+            rawField
+            |> deserializeFromRawField (InnerMessage())
+
+        static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
+            buf
+            |> ZeroCopyBuffer
+            |> deserializeLengthDelimited (InnerMessage())
 
 
     [<Fact>]
@@ -58,7 +89,7 @@ module ClassSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |] |> ArraySegment
-        let msg = InnerMessage.FromZeroCopyBuffer(ZeroCopyBuffer buf)
+        let msg = InnerMessage.Deserialize(buf)
         msg.Id |> should equal 99
         msg.Name |> should equal "Test message"
 
@@ -73,7 +104,7 @@ module ClassSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |] |> ArraySegment
-        fun () -> InnerMessage.FromZeroCopyBuffer(ZeroCopyBuffer buf) |> ignore
+        fun () -> InnerMessage.Deserialize(buf) |> ignore
         |> should throw typeof<Froto.Core.ProtobufSerializerException>
 
     [<Fact>]
@@ -93,36 +124,69 @@ module ClassSerialization =
                                     // value "ABC0"
             |]
 
-    type OuterMessage () as self =
-        inherit MessageBase()
-
+    type OuterMessage () =
         member val Id        = 0 with get,set
         member val Inner     = None with get,set
         member val HasMore   = false with get,set
+        member val _FoundFields = Set.empty with get,set
 
-        override x.Clear() =
+        member x.Clear() =
             x.Id <- 0
             x.Inner <- None
             x.HasMore <- false
 
-        override x.DecoderRing =
-            [ 1 , fun rawField -> self.Id      <- hydrateInt32 rawField
-              42, fun rawField -> self.Inner   <- hydrateOptionalMessage InnerMessage.FromZeroCopyBuffer rawField
-              43, fun rawField -> self.HasMore <- hydrateBool rawField
+        static member Serializer (m:OuterMessage, zcb) =
+            (m.Id         |> dehydrateVarint 1) >>
+            (m.Inner      |> dehydrateOptionalMessage serializeLengthDelimited 42) >>
+            (m.HasMore    |> dehydrateBool 43)
+            <| zcb
+
+        static member DecoderRing =
+            [ 1 , fun (m:OuterMessage) rawField -> m.Id      <- hydrateInt32 rawField; m
+              42, fun (m:OuterMessage) rawField ->
+                    let o = InnerMessage.Deserialize(rawField) |> Some
+                    m.Inner <- o
+                    m
+              43, fun (m:OuterMessage) rawField -> m.HasMore <- hydrateBool rawField; m
             ]
             |> Map.ofList
 
-        override x.Encode zcb =
-            let encode =
-                (x.Id         |> dehydrateVarint 1) >>
-                (x.Inner      |> dehydrateOptionalMessage serializeClassLengthDelimited 42) >>
-                (x.HasMore    |> dehydrateBool 43)
-            encode zcb
+        static member RememberFound (m:OuterMessage, found) =
+            m._FoundFields <- m._FoundFields.Add( found )
+            m
 
-        static member FromArraySegment (buf:ArraySegment<byte>) =
-            let self = OuterMessage()
-            self.Merge(buf) |> ignore
-            self
+        static member DecodeFixup (m:OuterMessage) =
+            m
+
+        static member RequiredFields =
+            Set.empty
+
+        static member FoundFields (m:OuterMessage) =
+            m._FoundFields
+
+        static member UnknownFields (m:OuterMessage) =
+            List.empty
+
+        member m.Serialize () =
+            Array.zeroCreate (serializedLength m |> int32)
+            |> ZeroCopyBuffer
+            |> serialize m
+            |> ZeroCopyBuffer.asArraySegment
+
+        member m.SerializeLengthDelimited () =
+            Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
+            |> ZeroCopyBuffer
+            |> serializeLengthDelimited m
+
+        static member Deserialize (buf:ArraySegment<byte>) =
+            buf
+            |> ZeroCopyBuffer
+            |> deserialize (OuterMessage())
+
+        static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
+            buf
+            |> ZeroCopyBuffer
+            |> deserializeLengthDelimited (InnerMessage())
 
     [<Fact>]
     let ``Deserialize compound message`` () =
@@ -141,7 +205,7 @@ module ClassSerialization =
                 0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
                 0x01uy;                 // value true
             |] |> ArraySegment
-        let msg = OuterMessage.FromArraySegment(buf)
+        let msg = OuterMessage.Deserialize(buf)
         msg.Id |> should equal 21
         msg.Inner.IsSome |> should equal true
         msg.Inner.Value.Id |> should equal 99
