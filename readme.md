@@ -7,7 +7,7 @@
 
 ## NuGet
 * [Froto.Parser](http://www.nuget.org/packages/Froto.Parser) - Protobuf Parser
-* [Froto.Core](http://www.nuget.org/packages/Froto.Core) - Protobuf F# Serialization Framework and low-level WireFormat library
+* [Froto.Encoding](http://www.nuget.org/packages/Froto.Encoding) - Protobuf F# Serialization Framework and low-level WireFormat library
 
 ## Status
 * 0.2.1 2016-04 Added F# serialization framework to Core, w/full wire format support

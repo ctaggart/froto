@@ -2,9 +2,9 @@
 
 module SampleNamespace =
     open System
-    open Froto.Core
-    open Froto.Core.RecordModel
-    open Froto.Core.Hydration
+    open Froto.Encoding
+    open Froto.Serialization
+    open Froto.Encoding.Encoders
 
     type ETest =
         | Nada = 0
@@ -36,24 +36,24 @@ module SampleNamespace =
             }
 
             static member Serializer (m, zcb) =
-                (m.id             |> dehydrateVarint 1) >>
-                (m.name           |> dehydrateString 2) >>
-                (m.option         |> dehydrateBool 3) >>
-                (m.test           |> dehydrateDefaultedVarint ETestDefault 4) >>
-                (m.packedFixed32  |> dehydratePackedFixed32 5) >>
-                (m.repeatedInt32  |> dehydrateRepeated dehydrateVarint 6) >>
-                (m._unknownFields |> dehydrateRawFields )
+                (m.id             |> encodeVarint 1) >>
+                (m.name           |> encodeString 2) >>
+                (m.option         |> encodeBool 3) >>
+                (m.test           |> encodeDefaultedVarint ETestDefault 4) >>
+                (m.packedFixed32  |> encodePackedFixed32 5) >>
+                (m.repeatedInt32  |> encodeRepeated encodeVarint 6) >>
+                (m._unknownFields |> encodeRawFields )
                 <| zcb
 
             static member DecoderRing =
                 [
                     0, fun m rawField -> { m with _unknownFields = rawField :: m._unknownFields }
-                    1, fun m rawField -> { m with id = rawField |> hydrateInt32 } : InnerSample
-                    2, fun m rawField -> { m with name = rawField |> hydrateString } : InnerSample
-                    3, fun m rawField -> { m with option = rawField |> hydrateBool } : InnerSample
-                    4, fun m rawField -> { m with test = rawField |> hydrateEnum } : InnerSample
-                    5, fun m rawField -> { m with packedFixed32 = rawField |> hydratePackedFixed32 } : InnerSample
-                    6, fun m rawField -> { m with repeatedInt32 = (rawField |> hydrateInt32) :: m.repeatedInt32 } : InnerSample
+                    1, fun m rawField -> { m with id = rawField |> decodeInt32 } : InnerSample
+                    2, fun m rawField -> { m with name = rawField |> decodeString } : InnerSample
+                    3, fun m rawField -> { m with option = rawField |> decodeBool } : InnerSample
+                    4, fun m rawField -> { m with test = rawField |> decodeEnum } : InnerSample
+                    5, fun m rawField -> { m with packedFixed32 = rawField |> decodePackedFixed32 } : InnerSample
+                    6, fun m rawField -> { m with repeatedInt32 = (rawField |> decodeInt32) :: m.repeatedInt32 } : InnerSample
                 ]
                 |> Map.ofList
 
@@ -102,7 +102,7 @@ module PerformanceTest =
 
     open Xunit
     open FsUnit.Xunit
-    open Froto.Core.RecordModel
+    open Froto.Serialization
     open SampleNamespace
 
     [<Fact>]
@@ -128,13 +128,13 @@ module PerformanceTest =
 
         let buf : byte array = Array.zeroCreate (len |> int)
         let bufAS = System.ArraySegment(buf)
-        let zcw = Froto.Core.ZeroCopyBuffer(bufAS)
+        let zcw = Froto.Encoding.ZeroCopyBuffer(bufAS)
 
         xs
         |> List.iter (fun x -> zcw |> serializeLengthDelimited x |> ignore)
 
         let ys =
-            let zcr = Froto.Core.ZeroCopyBuffer(zcw.Array)
+            let zcr = Froto.Encoding.ZeroCopyBuffer(zcw.Array)
             seq {
                 while not zcr.IsEof do
                     yield zcr |> deserializeLengthDelimited InnerSample.Default

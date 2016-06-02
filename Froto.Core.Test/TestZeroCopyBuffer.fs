@@ -6,7 +6,7 @@ open FsUnit.Xunit
 
 open System
 
-open Froto.Core
+open Froto.Encoding
 
 type System.ArraySegment<'a>
     with member x.ToArray() =

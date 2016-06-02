@@ -4,13 +4,13 @@ open Xunit
 open FsUnit.Xunit
 
 open System
-open Froto.Core
-open Froto.Core.Hydration
+open Froto.Encoding
+open Froto.Encoding.Encoders
 
 [<Xunit.Trait("Kind", "Unit")>]
 module ClassSerialization =
 
-    open Froto.Core.RecordModel
+    open Froto.Serialization
 
     let toArray (seg:ArraySegment<'a>) =
         seg.Array.[ seg.Offset .. (seg.Count-1) ]
@@ -25,14 +25,14 @@ module ClassSerialization =
             x.Name <- ""
 
         static member Serializer (m:InnerMessage, zcb) =
-            (m.Id             |> dehydrateVarint 1) >>
-            (m.Name           |> dehydrateString 2)
+            (m.Id             |> encodeVarint 1) >>
+            (m.Name           |> encodeString 2)
             <| zcb
 
         static member DecoderRing = 
             [
-                1, fun (m:InnerMessage) rawField -> m.Id          <- hydrateInt32 rawField ; m
-                2, fun (m:InnerMessage) rawField -> m.Name        <- hydrateString rawField ; m
+                1, fun (m:InnerMessage) rawField -> m.Id          <- decodeInt32 rawField ; m
+                2, fun (m:InnerMessage) rawField -> m.Name        <- decodeString rawField ; m
             ]
             |> Map.ofList
 
@@ -105,7 +105,7 @@ module ClassSerialization =
                                     // value "Test message"
             |] |> ArraySegment
         fun () -> InnerMessage.Deserialize(buf) |> ignore
-        |> should throw typeof<Froto.Core.ProtobufSerializerException>
+        |> should throw typeof<Froto.Encoding.ProtobufSerializerException>
 
     [<Fact>]
     let ``Serialize simple message`` () =
@@ -136,18 +136,18 @@ module ClassSerialization =
             x.HasMore <- false
 
         static member Serializer (m:OuterMessage, zcb) =
-            (m.Id         |> dehydrateVarint 1) >>
-            (m.Inner      |> dehydrateOptionalMessage serializeLengthDelimited 42) >>
-            (m.HasMore    |> dehydrateBool 43)
+            (m.Id         |> encodeVarint 1) >>
+            (m.Inner      |> encodeOptionalMessage serializeLengthDelimited 42) >>
+            (m.HasMore    |> encodeBool 43)
             <| zcb
 
         static member DecoderRing =
-            [ 1 , fun (m:OuterMessage) rawField -> m.Id      <- hydrateInt32 rawField; m
+            [ 1 , fun (m:OuterMessage) rawField -> m.Id      <- decodeInt32 rawField; m
               42, fun (m:OuterMessage) rawField ->
                     let o = InnerMessage.Deserialize(rawField) |> Some
                     m.Inner <- o
                     m
-              43, fun (m:OuterMessage) rawField -> m.HasMore <- hydrateBool rawField; m
+              43, fun (m:OuterMessage) rawField -> m.HasMore <- decodeBool rawField; m
             ]
             |> Map.ofList
 
@@ -240,7 +240,7 @@ module ClassSerialization =
 [<Xunit.Trait("Kind", "Unit")>]
 module RecordSerialization =
 
-    open Froto.Core.RecordModel
+    open Froto.Serialization
 
     let toArray (seg:ArraySegment<'a>) =
         seg.Array.[ seg.Offset .. (seg.Count-1) ]
@@ -281,15 +281,15 @@ module RecordSerialization =
                 |> deserializeLengthDelimited InnerMessage.Default
        
             static member Serializer (m, zcb) =
-                (m.id            |> dehydrateVarint 1) >>
-                (m.name          |> dehydrateString 2)
+                (m.id            |> encodeVarint 1) >>
+                (m.name          |> encodeString 2)
                 <| zcb
 
             static member DecoderRing =
                 [
                     0, fun m rawField -> { m with _unknownFields = rawField :: m._unknownFields } : InnerMessage
-                    1, fun m rawField -> { m with id = rawField |> hydrateInt32 } : InnerMessage
-                    2, fun m rawField -> { m with name = rawField |> hydrateString } : InnerMessage
+                    1, fun m rawField -> { m with id = rawField |> decodeInt32 } : InnerMessage
+                    2, fun m rawField -> { m with name = rawField |> decodeString } : InnerMessage
                 ]
                 |> Map.ofList
 
@@ -335,7 +335,7 @@ module RecordSerialization =
                                     // value "Test message"
             |] |> ArraySegment
         fun () -> InnerMessage.Deserialize(buf) |> ignore
-        |> should throw typeof<Froto.Core.ProtobufSerializerException>
+        |> should throw typeof<Froto.Encoding.ProtobufSerializerException>
 
     [<Fact>]
     let ``Serialize simple message`` () =
@@ -388,15 +388,15 @@ module RecordSerialization =
                 |> deserializeLengthDelimited OuterMessage.Default
 
             static member Serializer (m, zcb) =
-                (m.id         |> dehydrateVarint 1) >>
-                (m.inner      |> dehydrateOptionalMessage serializeLengthDelimited 42) >>
-                (m.hasMore    |> dehydrateBool 43)
+                (m.id         |> encodeVarint 1) >>
+                (m.inner      |> encodeOptionalMessage serializeLengthDelimited 42) >>
+                (m.hasMore    |> encodeBool 43)
                 <| zcb
 
             static member DecoderRing =
-                [ 1 , fun m rawField -> { m with id      = hydrateInt32 rawField } : OuterMessage
+                [ 1 , fun m rawField -> { m with id      = decodeInt32 rawField } : OuterMessage
                   42, fun m rawField -> { m with inner   = Some <| deserializeFromRawField InnerMessage.Default rawField } : OuterMessage
-                  43, fun m rawField -> { m with hasMore = hydrateBool rawField } : OuterMessage
+                  43, fun m rawField -> { m with hasMore = decodeBool rawField } : OuterMessage
                 ]
                 |> Map.ofList
 

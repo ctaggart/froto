@@ -1,4 +1,4 @@
-﻿namespace Froto.Core
+﻿namespace Froto.Encoding
 
 ///
 /// Utility functions used by the serializer
@@ -55,7 +55,7 @@ module Utility =
     let decodeWhile (predicate:ZeroCopyBuffer->bool) (zcb:ZeroCopyBuffer) =
         seq {
             while predicate zcb do
-                yield WireFormat.decodeField zcb
+                yield WireFormat.unpackField zcb
             }
     
     /// Decode an entire ZeroCopyBuffer (until EOF)
@@ -64,8 +64,8 @@ module Utility =
         |> decodeWhile (fun zcb -> not zcb.IsEof)
 
     /// Decode a length-delimited ZeroCopyBuffer
-    let decodeLengthDelimited zcb =
-        let len = zcb |> WireFormat.decodeVarint |> uint32
+    let unpackLengthDelimited zcb =
+        let len = zcb |> WireFormat.unpackVarint |> uint32
         let end_ = zcb.Position + len
         zcb
         |>  decodeWhile (fun zcb -> zcb.Position < end_)

@@ -5,7 +5,7 @@
 
 ### 0.2.1 _ 2016-04
   * [#19](https://github.com/ctaggart/froto/issues/19) Improve support for serialization/deserialization
-  * [#29](https://github.com/ctaggart/froto/issues/29) publish Froto.Core NuGet package
+  * [#29](https://github.com/ctaggart/froto/issues/29) publish Froto.Encoding NuGet package
   * See the [0.2.1 release details](https://github.com/ctaggart/froto/releases/tag/0.2.1) for help upgrading from 0.1.0.
 
 ### 0.2.0 _ 2016-02

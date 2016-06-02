@@ -1,4 +1,4 @@
-﻿namespace Froto.Core
+﻿namespace Froto.Encoding
 
 module WireFormat =
 
@@ -8,7 +8,7 @@ module WireFormat =
     let MAX_FIELD_LEN = 64u * 1024u * 1024u
    
     /// Decode a varint-encoded uint64 (1-9 bytes)
-    let decodeVarint (src:ZeroCopyBuffer) =
+    let unpackVarint (src:ZeroCopyBuffer) =
 
         // note: can't remember if using the outer `src` will cause a new
         // lambda to be created (on each call) to capture `src`, so be
@@ -33,24 +33,24 @@ module WireFormat =
 
         loop 0UL 0 src
 
-    let rec internal decodeFixedLoop acc len n (src:ZeroCopyBuffer) =
+    let rec internal unpackFixedLoop acc len n (src:ZeroCopyBuffer) =
         if n < len
         then
             let byt = src.ReadByte()
             let acc = (uint64 byt <<< (8*n)) ||| acc
-            decodeFixedLoop acc len (n+1) src
+            unpackFixedLoop acc len (n+1) src
         else
             acc
 
     /// Decode fixed-size uint32 (8-bytes)
-    let decodeFixed32 src = uint32 (decodeFixedLoop 0UL 4 0 src)
+    let unpackFixed32 src = uint32 (unpackFixedLoop 0UL 4 0 src)
 
     /// Decode fized-size uint64 (8-bytes)
-    let decodeFixed64 src = uint64 (decodeFixedLoop 0UL 8 0 src)
+    let unpackFixed64 src = uint64 (unpackFixedLoop 0UL 8 0 src)
 
     /// Decode fixed-size float (4-bytes)
-    let decodeSingle src =
-        let u = decodeFixed32 src
+    let unpackSingle src =
+        let u = unpackFixed32 src
         // TODO: eliminate the Array allocation,
         //       perhaps using CIL (MSIL) to load float from a register
         let bytes = BitConverter.GetBytes(u)
@@ -58,8 +58,8 @@ module WireFormat =
         BitConverter.ToSingle(bytes,0)
 
     /// Decode fized-size double (8-bytes)
-    let decodeDouble src =
-        let u = decodeFixed64 src
+    let unpackDouble src =
+        let u = unpackFixed64 src
         // TODO: eliminate the Array allocation,
         //       perhaps using CIL (MSIL) to load float from a register
         let bytes = BitConverter.GetBytes(u)
@@ -71,15 +71,15 @@ module WireFormat =
     /// NOTE: Returns an ArraySegement which references a section of the
     /// underlying source Array, rather than a copy.  Changes to that source
     /// Array will therefore impact this function's returned value.
-    let decodeLengthDelimited src =
-        let len = decodeVarint src
+    let unpackLengthDelimited src =
+        let len = unpackVarint src
         if len < uint64 MAX_FIELD_LEN then
             src.ReadByteSegment(uint32 len)
         else
             raise <| ProtobufWireFormatException( "Maximum field length exceeded" )
 
     /// Encode uint64 as a varint (1-9 bytes)
-    let encodeVarint (u:uint64) (dest:ZeroCopyBuffer) =
+    let packVarint (u:uint64) (dest:ZeroCopyBuffer) =
 
         let rec loop acc (dest:ZeroCopyBuffer) =
             let bMore  = acc > 0x7FUL
@@ -96,7 +96,7 @@ module WireFormat =
         dest
 
     /// Encode uint32 as fixed32 (4 bytes)
-    let encodeFixed32 (u:uint32) (dest:ZeroCopyBuffer) =
+    let packFixed32 (u:uint32) (dest:ZeroCopyBuffer) =
         dest.WriteByte (byte u)
         dest.WriteByte (byte (u >>> 8))
         dest.WriteByte (byte (u >>> 16))
@@ -104,24 +104,24 @@ module WireFormat =
         dest
 
     /// Encode uint64 as fixed64 (8 bytes)
-    let encodeFixed64 (u:uint64) dest =
+    let packFixed64 (u:uint64) dest =
         dest
-        |> encodeFixed32 (uint32 u)
-        |> encodeFixed32 (uint32 (u >>> 32))
+        |> packFixed32 (uint32 u)
+        |> packFixed32 (uint32 (u >>> 32))
    
     /// Encode float as fixed32 (4 bytes)
-    let encodeSingle (f:single) =
+    let packSingle (f:single) =
         let bytes = BitConverter.GetBytes(f)
         if not BitConverter.IsLittleEndian then Array.Reverse bytes
         let u = BitConverter.ToUInt32(bytes,0)
-        encodeFixed32 u
+        packFixed32 u
 
     /// Encode double as fixed64 (8-bytes)
-    let encodeDouble (d:double) =
+    let packDouble (d:double) =
         let bytes = BitConverter.GetBytes(d)
         if not BitConverter.IsLittleEndian then Array.Reverse bytes
         let UL = BitConverter.ToUInt64(bytes,0)
-        encodeFixed64 UL
+        packFixed64 UL
 
     /// Encode [0,MAX_FIELD_LEN) bytes as length delimited field
     ///
@@ -141,15 +141,15 @@ module WireFormat =
     ///     functions; several serialization functions are then chained together to
     ///     produce a single function which serializes the entire Message.
     /// </param>
-    let encodeLengthDelimited (len:uint32) (emplace:ArraySegment<byte>->unit) (dest:ZeroCopyBuffer) =
-        dest |> encodeVarint (uint64 len) |> ignore
+    let packLengthDelimited (len:uint32) (emplace:ArraySegment<byte>->unit) (dest:ZeroCopyBuffer) =
+        dest |> packVarint (uint64 len) |> ignore
         dest.WriteByteSegment len emplace
         dest
 
     /// Decode the field number and wire-type from a tag.
     /// Note: a tag is a field number with a wire type packed in the lower 3 bits.
-    let decodeTag src =
-        let u = decodeVarint src
+    let unpackTag src =
+        let u = unpackVarint src
         let fieldNum = u >>> 3
         // theoretic range is [0, UInt64.MaxValue>>>3],
         // but descriptor.proto defines it as an int32
@@ -162,78 +162,78 @@ module WireFormat =
             raise <| ProtobufWireFormatException("Decode failure: field number must be in range [1, 2^28)")
 
     /// Decode a field into a RawField Discriminated Union.
-    let decodeField src =
-        let fieldNum, wireType = decodeTag src
+    let unpackField src =
+        let fieldNum, wireType = unpackTag src
         match wireType with
         | WireType.Varint ->
-            Varint (fieldNum, decodeVarint src)
+            Varint (fieldNum, unpackVarint src)
         | WireType.Fixed64 ->
-            Fixed64 (fieldNum, decodeFixed64 src)
+            Fixed64 (fieldNum, unpackFixed64 src)
         | WireType.LengthDelimited ->
-            LengthDelimited (fieldNum, decodeLengthDelimited src)
+            LengthDelimited (fieldNum, unpackLengthDelimited src)
         | WireType.Fixed32 ->
-            Fixed32 (fieldNum, decodeFixed32 src)
+            Fixed32 (fieldNum, unpackFixed32 src)
 
         | WireType.StartGroup
         | WireType.EndGroup
         | _ -> raise <| ProtobufWireFormatException(sprintf "Decode failure: unsupported wiretype: %A" wireType)
 
     /// Encode a Tag (consisting of a field number and wire-type) as a single varint
-    let encodeTag (fieldNum:int32) (wireType:WireType) =
+    let packTag (fieldNum:int32) (wireType:WireType) =
         if fieldNum > 0 && fieldNum <= RawField.MaxFieldNum then
             let tag = (fieldNum <<< 3) ||| (int32 wireType)
-            encodeVarint (uint64 tag)
+            packVarint (uint64 tag)
         else
             raise <| ProtobufWireFormatException("Encode failure: field numbeer must be in range [1, 2^28)")
 
     /// Encode a varint-based field
-    let encodeFieldVarint (fieldNum:int32) (u:uint64) =
-        encodeTag fieldNum WireType.Varint
-        >> encodeVarint u
+    let packFieldVarint (fieldNum:int32) (u:uint64) =
+        packTag fieldNum WireType.Varint
+        >> packVarint u
 
     /// Encode a fixed32-based field
-    let encodeFieldFixed32 (fieldNum:int32) (u:uint32) =
-        encodeTag fieldNum WireType.Fixed32
-        >> encodeFixed32 u
+    let packFieldFixed32 (fieldNum:int32) (u:uint32) =
+        packTag fieldNum WireType.Fixed32
+        >> packFixed32 u
 
     /// Encode a fixed64-based field
-    let encodeFieldFixed64 (fieldNum:int32) (u:uint64) =
-        encodeTag fieldNum WireType.Fixed64
-        >> encodeFixed64 u
+    let packFieldFixed64 (fieldNum:int32) (u:uint64) =
+        packTag fieldNum WireType.Fixed64
+        >> packFixed64 u
 
     /// Encode a floating point single field
-    let encodeFieldSingle (fieldNum:int32) (f:single) =
-        encodeTag fieldNum WireType.Fixed32
-        >> encodeSingle f
+    let packFieldSingle (fieldNum:int32) (f:single) =
+        packTag fieldNum WireType.Fixed32
+        >> packSingle f
 
     /// Encode a floating point double field
-    let encodeFieldDouble (fieldNum:int32) (d:double) =
-        encodeTag fieldNum WireType.Fixed64
-        >> encodeDouble d
+    let packFieldDouble (fieldNum:int32) (d:double) =
+        packTag fieldNum WireType.Fixed64
+        >> packDouble d
 
     /// Encode a length delimited field
-    let encodeFieldLengthDelimited (fieldNum:int32) len (emplace:ArraySegment<byte>->unit) =
-        encodeTag fieldNum WireType.LengthDelimited
-        >> encodeLengthDelimited len emplace
+    let packFieldLengthDelimited (fieldNum:int32) len (emplace:ArraySegment<byte>->unit) =
+        packTag fieldNum WireType.LengthDelimited
+        >> packLengthDelimited len emplace
 
     /// Encode a bytes field
-    let encodeFieldBytes (fieldNum:int32) (source:ArraySegment<byte>) =
-        encodeFieldLengthDelimited
+    let packFieldBytes (fieldNum:int32) (source:ArraySegment<byte>) =
+        packFieldLengthDelimited
             (int32 fieldNum)
             (uint32 source.Count)
             (fun dest -> Array.Copy( source.Array, source.Offset, dest.Array, dest.Offset, source.Count))
 
     /// Encode a string field
-    let encodeFieldString fieldNum (s:string) =
+    let packFieldString fieldNum (s:string) =
         let utf8 = System.Text.Encoding.UTF8
         let len = utf8.GetByteCount(s) |> uint32
-        encodeFieldLengthDelimited fieldNum
+        packFieldLengthDelimited fieldNum
             len
             (fun dest -> utf8.GetBytes( s, 0, s.Length, dest.Array, dest.Offset) |> ignore)
 
     /// Encode a raw field
-    let encodeFieldRaw = function
-        | Varint (n,v) -> encodeFieldVarint n v
-        | Fixed32 (n,v) -> encodeFieldFixed32 n v
-        | Fixed64 (n,v) -> encodeFieldFixed64 n v
-        | LengthDelimited (n,v) -> encodeFieldBytes n v
+    let packFieldRaw = function
+        | Varint (n,v) -> packFieldVarint n v
+        | Fixed32 (n,v) -> packFieldFixed32 n v
+        | Fixed64 (n,v) -> packFieldFixed64 n v
+        | LengthDelimited (n,v) -> packFieldBytes n v

@@ -1,4 +1,4 @@
-﻿namespace Froto.Core
+﻿namespace Froto.Encoding
 
 open System
 
