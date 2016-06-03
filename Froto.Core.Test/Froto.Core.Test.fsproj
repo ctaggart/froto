@@ -128,8 +128,10 @@
   <ItemGroup>
     <Compile Include="TestZeroCopyBuffer.fs" />
     <Compile Include="TestWireFormat.fs" />
-    <Compile Include="TestSerializer.fs" />
-    <Compile Include="TestMessageSerialization.fs" />
+    <Compile Include="TestUtility.fs" />
+    <Compile Include="TestEncoding.fs" />
+    <Compile Include="TestSerialization.fs" />
+    <Compile Include="TestClassSerialization.fs" />
     <Compile Include="ExampleProtoRecord.fs" />
     <Compile Include="ExampleProtoClass.fs" />
     <Content Include="app.config" />
