@@ -1,8 +1,10 @@
-﻿namespace Froto.Encoding
+﻿namespace Froto.Serialization.Encoding
 
 module WireFormat =
 
     open System
+    open Froto.Serialization
+    open Froto.Serialization.Encoding
 
     /// Maximum length of a length-delimited field (64Mb)
     let MAX_FIELD_LEN = 64u * 1024u * 1024u

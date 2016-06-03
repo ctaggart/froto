@@ -1,7 +1,7 @@
 ﻿(*
  * Types used for encoding and decoding raw fields, at the wire format level.
  *)
-namespace Froto.Encoding
+namespace Froto.Serialization.Encoding
 
 open System
 

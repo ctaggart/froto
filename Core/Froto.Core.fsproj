@@ -8,9 +8,9 @@
     <ProjectGuid>{c37745d0-275d-4dce-9ddc-c4663a462edd}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Core</RootNamespace>
-    <AssemblyName>Froto.Encoding</AssemblyName>
+    <AssemblyName>Froto.Core</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <Name>Froto.Encoding</Name>
+    <Name>Froto.Core</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,7 +36,7 @@
     <Compile Include="EncodingTypes.fs" />
     <Compile Include="WireFormat.fs" />
     <Compile Include="Utility.fs" />
-    <Compile Include="Encoders.fs" />
+    <Compile Include="Encoder.fs" />
     <Compile Include="Serialization.fs" />
     <None Include="Froto.Core.nuspec" />
     <None Include="paket.references" />

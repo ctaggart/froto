@@ -1,4 +1,4 @@
-﻿namespace Froto.Encoding
+﻿namespace Froto.Serialization
 
 /// Exception encoding or decoding a Protobuf wireformat
 

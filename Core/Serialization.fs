@@ -1,10 +1,10 @@
-﻿namespace Froto
+﻿namespace Froto.Serialization
 
 /// Serialization support functions
 ///
-module Serialization =
+module ProtobufSerializer =
 
-    open Froto.Encoding
+    open Froto.Serialization.Encoding
 
 (* Serialize *)
 

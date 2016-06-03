@@ -4,13 +4,14 @@ open Xunit
 open FsUnit.Xunit
 
 open System
-open Froto.Encoding
-open Froto.Encoding.Encoders
+
+open Froto.Serialization
+open Froto.Serialization.ProtobufSerializer
+open Froto.Serialization.Encoding
+open Froto.Serialization.Encoding.ProtobufEncoder
 
 [<Xunit.Trait("Kind", "Unit")>]
 module ClassSerialization =
-
-    open Froto.Serialization
 
     let toArray (seg:ArraySegment<'a>) =
         seg.Array.[ seg.Offset .. (seg.Count-1) ]
@@ -105,7 +106,7 @@ module ClassSerialization =
                                     // value "Test message"
             |] |> ArraySegment
         fun () -> InnerMessage.Deserialize(buf) |> ignore
-        |> should throw typeof<Froto.Encoding.ProtobufSerializerException>
+        |> should throw typeof<Froto.Serialization.ProtobufSerializerException>
 
     [<Fact>]
     let ``Serialize simple message`` () =
@@ -240,8 +241,6 @@ module ClassSerialization =
 [<Xunit.Trait("Kind", "Unit")>]
 module RecordSerialization =
 
-    open Froto.Serialization
-
     let toArray (seg:ArraySegment<'a>) =
         seg.Array.[ seg.Offset .. (seg.Count-1) ]
 
@@ -335,7 +334,7 @@ module RecordSerialization =
                                     // value "Test message"
             |] |> ArraySegment
         fun () -> InnerMessage.Deserialize(buf) |> ignore
-        |> should throw typeof<Froto.Encoding.ProtobufSerializerException>
+        |> should throw typeof<Froto.Serialization.ProtobufSerializerException>
 
     [<Fact>]
     let ``Serialize simple message`` () =

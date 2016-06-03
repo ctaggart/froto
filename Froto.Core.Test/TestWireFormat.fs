@@ -5,8 +5,9 @@ open FsUnit.Xunit
 
 open System
 
-open Froto.Encoding
-open Froto.Encoding.WireFormat
+open Froto.Serialization
+open Froto.Serialization.Encoding
+open Froto.Serialization.Encoding.WireFormat
 
 module Helpers =
     type System.ArraySegment<'a>

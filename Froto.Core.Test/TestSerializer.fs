@@ -2,20 +2,15 @@
 
 (* TODO:
     Write tests (and implementation) for:
-    - Missing required field causes exception
     - Optional fields can be detected as ommitted?
-    - Enum properly has correct default (handle via codegen)
 *)
 
 open Xunit
 open FsUnit.Xunit
 
-open System
-open Froto.Encoding
-
 [<Xunit.Trait("Kind", "Unit")>]
 module Utility =
-    open Froto.Encoding.Utility
+    open Froto.Serialization.Encoding.Utility
 
     [<Fact>]
     let ``Zig to Zag`` () =
@@ -62,7 +57,12 @@ module Utility =
 [<Xunit.Trait("Kind", "Unit")>]
 module Deserialize =
 
-    open Froto.Encoding.Encoders
+    open System
+
+    open Froto.Serialization
+    open Froto.Serialization.Encoding
+    open Froto.Serialization.Encoding.ProtobufEncoder
+
 
     type ETestEnum =
         | ZERO = 0
@@ -262,7 +262,11 @@ module Deserialize =
 
 [<Xunit.Trait("Kind", "Unit")>]
 module Serialize =
-    open Froto.Encoding.Encoders
+
+    open System
+
+    open Froto.Serialization
+    open Froto.Serialization.Encoding.ProtobufEncoder
 
     type ZCB = ZeroCopyBuffer
     let toArray(zcb:ZCB) = zcb.ToArray()
@@ -270,7 +274,7 @@ module Serialize =
     let fid = 1 // field ID
 
     [<Fact>]
-    let ``Dedecode integer varint`` () =
+    let ``Encode integer varint`` () =
         ZCB(2)
         |> encodeVarint fid 0UL
         |> toArray
@@ -282,7 +286,7 @@ module Serialize =
         |> should equal [| 0x08uy; 2uy |]
 
     [<Fact>]
-    let ``Dedecode SInt32 varint`` () =
+    let ``Encode SInt32 varint`` () =
         ZCB(2)
         |> encodeSInt32 fid 0
         |> toArray
@@ -299,7 +303,7 @@ module Serialize =
         |> should equal [| 0x08uy; 2uy |]
 
     [<Fact>]
-    let ``Dedecode SInt64 varint`` () =
+    let ``Encode SInt64 varint`` () =
         ZCB(2)
         |> encodeSInt64 fid 0L
         |> toArray
@@ -316,7 +320,7 @@ module Serialize =
         |> should equal [| 0x08uy; 2uy |]
 
     [<Fact>]
-    let ``Dedecode bool varint`` () =
+    let ``Encode bool varint`` () =
         ZCB(2)
         |> encodeBool fid false
         |> toArray
@@ -328,49 +332,49 @@ module Serialize =
         |> should equal [| 0x08uy; 1uy |]
 
     [<Fact>]
-    let ``Dedecode Fixed32`` () =
+    let ``Encode Fixed32`` () =
         ZCB(5)
         |> encodeFixed32 fid 5
         |> toArray
         |> should equal [| 0x08uy ||| 5uy; 5uy;0uy;0uy;0uy |]
 
     [<Fact>]
-    let ``Dedecode Fixed64`` () =
+    let ``Encode Fixed64`` () =
         ZCB(9)
         |> encodeFixed64 fid 5
         |> toArray
         |> should equal [| 0x08uy ||| 1uy; 5uy;0uy;0uy;0uy; 0uy;0uy;0uy;0uy |]
 
     [<Fact>]
-    let ``Dedecode Single`` () =
+    let ``Encode Single`` () =
         ZCB(5)
         |> encodeSingle fid 2.0f
         |> toArray
         |> should equal [| 0x08uy ||| 5uy; 0uy; 0uy; 0b00000000uy; 0b01000000uy |]
 
     [<Fact>]
-    let ``Dedecode Double`` () =
+    let ``Encode Double`` () =
         ZCB(9)
         |> encodeDouble fid 0.10
         |> toArray
         |> should equal [| 0x08uy ||| 1uy; 0x9Auy; 0x99uy; 0x99uy; 0x99uy; 0x99uy; 0x99uy; 0xB9uy; 0x3Fuy |]
 
     [<Fact>]
-    let ``Dedecode String`` () =
+    let ``Encode String`` () =
         ZCB(6)
         |> encodeString fid "0ABC"
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 4uy; 0x30uy; 0x41uy; 0x42uy; 0x43uy |]
 
     [<Fact>]
-    let ``Dedecode Bytes`` () =
+    let ``Encode Bytes`` () =
         ZCB(6)
         |> encodeBytes fid (ArraySegment([| 3uy; 4uy; 5uy; 6uy; |]))
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 4uy; 3uy; 4uy; 5uy; 6uy |]
 
 
-    let ``Dedecode with default value`` () =
+    let ``Encode with default value`` () =
         // Verify non-default value results in an actual value
         ZCB(2)
         |> encodeDefaultedVarint 0UL fid 2UL
@@ -396,35 +400,35 @@ module Serialize =
         checkGetsElided <| encodeDefaultedBytes (ArraySegment([|8uy;9uy|])) fid (ArraySegment([|8uy;9uy|]))
 
     [<Fact>]
-    let ``Dedecode Packed Varint`` () =
+    let ``Encode Packed Varint`` () =
         ZCB(8)
         |> encodePackedVarint fid [ 0; 1; 128; 129 ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 6uy; 0uy; 1uy; 0x80uy; 0x01uy; 0x81uy; 0x01uy |]
     
     [<Fact>]
-    let ``Dedecode Packed Bool`` () =
+    let ``Encode Packed Bool`` () =
         ZCB(5)
         |> encodePackedBool fid [ false; true; false ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 3uy; 0uy; 1uy; 0uy |]
 
     [<Fact>]
-    let ``Dedecode Packed SInt32`` () =
+    let ``Encode Packed SInt32`` () =
         ZCB(5)
         |> encodePackedSInt32 fid [ 0; -1; 1 ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 3uy; 0uy; 1uy; 2uy |]
 
     [<Fact>]
-    let ``Dedecode Packed SInt64`` () =
+    let ``Encode Packed SInt64`` () =
         ZCB(5)
         |> encodePackedSInt64 fid [ 0L; -1L; 1L ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 3uy; 0uy; 1uy; 2uy |]
 
     [<Fact>]
-    let ``Dedecode Packed Fixed32`` () =
+    let ``Encode Packed Fixed32`` () =
         ZCB(10)
         |> encodePackedFixed32 fid [ 0; -1 ]
         |> toArray
@@ -432,14 +436,14 @@ module Serialize =
         
 
     [<Fact>]
-    let ``Dedecode Packed Fixed64`` () =
+    let ``Encode Packed Fixed64`` () =
         ZCB(18)
         |> encodePackedFixed64 fid [ 0; -1 ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 16uy; 0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy; 0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy |]
 
     [<Fact>]
-    let ``Dedecode Packed Single`` () =
+    let ``Encode Packed Single`` () =
         ZCB(10)
         |> encodePackedSingle fid [ 0.0f; 2.0f ]
         |> toArray
@@ -447,14 +451,14 @@ module Serialize =
         
 
     [<Fact>]
-    let ``Dedecode Packed Double`` () =
+    let ``Encode Packed Double`` () =
         ZCB(18)
         |> encodePackedDouble fid [ 0.0; 0.10 ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 16uy; 0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy; 0x9Auy;0x99uy;0x99uy;0x99uy;0x99uy;0x99uy;0xB9uy;0x3Fuy |]
 
     [<Fact>]
-    let ``Dedecode Repeated Field`` () =
+    let ``Encode Repeated Field`` () =
         ZCB(12)
         |> encodeRepeated encodeString fid [ "0ABC"; "CBA0" ]
         |> toArray

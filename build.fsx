@@ -53,12 +53,12 @@ Target "UnitTest" <| fun _ ->
         // Mono can't load .NET 4.5.2 yet
         if isMono then
             [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Froto.Encoding.Test/bin/Release/Froto.Encoding.Test.dll"
+                @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
                 //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
             ]
         else
             [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Froto.Encoding.Test/bin/Release/Froto.Encoding.Test.dll"
+                @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
                 @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
             ]
     xUnit2 (fun p ->
@@ -76,7 +76,7 @@ Target "SourceLink" <| fun _ ->
         let url = "https://raw.githubusercontent.com/ctaggart/froto/{0}/%var2%"
         SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
     sourceIndex "ProtoParser/Froto.Parser.fsproj" None
-    sourceIndex "Core/Froto.Encoding.fsproj" None
+    sourceIndex "Core/Froto.Core.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
     sourceIndex "Exe/Exe.fsproj" None
 
@@ -109,7 +109,7 @@ Target "NuGet" <| fun _ ->
                 [
                 ]
         }]
-    }) "Core/Froto.Encoding.nuspec"
+    }) "Core/Froto.Core.nuspec"
 
     NuGet (fun p ->
     { p with

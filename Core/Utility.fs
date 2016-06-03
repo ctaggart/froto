@@ -1,4 +1,6 @@
-﻿namespace Froto.Encoding
+﻿namespace Froto.Serialization.Encoding
+
+open Froto.Serialization
 
 ///
 /// Utility functions used by the serializer

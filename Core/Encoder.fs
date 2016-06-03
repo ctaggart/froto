@@ -1,4 +1,4 @@
-﻿namespace Froto.Encoding
+﻿namespace Froto.Serialization.Encoding
 
 ///
 /// Hydration and Dehydration of .NET data types.
@@ -11,11 +11,11 @@
 /// In addition, a set of generic functions are provided which defines a
 /// simple DSL for constructing Records which model Protobuf Messages.
 ///
-module Encoders =
+module ProtobufEncoder =
     open System
-    open Froto.Encoding
-    open Froto.Encoding.WireFormat
-    open Froto.Encoding.Utility
+    open Froto.Serialization
+    open Froto.Serialization.Encoding.WireFormat
+    open Froto.Serialization.Encoding.Utility
 
     let inline internal toBool (u:uint64) = not (u=0UL)
     let inline internal fromBool b = if b then 1UL else 0UL
@@ -146,7 +146,7 @@ module Encoders =
         then id
         else f
 
-    /// Generic Dedecode for all varint types, excepted for signed & bool:
+    /// Generic Encode for all varint types, excepted for signed & bool:
     ///   int32, int64, uint32, uint64, enum
     let inline encodeDefaultedVarint d fldNum v = elided d v <| WireFormat.packFieldVarint fldNum (uint64 v)
     let inline encodeNondefaultedVarint fldNum v = WireFormat.packFieldVarint fldNum (uint64 v)
@@ -180,7 +180,7 @@ module Encoders =
     let encodeBytes  fldNum v = encodeDefaultedBytes (ArraySegment ([||]:byte array)) fldNum v
 
 
-    (* Dedecode Repeated Packed Numeric Values *)
+    (* Encode Repeated Packed Numeric Values *)
 
     let encodePackedHelper lenFn encFn fieldNum xs =
         let xslen = xs
@@ -193,7 +193,7 @@ module Encoders =
     let inline varIntListPackedLen encode (xs:'a list) =
         List.sumBy (encode >> varIntLenNoDefault) xs
 
-    /// Generic Dedecode for all packed varint types, excepted for bool & signed:
+    /// Generic Encode for all packed varint types, excepted for bool & signed:
     ///   int32, int64, uint32, uint64, enum
     let inline encodePackedVarint fieldNum xs =
         let encode = uint64
@@ -251,7 +251,7 @@ module Encoders =
             WireFormat.packDouble
             fieldNum xs
 
-    (* Dedecode Message *)
+    (* Encode Message *)
 
     (* Repeated Field Helpers *)
     let encodeRepeated<'a> (encoder:FieldNum -> 'a -> ZeroCopyBuffer -> ZeroCopyBuffer) (fldNum:int32) (vs:'a list) : (ZeroCopyBuffer -> ZeroCopyBuffer) =
