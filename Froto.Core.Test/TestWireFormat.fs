@@ -48,7 +48,7 @@ module UnpackValue =
             |> ZCR
             |> unpackVarint
             |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
     [<Fact>]
     let ``Can unpack max Varint`` () =
@@ -74,7 +74,7 @@ module UnpackValue =
             |> ZCR
             |> unpackVarint
             |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
     [<Fact>]
     let ``Can decode fixed`` () =
@@ -95,7 +95,7 @@ module UnpackValue =
             |> ZCR
             |> unpackFixed32
             |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
     [<Fact>]
     let ``Unpack Single`` () =
@@ -232,28 +232,28 @@ module UnpackField =
             |> ZCR
             |> unpackTag
             |> ignore
-        |> should not' (throw typeof<ProtobufWireFormatException>)
+        |> should not' (throw typeof<WireFormatException>)
 
         fun () ->
             [| 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0x08uy |]
             |> ZCR
             |> unpackTag
             |> ignore
-        |> should not' (throw typeof<ProtobufWireFormatException>)
+        |> should not' (throw typeof<WireFormatException>)
 
         fun () ->
             [| 0x00uy |]
             |> ZCR
             |> unpackTag
             |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
         fun () ->
             [| 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x10uy |]
             |> ZCR
             |> unpackTag
             |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
     [<Fact>]
     let ``Unpack varint field`` () =
@@ -296,14 +296,14 @@ module UnpackField =
             |> ZCR
             |> unpackField
             |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
         fun () ->
             [| byte ((1<<<3) ||| 4) |]
             |> ZCR
             |> unpackField
             |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
 
 [<Xunit.Trait("Kind", "Unit")>]
@@ -326,22 +326,22 @@ module PackField =
         let buf = ZCW(256)
 
         fun () -> buf |> packTag 1 WireType.Fixed64 |> ignore
-        |> should not' (throw typeof<ProtobufWireFormatException>)
+        |> should not' (throw typeof<WireFormatException>)
 
         fun () -> buf |> packTag RawField.MaxFieldNum WireType.Fixed64 |> ignore
-        |> should not' (throw typeof<ProtobufWireFormatException>)
+        |> should not' (throw typeof<WireFormatException>)
 
         fun () -> buf |> packTag 0 WireType.Fixed64 |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
         fun () -> buf |> packTag (RawField.MaxFieldNum+1) WireType.Fixed64 |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
         fun () -> buf |> packTag -1 WireType.Fixed64 |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
         fun () -> buf |> packTag (Int32.MinValue) WireType.Fixed64 |> ignore
-        |> should throw typeof<ProtobufWireFormatException>
+        |> should throw typeof<WireFormatException>
 
     [<Fact>]
     let ``Pack varint field`` () =

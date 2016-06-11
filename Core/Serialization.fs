@@ -2,7 +2,7 @@
 
 /// Serialization support functions
 ///
-module ProtobufSerializer =
+module Serializer =
 
     open Froto.Serialization.Encoding
 
@@ -59,7 +59,7 @@ module ProtobufSerializer =
                     match decoderRing |> Map.tryFind 0 with
                     | Some(decoder) -> (decode decoder, field)
                     | None ->
-                        raise <| ProtobufSerializerException(sprintf "Invalid decoder ring; encountered unknown field '%d' and ring must include an entry for field number 0 to handle unknown fields" n)
+                        raise <| SerializerException(sprintf "Invalid decoder ring; encountered unknown field '%d' and ring must include an entry for field number 0 to handle unknown fields" n)
 
             let inline decode decoderRing state fields =
                 fields
@@ -73,7 +73,7 @@ module ProtobufSerializer =
             then
                 m
             else
-                raise <| ProtobufSerializerException(sprintf "Missing required fields %A" missingFields)
+                raise <| SerializerException(sprintf "Missing required fields %A" missingFields)
 
     let inline deserialize m zcb =
         zcb
@@ -93,7 +93,7 @@ module ProtobufSerializer =
             | LengthDelimited (fieldId, buf) ->
                 buf
             | _ ->
-                raise <| ProtobufSerializerException(sprintf "Expected LengthDelimited field, found %s" (rawField.GetType().Name) )
+                raise <| SerializerException(sprintf "Expected LengthDelimited field, found %s" (rawField.GetType().Name) )
         buf
         |> ZeroCopyBuffer
         |> deserialize m

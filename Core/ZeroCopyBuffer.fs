@@ -51,7 +51,7 @@ type ZeroCopyBuffer (seg:ArraySegment<byte>) =
             m_position <- m_position + 1u
             b
         else
-            raise <| ProtobufWireFormatException("Read past end of protobuf buffer")
+            raise <| WireFormatException("Read past end of protobuf buffer")
 
     /// Read multiple bytes, returning an ArraySegment which points directly
     /// into the backing buffer.
@@ -61,7 +61,7 @@ type ZeroCopyBuffer (seg:ArraySegment<byte>) =
             m_position <- m_position + n
             buf
         else
-            raise <| ProtobufWireFormatException("Read past end of protobuf buffer")
+            raise <| WireFormatException("Read past end of protobuf buffer")
 
     /// Return portion of buffer written as an ArraySegment
     member x.AsArraySegment
@@ -84,7 +84,7 @@ type ZeroCopyBuffer (seg:ArraySegment<byte>) =
             m_array.[int m_position] <- b
             m_position <- m_position + 1u
         else
-            raise <| ProtobufWireFormatException("Write past end of protobuf buffer")
+            raise <| WireFormatException("Write past end of protobuf buffer")
 
     /// Write 'len' bytes, via the caller supplied emplace function,
     /// directly into the backing buffer.
@@ -94,7 +94,7 @@ type ZeroCopyBuffer (seg:ArraySegment<byte>) =
             emplace buf
             m_position <- m_position + len
         else
-            raise <| ProtobufWireFormatException("Write past end of protobuf buffer")
+            raise <| WireFormatException("Write past end of protobuf buffer")
 
 /// Null ZeroCopyBuffer.  Used to calculate serialized length, without
 /// actually writing anything.

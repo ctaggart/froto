@@ -6,9 +6,9 @@ open FsUnit.Xunit
 open System
 
 open Froto.Serialization
-open Froto.Serialization.ProtobufSerializer
+open Froto.Serialization.Serializer
 open Froto.Serialization.Encoding
-open Froto.Serialization.Encoding.ProtobufEncoder
+open Froto.Serialization.Encoding
 
 [<Xunit.Trait("Kind", "Unit")>]
 module RecordSerialization =
@@ -52,15 +52,15 @@ module RecordSerialization =
                 |> deserializeLengthDelimited InnerMessage.Default
        
             static member Serializer (m, zcb) =
-                (m.id            |> encodeVarint 1) >>
-                (m.name          |> encodeString 2)
+                (m.id            |> Encode.fromVarint 1) >>
+                (m.name          |> Encode.fromString 2)
                 <| zcb
 
             static member DecoderRing =
                 [
                     0, fun m rawField -> { m with _unknownFields = rawField :: m._unknownFields } : InnerMessage
-                    1, fun m rawField -> { m with id = rawField |> decodeInt32 } : InnerMessage
-                    2, fun m rawField -> { m with name = rawField |> decodeString } : InnerMessage
+                    1, fun m rawField -> { m with id = rawField |> Decode.toInt32 } : InnerMessage
+                    2, fun m rawField -> { m with name = rawField |> Decode.toString } : InnerMessage
                 ]
                 |> Map.ofList
 
@@ -106,7 +106,7 @@ module RecordSerialization =
                                     // value "Test message"
             |] |> ArraySegment
         fun () -> InnerMessage.Deserialize(buf) |> ignore
-        |> should throw typeof<Froto.Serialization.ProtobufSerializerException>
+        |> should throw typeof<Froto.Serialization.SerializerException>
 
     [<Fact>]
     let ``Serialize simple message`` () =
@@ -159,15 +159,15 @@ module RecordSerialization =
                 |> deserializeLengthDelimited OuterMessage.Default
 
             static member Serializer (m, zcb) =
-                (m.id         |> encodeVarint 1) >>
-                (m.inner      |> encodeOptionalMessage serializeLengthDelimited 42) >>
-                (m.hasMore    |> encodeBool 43)
+                (m.id         |> Encode.fromVarint 1) >>
+                (m.inner      |> Encode.fromOptionalMessage serializeLengthDelimited 42) >>
+                (m.hasMore    |> Encode.fromBool 43)
                 <| zcb
 
             static member DecoderRing =
-                [ 1 , fun m rawField -> { m with id      = decodeInt32 rawField } : OuterMessage
+                [ 1 , fun m rawField -> { m with id      = Decode.toInt32 rawField } : OuterMessage
                   42, fun m rawField -> { m with inner   = Some <| deserializeFromRawField InnerMessage.Default rawField } : OuterMessage
-                  43, fun m rawField -> { m with hasMore = decodeBool rawField } : OuterMessage
+                  43, fun m rawField -> { m with hasMore = Decode.toBool rawField } : OuterMessage
                 ]
                 |> Map.ofList
 

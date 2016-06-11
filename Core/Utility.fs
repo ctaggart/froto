@@ -7,6 +7,12 @@ open Froto.Serialization
 ///
 module Utility =
 
+    /// Convert int64 to bool
+    let inline int64ToBool (u:uint64) = not (u=0UL)
+
+    /// Convert bool to int64
+    let inline boolToInt64 b = if b then 1UL else 0UL
+
     /// Encode SInt32
     let zigZag32 (n:int32) = (n <<< 1) ^^^ (n >>> 31)
     /// Encode SInt64

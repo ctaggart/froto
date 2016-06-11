@@ -41,3 +41,14 @@ type RawField =
             | Fixed32 _ -> WireType.Fixed32
             | Fixed64 _ -> WireType.Fixed64
             | LengthDelimited _ -> WireType.LengthDelimited
+
+        static member raiseMismatch expected actual =
+            let extractNumAndType = function
+                | RawField.Varint (n,_)  -> n, "Varint"
+                | RawField.Fixed32 (n,_) -> n, "Fixed32"
+                | RawField.Fixed64 (n,_) -> n, "Fixed64"
+                | RawField.LengthDelimited (n,_) -> n, "LengthDelimited"
+            let (n, found) = actual |> extractNumAndType
+            let s = sprintf "Encoding failure: wiretype mismatch for field %d: expected %s, found %s" n expected found
+            raise <| Froto.Serialization.EncoderException(s)
+

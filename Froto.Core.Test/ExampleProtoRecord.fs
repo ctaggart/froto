@@ -3,9 +3,8 @@
 module SampleNamespace =
     open System
     open Froto.Serialization
-    open Froto.Serialization.ProtobufSerializer
+    open Froto.Serialization.Serializer
     open Froto.Serialization.Encoding
-    open Froto.Serialization.Encoding.ProtobufEncoder
 
     type ETest =
         | Nada = 0
@@ -37,24 +36,24 @@ module SampleNamespace =
             }
 
             static member Serializer (m, zcb) =
-                (m.id             |> encodeVarint 1) >>
-                (m.name           |> encodeString 2) >>
-                (m.option         |> encodeBool 3) >>
-                (m.test           |> encodeDefaultedVarint ETestDefault 4) >>
-                (m.packedFixed32  |> encodePackedFixed32 5) >>
-                (m.repeatedInt32  |> encodeRepeated encodeVarint 6) >>
-                (m._unknownFields |> encodeRawFields )
+                (m.id             |> Encode.fromVarint 1) >>
+                (m.name           |> Encode.fromString 2) >>
+                (m.option         |> Encode.fromBool 3) >>
+                (m.test           |> Encode.fromDefaultedVarint ETestDefault 4) >>
+                (m.packedFixed32  |> Encode.fromPackedFixed32 5) >>
+                (m.repeatedInt32  |> Encode.fromRepeated Encode.fromVarint 6) >>
+                (m._unknownFields |> Encode.fromRawFields )
                 <| zcb
 
             static member DecoderRing =
                 [
                     0, fun m rawField -> { m with _unknownFields = rawField :: m._unknownFields }
-                    1, fun m rawField -> { m with id = rawField |> decodeInt32 } : InnerSample
-                    2, fun m rawField -> { m with name = rawField |> decodeString } : InnerSample
-                    3, fun m rawField -> { m with option = rawField |> decodeBool } : InnerSample
-                    4, fun m rawField -> { m with test = rawField |> decodeEnum } : InnerSample
-                    5, fun m rawField -> { m with packedFixed32 = rawField |> decodePackedFixed32 } : InnerSample
-                    6, fun m rawField -> { m with repeatedInt32 = (rawField |> decodeInt32) :: m.repeatedInt32 } : InnerSample
+                    1, fun m rawField -> { m with id = rawField |> Decode.toInt32 } : InnerSample
+                    2, fun m rawField -> { m with name = rawField |> Decode.toString } : InnerSample
+                    3, fun m rawField -> { m with option = rawField |> Decode.toBool } : InnerSample
+                    4, fun m rawField -> { m with test = rawField |> Decode.toEnum } : InnerSample
+                    5, fun m rawField -> { m with packedFixed32 = rawField |> Decode.toPackedFixed32 } : InnerSample
+                    6, fun m rawField -> { m with repeatedInt32 = (rawField |> Decode.toInt32) :: m.repeatedInt32 } : InnerSample
                 ]
                 |> Map.ofList
 
@@ -125,20 +124,20 @@ module PerformanceTest =
             ]
 
         let len =
-            xs |> List.sumBy (fun x -> ProtobufSerializer.serializedLengthDelimitedLength x)
+            xs |> List.sumBy (fun x -> Serializer.serializedLengthDelimitedLength x)
 
         let buf : byte array = Array.zeroCreate (len |> int)
         let bufAS = System.ArraySegment(buf)
         let zcw = Froto.Serialization.ZeroCopyBuffer(bufAS)
 
         xs
-        |> List.iter (fun x -> zcw |> ProtobufSerializer.serializeLengthDelimited x |> ignore)
+        |> List.iter (fun x -> zcw |> Serializer.serializeLengthDelimited x |> ignore)
 
         let ys =
             let zcr = Froto.Serialization.ZeroCopyBuffer(zcw.Array)
             seq {
                 while not zcr.IsEof do
-                    yield zcr |> ProtobufSerializer.deserializeLengthDelimited InnerSample.Default
+                    yield zcr |> Serializer.deserializeLengthDelimited InnerSample.Default
             }
 
         ys |> Seq.iter ignore

@@ -6,9 +6,8 @@ open FsUnit.Xunit
 open System
 
 open Froto.Serialization
-open Froto.Serialization.ProtobufSerializer
+open Froto.Serialization.Serializer
 open Froto.Serialization.Encoding
-open Froto.Serialization.Encoding.ProtobufEncoder
 
 [<Xunit.Trait("Kind", "Unit")>]
 module ClassSerialization =
@@ -26,14 +25,14 @@ module ClassSerialization =
             x.Name <- ""
 
         static member Serializer (m:InnerMessage, zcb) =
-            (m.Id             |> encodeVarint 1) >>
-            (m.Name           |> encodeString 2)
+            (m.Id             |> Encode.fromVarint 1) >>
+            (m.Name           |> Encode.fromString 2)
             <| zcb
 
         static member DecoderRing = 
             [
-                1, fun (m:InnerMessage) rawField -> m.Id          <- decodeInt32 rawField ; m
-                2, fun (m:InnerMessage) rawField -> m.Name        <- decodeString rawField ; m
+                1, fun (m:InnerMessage) rawField -> m.Id          <- Decode.toInt32 rawField ; m
+                2, fun (m:InnerMessage) rawField -> m.Name        <- Decode.toString rawField ; m
             ]
             |> Map.ofList
 
@@ -106,7 +105,7 @@ module ClassSerialization =
                                     // value "Test message"
             |] |> ArraySegment
         fun () -> InnerMessage.Deserialize(buf) |> ignore
-        |> should throw typeof<Froto.Serialization.ProtobufSerializerException>
+        |> should throw typeof<Froto.Serialization.SerializerException>
 
     [<Fact>]
     let ``Serialize simple message`` () =
@@ -137,18 +136,18 @@ module ClassSerialization =
             x.HasMore <- false
 
         static member Serializer (m:OuterMessage, zcb) =
-            (m.Id         |> encodeVarint 1) >>
-            (m.Inner      |> encodeOptionalMessage serializeLengthDelimited 42) >>
-            (m.HasMore    |> encodeBool 43)
+            (m.Id         |> Encode.fromVarint 1) >>
+            (m.Inner      |> Encode.fromOptionalMessage serializeLengthDelimited 42) >>
+            (m.HasMore    |> Encode.fromBool 43)
             <| zcb
 
         static member DecoderRing =
-            [ 1 , fun (m:OuterMessage) rawField -> m.Id      <- decodeInt32 rawField; m
+            [ 1 , fun (m:OuterMessage) rawField -> m.Id      <- Decode.toInt32 rawField; m
               42, fun (m:OuterMessage) rawField ->
                     let o = InnerMessage.Deserialize(rawField) |> Some
                     m.Inner <- o
                     m
-              43, fun (m:OuterMessage) rawField -> m.HasMore <- decodeBool rawField; m
+              43, fun (m:OuterMessage) rawField -> m.HasMore <- Decode.toBool rawField; m
             ]
             |> Map.ofList
 

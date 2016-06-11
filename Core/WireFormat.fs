@@ -31,7 +31,7 @@ module WireFormat =
                 else
                     acc 
             else
-                raise <| ProtobufWireFormatException( "Unpack: Unterminated VarInt" )
+                raise <| WireFormatException( "Unpack: Unterminated VarInt" )
 
         loop 0UL 0 src
 
@@ -78,7 +78,7 @@ module WireFormat =
         if len < uint64 MAX_FIELD_LEN then
             src.ReadByteSegment(uint32 len)
         else
-            raise <| ProtobufWireFormatException( sprintf "Unpack: Maximum field length of %d bytes exceeded" MAX_FIELD_LEN)
+            raise <| WireFormatException( sprintf "Unpack: Maximum field length of %d bytes exceeded" MAX_FIELD_LEN)
 
     /// Pack uint64 as a varint (1-9 bytes)
     let packVarint (u:uint64) (dest:ZeroCopyBuffer) =
@@ -161,7 +161,7 @@ module WireFormat =
             let wireType = enum<WireType> (int32 u &&& 0x07)
             (fieldNum, wireType)
         else
-            raise <| ProtobufWireFormatException(sprintf "Unpack: field number must be in range [1, 2^28); found %d" fieldNum)
+            raise <| WireFormatException(sprintf "Unpack: field number must be in range [1, 2^28); found %d" fieldNum)
 
     /// Unpack a field into a RawField Discriminated Union.
     let unpackField src =
@@ -178,7 +178,7 @@ module WireFormat =
 
         | WireType.StartGroup
         | WireType.EndGroup
-        | _ -> raise <| ProtobufWireFormatException(sprintf "Unpack: unsupported wiretype on field #%d: %A" fieldNum wireType)
+        | _ -> raise <| WireFormatException(sprintf "Unpack: unsupported wiretype on field #%d: %A" fieldNum wireType)
 
     /// Pack a Tag (consisting of a field number and wire-type) as a single varint
     let packTag (fieldNum:int32) (wireType:WireType) =
@@ -186,7 +186,7 @@ module WireFormat =
             let tag = (fieldNum <<< 3) ||| (int32 wireType)
             packVarint (uint64 tag)
         else
-            raise <| ProtobufWireFormatException(sprintf "Pack: field numbeer must be in range [1, 2^28); given %d" fieldNum)
+            raise <| WireFormatException(sprintf "Pack: field numbeer must be in range [1, 2^28); given %d" fieldNum)
 
     /// Pack a varint-based field
     let packFieldVarint (fieldNum:int32) (u:uint64) =

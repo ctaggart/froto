@@ -36,7 +36,7 @@
     <Compile Include="EncodingTypes.fs" />
     <Compile Include="WireFormat.fs" />
     <Compile Include="Utility.fs" />
-    <Compile Include="Encoder.fs" />
+    <Compile Include="Encoding.fs" />
     <Compile Include="Serialization.fs" />
     <None Include="Froto.Core.nuspec" />
     <None Include="paket.references" />
