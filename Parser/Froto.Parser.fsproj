@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{1c31da31-bec5-4e73-9d83-e36d18847439}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>ProtoParser</RootNamespace>
+    <RootNamespace>Parser</RootNamespace>
     <AssemblyName>Froto.Parser</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Froto.Parser</Name>

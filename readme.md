@@ -10,6 +10,7 @@
 * [Froto.Core](http://www.nuget.org/packages/Froto.Core) - Protobuf F# Serialization Framework and low-level WireFormat library
 
 ## Status
+* 0.3.0 2016-06 Rewrote F# serialization to support both Record and Class serialization.
 * 0.2.1 2016-04 Added F# serialization framework to Core, w/full wire format support
   See the [0.2.1 release details](https://github.com/ctaggart/froto/releases/tag/0.2.1) for help upgrading from 0.1.0.
 * 0.2.0 2016-02 Complete rewrite of parser to support full proto2 and proto3 syntax

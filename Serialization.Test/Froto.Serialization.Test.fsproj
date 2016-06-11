@@ -7,12 +7,12 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>af2d437d-55a1-4f31-86bd-9b9d7e05caea</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Froto.Core.Test</RootNamespace>
-    <AssemblyName>Froto.Core.Test</AssemblyName>
+    <RootNamespace>Froto.Serialization.Test</RootNamespace>
+    <AssemblyName>Froto.Serialization.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.4.0.0</TargetFSharpCoreVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Name>Froto.Core.Test</Name>
+    <Name>Froto.Serialization.Test</Name>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -23,7 +23,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Froto.Core.Test.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Froto.Serialization.Test.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,7 +32,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Froto.Core.Test.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Froto.Serialization.Test.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -150,8 +150,8 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\Froto.Core.fsproj">
-      <Name>Froto.Core</Name>
+    <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj">
+      <Name>Froto.Serialization</Name>
       <Project>{c37745d0-275d-4dce-9ddc-c4663a462edd}</Project>
       <Private>True</Private>
     </ProjectReference>

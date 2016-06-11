@@ -2,6 +2,7 @@
 ### 0.3.0 _ under construction
   * [#3](https://github.com/ctaggart/froto/issues/3) F# type provider
   * [#15](https://github.com/ctaggart/froto/issues/15) froto.exe code generator for proto3
+  * [#39](https://github.com/ctaggart/froto/issues/15) Record Serialization
 
 ### 0.2.1 _ 2016-04
   * [#19](https://github.com/ctaggart/froto/issues/19) Improve support for serialization/deserialization
