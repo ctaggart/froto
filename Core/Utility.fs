@@ -47,12 +47,6 @@ module Utility =
     let tagLen (t:int32) =
         varIntLenNoDefault ((uint64 t) <<< 3)
 
-    /// Apply a function to a Option value, if the value is Some.
-    let inline IfSome f opt =
-        match opt with
-        | None -> id
-        | Some(v) -> f v
-    
     /// Decode a ZeroCopyBuffer until the predicate is satisfied
     let decodeWhile (predicate:ZeroCopyBuffer->bool) (zcb:ZeroCopyBuffer) =
         seq {

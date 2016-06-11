@@ -1,15 +1,15 @@
 ﻿namespace Froto.Serialization.Encoding
 
 ///
-/// Hydration and Dehydration of .NET data types.
+/// Encoding and Decoding of .NET data types to/from Protobuf wire format.
 ///
 /// This module contains support for writing (or generating) code which
-/// performs hydration (deserialization) and dehydration (serialization) of
-/// individual properties.  These can be used directly to create methods
-/// on classes, records, discriminated unions, etc.
+/// performs encoding ad decoding of individual properties.  These can be
+/// used directly to create methods on classes, records, discriminated unions,
+/// etc. for serialization and deserialization.
 ///
-/// In addition, a set of generic functions are provided which defines a
-/// simple DSL for constructing Records which model Protobuf Messages.
+/// In addition, this module provides a set of generic functions which create
+/// a simple DSL for constructing Records which model Protobuf Messages.
 ///
 module ProtobufEncoder =
     open System
@@ -136,33 +136,34 @@ module ProtobufEncoder =
 
 //---- Serialization
 
+    /// Encode a list of RawFields into a ZeroCopyBuffer
     let encodeRawFields fieldList zcb =
         fieldList
         |> List.fold (fun zcb field -> WireFormat.packFieldRaw field zcb) zcb
 
     /// If value = default, then elide the field (don't serialize)
-    let inline elided d v f =
-        if v = d
+    let inline elideDefault defV v f =
+        if v = defV
         then id
         else f
 
     /// Generic Encode for all varint types, excepted for signed & bool:
     ///   int32, int64, uint32, uint64, enum
-    let inline encodeDefaultedVarint d fldNum v = elided d v <| WireFormat.packFieldVarint fldNum (uint64 v)
+    let inline encodeDefaultedVarint defV fldNum v = elideDefault defV v <| WireFormat.packFieldVarint fldNum (uint64 v)
     let inline encodeNondefaultedVarint fldNum v = WireFormat.packFieldVarint fldNum (uint64 v)
 
-    let encodeDefaultedSInt32 d fldNum v = elided d v <| WireFormat.packFieldVarint fldNum (zigZag32 v |> uint64)
-    let encodeDefaultedSInt64 d fldNum v = elided d v <| WireFormat.packFieldVarint fldNum (zigZag64 v |> uint64)
-    let encodeDefaultedBool   d fldNum v = elided d v <| encodeNondefaultedVarint fldNum (fromBool v)
+    let encodeDefaultedSInt32 defV fldNum v = elideDefault defV v <| WireFormat.packFieldVarint fldNum (zigZag32 v |> uint64)
+    let encodeDefaultedSInt64 defV fldNum v = elideDefault defV v <| WireFormat.packFieldVarint fldNum (zigZag64 v |> uint64)
+    let encodeDefaultedBool   defV fldNum v = elideDefault defV v <| encodeNondefaultedVarint fldNum (fromBool v)
 
-    let inline encodeDefaultedFixed32  d fldNum v = elided d v <| WireFormat.packFieldFixed32 fldNum (uint32 v)
-    let inline encodeDefaultedFixed64  d fldNum v = elided d v <| WireFormat.packFieldFixed64 fldNum (uint64 v)
+    let inline encodeDefaultedFixed32  defV fldNum v = elideDefault defV v <| WireFormat.packFieldFixed32 fldNum (uint32 v)
+    let inline encodeDefaultedFixed64  defV fldNum v = elideDefault defV v <| WireFormat.packFieldFixed64 fldNum (uint64 v)
 
-    let encodeDefaultedSingle d fldNum v = elided d v <| WireFormat.packFieldSingle fldNum v
-    let encodeDefaultedDouble d fldNum v = elided d v <| WireFormat.packFieldDouble fldNum v
+    let encodeDefaultedSingle defV fldNum v = elideDefault defV v <| WireFormat.packFieldSingle fldNum v
+    let encodeDefaultedDouble defV fldNum v = elideDefault defV v <| WireFormat.packFieldDouble fldNum v
 
-    let encodeDefaultedString d fldNum v = elided d v <| WireFormat.packFieldString fldNum v
-    let encodeDefaultedBytes  d fldNum v = elided d v <| WireFormat.packFieldBytes fldNum v
+    let encodeDefaultedString defV fldNum v = elideDefault defV v <| WireFormat.packFieldString fldNum v
+    let encodeDefaultedBytes  defV fldNum v = elideDefault defV v <| WireFormat.packFieldBytes fldNum v
 
     let inline encodeVarint fldNum (v:'a) = encodeDefaultedVarint (Unchecked.defaultof<'a>) fldNum v
 
@@ -182,6 +183,13 @@ module ProtobufEncoder =
 
     (* Encode Repeated Packed Numeric Values *)
 
+    /// Helper for encoding packed types.
+    /// Writes a length delimited field containing a list of values packed
+    /// into the field body.
+    ///
+    /// NOTE: Protobuf does NOT provide a means to encode the field type, so
+    /// encoder and decoder clients must agree on what is contained in the
+    /// field body.
     let encodePackedHelper lenFn encFn fieldNum xs =
         let xslen = xs
                     |> lenFn
@@ -190,6 +198,7 @@ module ProtobufEncoder =
         >> WireFormat.packVarint xslen
         >> flip (List.fold (fun buf x -> buf |> encFn x )) xs
 
+    /// Calculate the total length of an encoded list of varints.
     let inline varIntListPackedLen encode (xs:'a list) =
         List.sumBy (encode >> varIntLenNoDefault) xs
 
@@ -253,19 +262,26 @@ module ProtobufEncoder =
 
     (* Encode Message *)
 
-    (* Repeated Field Helpers *)
-    let encodeRepeated<'a> (encoder:FieldNum -> 'a -> ZeroCopyBuffer -> ZeroCopyBuffer) (fldNum:int32) (vs:'a list) : (ZeroCopyBuffer -> ZeroCopyBuffer) =
-        let dh = flip (encoder fldNum)
+    /// Encode a list of same-type values, using the provided encoder and tag
+    /// for each.  Unlike packed fields which share a single field tag,
+    /// each value encoded will be complete with a field tag (type + FieldNum).
+    ///
+    let encodeRepeated<'a> (encoder:FieldNum -> 'a -> ZeroCopyBuffer -> ZeroCopyBuffer) (fldNum:int32) (xs:'a list) : (ZeroCopyBuffer -> ZeroCopyBuffer) =
+        let enc = flip (encoder fldNum)
         let wrapperFn (zcb:ZeroCopyBuffer) =
-            vs
-            |> List.iter (dh zcb >> ignore)
+            xs
+            |> List.iter (enc zcb >> ignore)
             zcb
         wrapperFn
 
+    /// Encode a message with the supplied field number, using the supplied
+    /// encode function.  This is a convienence function to simplify the call
+    /// site and avoid exposing WireFormat to callers.
     let encodeMessage (fn:'m -> ZeroCopyBuffer -> ZeroCopyBuffer) fieldNum m =
         WireFormat.packTag fieldNum WireType.LengthDelimited
         >> fn m
 
+    /// Helper to encode an optional message, or nothing if None
     let encodeOptionalMessage (fn:'m -> ZeroCopyBuffer -> ZeroCopyBuffer) fieldNum (m:'m option) =
-        m |> IfSome (fun o -> encodeMessage fn fieldNum o)
+        m |> Option.foldBack (fun o -> encodeMessage fn fieldNum o)
 
