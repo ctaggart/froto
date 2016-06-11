@@ -8,7 +8,6 @@ open System
 open Froto.Serialization
 open Froto.Serialization.Serializer
 open Froto.Serialization.Encoding
-open Froto.Serialization.Encoding
 
 [<Xunit.Trait("Kind", "Unit")>]
 module RecordSerialization =
@@ -30,27 +29,6 @@ module RecordSerialization =
                 _unknownFields = List.empty
                 }
 
-            member m.Serialize () =
-                Array.zeroCreate (serializedLength m |> int32)
-                |> ZeroCopyBuffer
-                |> serialize m
-                |> ZeroCopyBuffer.asArraySegment
-
-            member m.SerializeLengthDelimited () =
-                Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
-                |> ZeroCopyBuffer
-                |> serializeLengthDelimited m
-
-            static member Deserialize (buf:ArraySegment<byte>) =
-                buf
-                |> ZeroCopyBuffer
-                |> deserialize InnerMessage.Default
-
-            static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
-                buf
-                |> ZeroCopyBuffer
-                |> deserializeLengthDelimited InnerMessage.Default
-       
             static member Serializer (m, zcb) =
                 (m.id            |> Encode.fromVarint 1) >>
                 (m.name          |> Encode.fromString 2)
@@ -90,7 +68,7 @@ module RecordSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |] |> ArraySegment
-        let msg = buf |> InnerMessage.Deserialize
+        let msg = buf |> deserialize InnerMessage.Default
         msg.id |> should equal 99
         msg.name |> should equal "Test message"
 
@@ -105,7 +83,7 @@ module RecordSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |] |> ArraySegment
-        fun () -> InnerMessage.Deserialize(buf) |> ignore
+        fun () -> buf |> deserialize InnerMessage.Default |> ignore
         |> should throw typeof<Froto.Serialization.SerializerException>
 
     [<Fact>]
@@ -113,7 +91,8 @@ module RecordSerialization =
         let msg = { InnerMessage.Default with
                         id = 98
                         name = "ABC0" }
-        msg.Serialize()
+        msg
+        |> serialize
         |> toArray
         |> should equal
             [|
@@ -137,36 +116,15 @@ module RecordSerialization =
                 hasMore = false
                 }
 
-            member m.Serialize () =
-                Array.zeroCreate (serializedLength m |> int32)
-                |> ZeroCopyBuffer
-                |> serialize m
-                |> ZeroCopyBuffer.asArraySegment
-
-            member m.SerializeLengthDelimited () =
-                Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
-                |> ZeroCopyBuffer
-                |> serializeLengthDelimited m
-
-            static member Deserialize (buf:ArraySegment<byte>) =
-                buf
-                |> ZeroCopyBuffer
-                |> deserialize OuterMessage.Default
-
-            static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
-                buf
-                |> ZeroCopyBuffer
-                |> deserializeLengthDelimited OuterMessage.Default
-
             static member Serializer (m, zcb) =
                 (m.id         |> Encode.fromVarint 1) >>
-                (m.inner      |> Encode.fromOptionalMessage serializeLengthDelimited 42) >>
+                (m.inner      |> Encode.fromOptionalMessage serializeToLD 42) >>
                 (m.hasMore    |> Encode.fromBool 43)
                 <| zcb
 
             static member DecoderRing =
                 [ 1 , fun m rawField -> { m with id      = Decode.toInt32 rawField } : OuterMessage
-                  42, fun m rawField -> { m with inner   = Some <| deserializeFromRawField InnerMessage.Default rawField } : OuterMessage
+                  42, fun m rawField -> { m with inner   = deserializeOptionalMessage InnerMessage.Default rawField} : OuterMessage
                   43, fun m rawField -> { m with hasMore = Decode.toBool rawField } : OuterMessage
                 ]
                 |> Map.ofList
@@ -193,7 +151,7 @@ module RecordSerialization =
                 0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
                 0x01uy;                 // value true
             |] |> ArraySegment
-        let msg = buf |> OuterMessage.Deserialize
+        let msg = buf |> deserialize OuterMessage.Default
         msg.id |> should equal 21
         msg.inner.IsSome |> should equal true
         msg.inner.Value.id |> should equal 99
@@ -205,7 +163,8 @@ module RecordSerialization =
                         id = 5
                         inner = Some { InnerMessage.Default with id=6; name = "ABC0" }
                         hasMore = true }
-        msg.Serialize()
+        msg
+        |> serialize
         |> toArray
         |> should equal
             [|

@@ -52,30 +52,14 @@ module ClassSerialization =
         static member UnknownFields (m:InnerMessage) =
             List.empty
 
-        member m.Serialize () =
-            Array.zeroCreate (serializedLength m |> int32)
-            |> ZeroCopyBuffer
-            |> serialize m
-            |> ZeroCopyBuffer.asArraySegment
+        member m.Serialize ()                   = serialize m
+        member m.SerializeLengthDelimited ()    = serializeLD m
+        member m.SerializeLD ()                 = serializeLD m
 
-        member m.SerializeLengthDelimited () =
-            Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
-            |> ZeroCopyBuffer
-            |> serializeLengthDelimited m
-
-        static member Deserialize (buf:ArraySegment<byte>) =
-            buf
-            |> ZeroCopyBuffer
-            |> deserialize (InnerMessage())
-
-        static member Deserialize (rawField:RawField) =
-            rawField
-            |> deserializeFromRawField (InnerMessage())
-
-        static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
-            buf
-            |> ZeroCopyBuffer
-            |> deserializeLengthDelimited (InnerMessage())
+        static member Deserialize buf                   = buf |> deserialize (InnerMessage())
+        static member Deserialize raw                   = raw |> deserializeFromRawField (InnerMessage())
+        static member DeserializeLengthDelimited buf    = buf |> deserializeLD (InnerMessage())
+        static member DeserializeLD buf                 = buf |> deserializeLD (InnerMessage())
 
 
     [<Fact>]
@@ -137,7 +121,7 @@ module ClassSerialization =
 
         static member Serializer (m:OuterMessage, zcb) =
             (m.Id         |> Encode.fromVarint 1) >>
-            (m.Inner      |> Encode.fromOptionalMessage serializeLengthDelimited 42) >>
+            (m.Inner      |> Encode.fromOptionalMessage serializeToLD 42) >>
             (m.HasMore    |> Encode.fromBool 43)
             <| zcb
 
@@ -167,26 +151,15 @@ module ClassSerialization =
         static member UnknownFields (m:OuterMessage) =
             List.empty
 
-        member m.Serialize () =
-            Array.zeroCreate (serializedLength m |> int32)
-            |> ZeroCopyBuffer
-            |> serialize m
-            |> ZeroCopyBuffer.asArraySegment
+        member m.Serialize ()                   = serialize m
+        member m.SerializeLengthDelimited ()    = serializeLD m
+        member m.SerializeLD ()                 = serializeLD m
 
-        member m.SerializeLengthDelimited () =
-            Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
-            |> ZeroCopyBuffer
-            |> serializeLengthDelimited m
+        static member Deserialize buf                   = buf |> deserialize (OuterMessage())
+        static member Deserialize raw                   = raw |> deserializeFromRawField (OuterMessage())
+        static member DeserializeLengthDelimited buf    = buf |> deserializeLD (OuterMessage())
+        static member DeserializeLD buf                 = buf |> deserializeLD (OuterMessage())
 
-        static member Deserialize (buf:ArraySegment<byte>) =
-            buf
-            |> ZeroCopyBuffer
-            |> deserialize (OuterMessage())
-
-        static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
-            buf
-            |> ZeroCopyBuffer
-            |> deserializeLengthDelimited (InnerMessage())
 
     [<Fact>]
     let ``Deserialize compound message`` () =

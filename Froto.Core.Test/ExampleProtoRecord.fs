@@ -75,28 +75,6 @@ module SampleNamespace =
             static member UnknownFields m =
                 m._unknownFields
 
-            member m.Serialize () =
-                Array.zeroCreate (serializedLength m |> int32)
-                |> ZeroCopyBuffer
-                |> serialize m
-                |> ZeroCopyBuffer.asArraySegment
-
-            member m.SerializeLengthDelimited () =
-                Array.zeroCreate (serializedLengthDelimitedLength m |> int32)
-                |> ZeroCopyBuffer
-                |> serializeLengthDelimited m
-
-            static member Deserialize (buf:ArraySegment<byte>) =
-                buf
-                |> ZeroCopyBuffer
-                |> deserialize InnerSample.Default
-
-            static member DeserializeLengthDelimited (buf:ArraySegment<byte>) =
-                buf
-                |> ZeroCopyBuffer
-                |> deserializeLengthDelimited InnerSample.Default
-                
-
 
 module PerformanceTest =
 
@@ -124,20 +102,20 @@ module PerformanceTest =
             ]
 
         let len =
-            xs |> List.sumBy (fun x -> Serializer.serializedLengthDelimitedLength x)
+            xs |> List.sumBy (fun x -> Serializer.serializedLengthLD x)
 
         let buf : byte array = Array.zeroCreate (len |> int)
         let bufAS = System.ArraySegment(buf)
         let zcw = Froto.Serialization.ZeroCopyBuffer(bufAS)
 
         xs
-        |> List.iter (fun x -> zcw |> Serializer.serializeLengthDelimited x |> ignore)
+        |> List.iter (fun x -> zcw |> Serializer.serializeToLD x |> ignore)
 
         let ys =
             let zcr = Froto.Serialization.ZeroCopyBuffer(zcw.Array)
             seq {
                 while not zcr.IsEof do
-                    yield zcr |> Serializer.deserializeLengthDelimited InnerSample.Default
+                    yield zcr |> Serializer.deserializeFromLD InnerSample.Default
             }
 
         ys |> Seq.iter ignore
