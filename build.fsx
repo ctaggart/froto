@@ -53,12 +53,12 @@ Target "UnitTest" <| fun _ ->
         // Mono can't load .NET 4.5.2 yet
         if isMono then
             [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Froto.Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
+                @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
                 //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
             ]
         else
             [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Froto.Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
+                @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
                 @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
             ]
     xUnit2 (fun p ->
