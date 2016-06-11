@@ -89,8 +89,6 @@ module Decode =
 
     let toString = helper_bytes arraySegtoString
     let toBytes  = helper_bytes toByteArray
-    let toMessage messageCtor = helper_bytes (ZeroCopyBuffer >> messageCtor)
-    let toOptionalMessage messageCtor = toMessage (messageCtor >> Some)
 
     /// Helper to deserialize Packed Repeated from LengthDelimited.
     /// Since this is used by an inline function (toPackedEnum),
@@ -119,6 +117,15 @@ module Decode =
     let toPackedSFixed64 = helper_packed (unpackFixed64 >> int64)
     let toPackedSingle   = helper_packed unpackSingle
     let toPackedDouble   = helper_packed unpackDouble
+
+    (* Decode Message *)
+
+    /// Decode a message, given a constructor from a ZeroCopyBuffer.
+    let toMessage messageCtor = helper_bytes (ZeroCopyBuffer >> messageCtor)
+
+    /// Decode an optional message, fiven a constructor from a ZeroCopyBuffer.
+    /// Same as Some(toMessage zcb), but simplifies the call site.
+    let toOptionalMessage messageCtor = toMessage (messageCtor >> Some)
 
 
 ///
@@ -258,8 +265,6 @@ module Encode =
             WireFormat.packDouble
             fieldNum xs
 
-    (* Encode Message *)
-
     /// Encode a list of same-type values, using the provided encoder and tag
     /// for each.  Unlike packed fields which share a single field tag,
     /// each value encoded will be complete with a field tag (type + FieldNum).
@@ -271,6 +276,8 @@ module Encode =
             |> List.iter (enc zcb >> ignore)
             zcb
         wrapperFn
+
+    (* Encode Message *)
 
     /// Encode a message with the supplied field number, using the supplied
     /// encode function.  This is a convienence function to simplify the call

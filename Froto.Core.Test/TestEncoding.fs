@@ -90,7 +90,7 @@ module Decode =
         |> should throw typeof<EncoderException>
 
     [<Fact>]
-    let ``Hydrate numeric types from fixed`` () =
+    let ``Decode numeric types to fixed`` () =
         RawField.Fixed32 (1, 42u)
         |> Decode.toFixed32
         |> should equal 42u
@@ -116,21 +116,21 @@ module Decode =
         |> should equal 2.0
 
     [<Fact>]
-    let ``Hydrate bytes`` () =
+    let ``Decode bytes`` () =
         let buf = [| 0uy; 1uy; 2uy; 3uy; 4uy; 5uy; 6uy; 7uy; 8uy |]
         RawField.LengthDelimited (1, ArraySegment(buf))
         |> Decode.toBytes
         |> should equal buf
 
     [<Fact>]
-    let ``Hydrate string`` () =
+    let ``Decode string`` () =
         let buf = [| 0x41uy; 0x42uy; 0x43uy; 0x34uy; 0x32uy |]
         RawField.LengthDelimited (1, ArraySegment(buf))
         |> Decode.toString
         |> should equal "ABC42"
 
     [<Fact>]
-    let ``Hydrate packed numeric types`` () =
+    let ``Decode packed numeric types`` () =
 
         // Packet Int32
         let buf = [|0uy; 1uy; 2uy; 3uy; 4uy|]
@@ -231,6 +231,28 @@ module Encode =
     let toArray(zcb:ZCB) = zcb.ToArray()
 
     let fid = 1 // field ID
+
+    [<Fact>]
+    let ``Encode from raw field list`` () =
+        let byteTag n t = (n <<<3) ||| (int32 t) |> byte
+        let fields =
+            [
+                RawField.Varint(1, 2UL)
+                RawField.Fixed32(2, 0x80000001u)
+                RawField.Fixed64(3, 0x8000000000000001UL)
+                RawField.LengthDelimited(4, ArraySegment([|0x00uy; 0x01uy; 0x02uy; 0x03uy; 0x04uy|]))
+            ]
+        ZCB(256)
+        |> Encode.fromRawFields fields
+        |> toArray
+        |> should equal
+            [| byteTag 1 WireType.Varint;  2uy;
+               byteTag 2 WireType.Fixed32; 0x01uy; 0x00uy; 0x00uy; 0x80uy;
+               byteTag 3 WireType.Fixed64; 1uy;0uy;0uy;0uy; 0uy;0uy;0uy;0x80uy;
+               byteTag 4 WireType.LengthDelimited; 5uy; 0uy; 1uy; 2uy; 3uy; 4uy;
+             |]
+
+
 
     [<Fact>]
     let ``Encode integer varint`` () =
