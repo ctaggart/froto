@@ -57,7 +57,7 @@ module Utility =
     let decodeWhile (predicate:ZeroCopyBuffer->bool) (zcb:ZeroCopyBuffer) =
         seq {
             while predicate zcb do
-                yield WireFormat.unpackField zcb
+                yield WireFormat.Unpack.fromField zcb
             }
     
     /// Decode an entire ZeroCopyBuffer (until EOF)
@@ -67,7 +67,7 @@ module Utility =
 
     /// Decode a length-delimited ZeroCopyBuffer
     let unpackLengthDelimited zcb =
-        let len = zcb |> WireFormat.unpackVarint |> uint32
+        let len = zcb |> WireFormat.Unpack.fromVarint |> uint32
         let end_ = zcb.Position + len
         zcb
         |>  decodeWhile (fun zcb -> zcb.Position < end_)

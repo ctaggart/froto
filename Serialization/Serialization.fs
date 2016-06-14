@@ -109,7 +109,7 @@ module Serializer =
     /// Serialize a message, length delimited, into a ZeroCopyBuffer
     let inline serializeLengthDelimitedTo m zcb =
         zcb
-        |> WireFormat.packVarint (uint64 (serializedLength m))
+        |> WireFormat.Pack.toVarint (uint64 (serializedLength m))
         |> serializeTo m
 
     /// Serialize a message, length delimited, into a ZeroCopyBuffer

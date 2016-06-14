@@ -103,20 +103,20 @@ module Decode =
         | raw ->
             RawField.raiseMismatch "LengthDelimited" raw
 
-    let toPackedInt32    = helper_packed (unpackVarint >> int32)
-    let toPackedInt64    = helper_packed (unpackVarint >> int64)
-    let toPackedUInt32   = helper_packed (unpackVarint >> uint32)
-    let toPackedUInt64   = helper_packed (unpackVarint >> uint64)
-    let toPackedSInt32   = helper_packed (unpackVarint >> int32 >> zagZig32)
-    let toPackedSInt64   = helper_packed (unpackVarint >> int64 >> zagZig64)
-    let toPackedBool     = helper_packed (unpackVarint >> int64ToBool)
-    let inline toPackedEnum x    = helper_packed (unpackVarint >> int32 >> enum) x
-    let toPackedFixed32  = helper_packed unpackFixed32
-    let toPackedFixed64  = helper_packed unpackFixed64
-    let toPackedSFixed32 = helper_packed (unpackFixed32 >> int32)
-    let toPackedSFixed64 = helper_packed (unpackFixed64 >> int64)
-    let toPackedSingle   = helper_packed unpackSingle
-    let toPackedDouble   = helper_packed unpackDouble
+    let toPackedInt32    = helper_packed (Unpack.fromVarint >> int32)
+    let toPackedInt64    = helper_packed (Unpack.fromVarint >> int64)
+    let toPackedUInt32   = helper_packed (Unpack.fromVarint >> uint32)
+    let toPackedUInt64   = helper_packed (Unpack.fromVarint >> uint64)
+    let toPackedSInt32   = helper_packed (Unpack.fromVarint >> int32 >> zagZig32)
+    let toPackedSInt64   = helper_packed (Unpack.fromVarint >> int64 >> zagZig64)
+    let toPackedBool     = helper_packed (Unpack.fromVarint >> int64ToBool)
+    let inline toPackedEnum x    = helper_packed (Unpack.fromVarint >> int32 >> enum) x
+    let toPackedFixed32  = helper_packed Unpack.fromFixed32
+    let toPackedFixed64  = helper_packed Unpack.fromFixed64
+    let toPackedSFixed32 = helper_packed (Unpack.fromFixed32 >> int32)
+    let toPackedSFixed64 = helper_packed (Unpack.fromFixed64 >> int64)
+    let toPackedSingle   = helper_packed Unpack.fromSingle
+    let toPackedDouble   = helper_packed Unpack.fromDouble
 
     (* Decode Message *)
 
@@ -144,7 +144,7 @@ module Encode =
     /// Encode a list of RawFields into a ZeroCopyBuffer
     let fromRawFields fieldList zcb =
         fieldList
-        |> List.fold (fun zcb field -> WireFormat.packFieldRaw field zcb) zcb
+        |> List.fold (fun zcb field -> Pack.toFieldRaw field zcb) zcb
 
     /// If value = default, then elide the field (don't serialize)
     let inline elideDefault defV v f =
@@ -154,21 +154,21 @@ module Encode =
 
     /// Generic Encode for all varint types, excepted for signed & bool:
     ///   int32, int64, uint32, uint64, enum
-    let inline fromDefaultedVarint defV fldNum v = elideDefault defV v <| WireFormat.packFieldVarint fldNum (uint64 v)
-    let inline fromNondefaultedVarint fldNum v = WireFormat.packFieldVarint fldNum (uint64 v)
+    let inline fromDefaultedVarint defV fldNum v = elideDefault defV v <| Pack.toFieldVarint fldNum (uint64 v)
+    let inline fromNondefaultedVarint fldNum v = Pack.toFieldVarint fldNum (uint64 v)
 
-    let fromDefaultedSInt32 defV fldNum v = elideDefault defV v <| WireFormat.packFieldVarint fldNum (zigZag32 v |> uint64)
-    let fromDefaultedSInt64 defV fldNum v = elideDefault defV v <| WireFormat.packFieldVarint fldNum (zigZag64 v |> uint64)
+    let fromDefaultedSInt32 defV fldNum v = elideDefault defV v <| Pack.toFieldVarint fldNum (zigZag32 v |> uint64)
+    let fromDefaultedSInt64 defV fldNum v = elideDefault defV v <| Pack.toFieldVarint fldNum (zigZag64 v |> uint64)
     let fromDefaultedBool   defV fldNum v = elideDefault defV v <| fromNondefaultedVarint fldNum (boolToInt64 v)
 
-    let inline fromDefaultedFixed32  defV fldNum v = elideDefault defV v <| WireFormat.packFieldFixed32 fldNum (uint32 v)
-    let inline fromDefaultedFixed64  defV fldNum v = elideDefault defV v <| WireFormat.packFieldFixed64 fldNum (uint64 v)
+    let inline fromDefaultedFixed32  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed32 fldNum (uint32 v)
+    let inline fromDefaultedFixed64  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed64 fldNum (uint64 v)
 
-    let fromDefaultedSingle defV fldNum v = elideDefault defV v <| WireFormat.packFieldSingle fldNum v
-    let fromDefaultedDouble defV fldNum v = elideDefault defV v <| WireFormat.packFieldDouble fldNum v
+    let fromDefaultedSingle defV fldNum v = elideDefault defV v <| Pack.toFieldSingle fldNum v
+    let fromDefaultedDouble defV fldNum v = elideDefault defV v <| Pack.toFieldDouble fldNum v
 
-    let fromDefaultedString defV fldNum v = elideDefault defV v <| WireFormat.packFieldString fldNum v
-    let fromDefaultedBytes  defV fldNum v = elideDefault defV v <| WireFormat.packFieldBytes fldNum v
+    let fromDefaultedString defV fldNum v = elideDefault defV v <| Pack.toFieldString fldNum v
+    let fromDefaultedBytes  defV fldNum v = elideDefault defV v <| Pack.toFieldBytes fldNum v
 
     let inline fromVarint fldNum (v:'a) = fromDefaultedVarint (Unchecked.defaultof<'a>) fldNum v
 
@@ -199,8 +199,8 @@ module Encode =
         let xslen = xs
                     |> lenFn
                     |> uint64
-        WireFormat.packTag fieldNum WireType.LengthDelimited
-        >> WireFormat.packVarint xslen
+        Pack.toTag fieldNum WireType.LengthDelimited
+        >> Pack.toVarint xslen
         >> flip (List.fold (fun buf x -> buf |> encFn x )) xs
 
     /// Calculate the total length of an encoded list of varints.
@@ -213,28 +213,28 @@ module Encode =
         let encode = uint64
         fromPackedHelper
             (varIntListPackedLen encode)
-            (encode >> WireFormat.packVarint)
+            (encode >> Pack.toVarint)
             fieldNum xs
 
     let fromPackedBool fieldNum xs =
         let boolPackedLen = List.length
         fromPackedHelper
             boolPackedLen (* encodes to 1 byte per bool *)
-            (boolToInt64 >> WireFormat.packVarint)
+            (boolToInt64 >> Pack.toVarint)
             fieldNum xs
 
     let fromPackedSInt32 fieldNum xs =
         let encode = zigZag32 >> uint64
         fromPackedHelper
             (varIntListPackedLen encode)
-            (encode >> WireFormat.packVarint)
+            (encode >> Pack.toVarint)
             fieldNum xs
 
     let fromPackedSInt64 fieldNum xs =
         let encode = zigZag64 >> uint64
         fromPackedHelper
             (varIntListPackedLen encode)
-            (encode >> WireFormat.packVarint)
+            (encode >> Pack.toVarint)
             fieldNum xs
 
     let inline fixedListPackedLen size = (List.length >> ((*) size))
@@ -244,25 +244,25 @@ module Encode =
     let inline fromPackedFixed32 fieldNum xs =
         fromPackedHelper
             fixed32ListPackedLen
-            (uint32 >> WireFormat.packFixed32)
+            (uint32 >> Pack.toFixed32)
             fieldNum xs
 
     let inline fromPackedFixed64 fieldNum xs =
         fromPackedHelper
             fixed64ListPackedLen
-            (uint64 >> WireFormat.packFixed64)
+            (uint64 >> Pack.toFixed64)
             fieldNum xs
 
     let fromPackedSingle fieldNum xs =
         fromPackedHelper
             fixed32ListPackedLen
-            WireFormat.packSingle
+            Pack.toSingle
             fieldNum xs
 
     let fromPackedDouble fieldNum xs =
         fromPackedHelper
             fixed64ListPackedLen
-            WireFormat.packDouble
+            Pack.toDouble
             fieldNum xs
 
     /// Encode a list of same-type values, using the provided encoder and tag
@@ -283,7 +283,7 @@ module Encode =
     /// encode function.  This is a convienence function to simplify the call
     /// site and avoid exposing WireFormat to callers.
     let fromMessage (fn:'m -> ZeroCopyBuffer -> ZeroCopyBuffer) fieldNum m =
-        WireFormat.packTag fieldNum WireType.LengthDelimited
+        Pack.toTag fieldNum WireType.LengthDelimited
         >> fn m
 
     /// Helper to encode an optional message, or nothing if None

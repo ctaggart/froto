@@ -28,25 +28,25 @@ module UnpackValue =
 
         [| 0b00000001uy |]
         |> ZCR
-        |> unpackVarint
+        |> Unpack.fromVarint
         |> should equal 1UL
 
         [| 0b10101100uy; 0b00000010uy |]
         |> ZCR
-        |> unpackVarint
+        |> Unpack.fromVarint
         |> should equal 300UL
 
     [<Fact>]
     let ``Unpack Varint stops after 64 bits of bytes`` () =
         [| 0x81uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x00uy |]
         |> ZCR
-        |> unpackVarint
+        |> Unpack.fromVarint
         |> should equal 1UL
 
         fun () ->
             [| 0x81uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x00uy |]
             |> ZCR
-            |> unpackVarint
+            |> Unpack.fromVarint
             |> ignore
         |> should throw typeof<WireFormatException>
 
@@ -54,16 +54,16 @@ module UnpackValue =
     let ``Can unpack max Varint`` () =
         [| 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0x01uy |]
         |> ZCR
-        |> unpackVarint
+        |> Unpack.fromVarint
         |> should equal System.UInt64.MaxValue
 
     [<Fact>]
     let ``Unpack varint ignores overflow`` () =
         // TODO: Should this really throw an error?
-        // That would add another IF statment to the inner unpack loop of every varint...
+        // That would add another IF statment to the inner Unpack.from loop of every varint...
         [| 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0x7Fuy |]
         |> ZCR
-        |> unpackVarint
+        |> Unpack.fromVarint
         |> should equal System.UInt64.MaxValue
 
 
@@ -72,7 +72,7 @@ module UnpackValue =
         fun () ->
             [| 0x80uy; 0x80uy; 0x80uy |]
             |> ZCR
-            |> unpackVarint
+            |> Unpack.fromVarint
             |> ignore
         |> should throw typeof<WireFormatException>
 
@@ -80,12 +80,12 @@ module UnpackValue =
     let ``Can decode fixed`` () =
         [| 0x01uy; 0x20uy; 0x03uy; 0x40uy |]
         |> ZCR
-        |> unpackFixed32
+        |> Unpack.fromFixed32
         |> should equal 0x40032001u
 
         [| 0x01uy; 0x20uy; 0x03uy; 0x40uy; 0x00uy; 0x00uy; 0x00uy; 0x80uy |]
         |> ZCR
-        |> unpackFixed64
+        |> Unpack.fromFixed64
         |> should equal 0x8000000040032001UL
 
     [<Fact>]
@@ -93,7 +93,7 @@ module UnpackValue =
         fun () ->
             [| 0x01uy; 0x20uy; 0x03uy |]
             |> ZCR
-            |> unpackFixed32
+            |> Unpack.fromFixed32
             |> ignore
         |> should throw typeof<WireFormatException>
 
@@ -101,14 +101,14 @@ module UnpackValue =
     let ``Unpack Single`` () =
         [| 0uy; 0uy; 0b00000000uy; 0b01000000uy |]
         |> ZCR
-        |> unpackSingle
+        |> Unpack.fromSingle
         |> should equal 2.0f
 
     [<Fact>]
     let ``Unpack Double`` () =
         [| 0x9Auy; 0x99uy; 0x99uy; 0x99uy; 0x99uy; 0x99uy; 0xB9uy; 0x3Fuy |]
         |> ZCR
-        |> unpackDouble
+        |> Unpack.fromDouble
         |> should equal 0.10
 
     [<Fact>]
@@ -117,7 +117,7 @@ module UnpackValue =
         // len=3; should not return last byte
         [| 0x03uy; 0x00uy; 0x01uy; 0x02uy; 0x00uy |]
         |> ZCR
-        |> unpackLengthDelimited
+        |> Unpack.fromLengthDelimited
         |> toArray
         |> should equal [| 00uy; 01uy; 02uy |]
 
@@ -133,57 +133,57 @@ module PackValue =
     [<Fact>]
     let ``Pack one-byte varint`` () =
         ZCW(2)
-        |> packVarint 0x01UL
+        |> Pack.toVarint 0x01UL
         |> toArray
         |> should equal [| 0x01uy |]
 
     [<Fact>]
     let ``Pack two-byte varint`` () =
         ZCW(2)
-        |> packVarint 0x81UL
+        |> Pack.toVarint 0x81UL
         |> toArray
         |> should equal [| 0x81uy; 0x01uy |]
 
     [<Fact>]
     let ``Pack max-byte varint`` () =
         ZCW(10)
-        |> packVarint 0x8000000000000000UL
+        |> Pack.toVarint 0x8000000000000000UL
         |> toArray
         |> should equal [| 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x01uy |]
 
     [<Fact>]
     let ``Pack max-value varint`` () =
         ZCW(10)
-        |> packVarint System.UInt64.MaxValue
+        |> Pack.toVarint System.UInt64.MaxValue
         |> toArray
         |> should equal [| 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0x01uy |]
 
     [<Fact>]
     let ``Pack Fixed32`` () =
         ZCW(4)
-        |> packFixed32 0x80000001u
+        |> Pack.toFixed32 0x80000001u
         |> toArray
         |> should equal [| 0x01uy; 0x00uy; 0x00uy; 0x80uy |]
 
     [<Fact>]
     let ``Pack Fixed64`` () =
         ZCW(8)
-        |> packFixed64 0x8000000000000001UL
+        |> Pack.toFixed64 0x8000000000000001UL
         |> toArray
         |> should equal [| 0x01uy; 0x00uy; 0x00uy; 0x00uy; 0x00uy; 0x00uy; 0x00uy; 0x80uy |]
 
     [<Fact>]
     let ``Pack Single and Double`` () =
         ZCW(4)
-            |> packSingle 2.0f
+            |> Pack.toSingle 2.0f
             |> ZeroCopyBuffer
-            |> unpackSingle
+            |> Unpack.fromSingle
             |> should equal 2.0f
 
         ZCW(8)
-            |> packDouble 0.10
+            |> Pack.toDouble 0.10
             |> ZeroCopyBuffer
-            |> unpackDouble
+            |> Unpack.fromDouble
             |> should equal 0.10
 
     [<Fact>]
@@ -193,7 +193,7 @@ module PackValue =
         let len = src.Length
 
         ZCW(256)
-        |> packLengthDelimited
+        |> Pack.toLengthDelimited
             (uint32 len)
             (fun dest-> Array.Copy(src, 0L, dest.Array, int64 dest.Offset, int64 len) )
         |> toArray
@@ -210,17 +210,17 @@ module UnpackField =
         
         [| 0x08uy |]
         |> ZCR
-        |> unpackTag
+        |> Unpack.fromTag
         |> should equal (1, WireType.Varint)
 
         [| 0x11uy |]
         |> ZCR
-        |> unpackTag
+        |> Unpack.fromTag
         |> should equal (2, WireType.Fixed64)
 
         [| 0xD2uy; 0x02uy |]
         |> ZCR
-        |> unpackTag
+        |> Unpack.fromTag
         |> should equal (42, WireType.LengthDelimited )
 
 
@@ -230,28 +230,28 @@ module UnpackField =
         fun () ->
             [| 0x08uy |]
             |> ZCR
-            |> unpackTag
+            |> Unpack.fromTag
             |> ignore
         |> should not' (throw typeof<WireFormatException>)
 
         fun () ->
             [| 0xFFuy; 0xFFuy; 0xFFuy; 0xFFuy; 0x08uy |]
             |> ZCR
-            |> unpackTag
+            |> Unpack.fromTag
             |> ignore
         |> should not' (throw typeof<WireFormatException>)
 
         fun () ->
             [| 0x00uy |]
             |> ZCR
-            |> unpackTag
+            |> Unpack.fromTag
             |> ignore
         |> should throw typeof<WireFormatException>
 
         fun () ->
             [| 0x80uy; 0x80uy; 0x80uy; 0x80uy; 0x10uy |]
             |> ZCR
-            |> unpackTag
+            |> Unpack.fromTag
             |> ignore
         |> should throw typeof<WireFormatException>
 
@@ -259,14 +259,14 @@ module UnpackField =
     let ``Unpack varint field`` () =
         [| 0x08uy; 2uy |]
         |> ZCR
-        |> unpackField
+        |> Unpack.fromField
         |> should equal (Varint (1, 2UL))
 
     [<Fact>]
     let ``Unpack fixed64 field`` () =
         [| 0x09uy; 0x00uy;0x00uy;0x00uy;0x00uy; 0x00uy;0x01uy;0x02uy;0x03uy |]
         |> ZCR
-        |> unpackField
+        |> Unpack.fromField
         |> should equal (Fixed64 (1, 0x0302010000000000UL))
 
     [<Fact>]
@@ -274,7 +274,7 @@ module UnpackField =
         let field =
             [| 0x1Auy; 0x03uy; 0x00uy;0x00uy;0x01uy; 0x00uy;0x00uy;0x01uy;0x02uy;0x03uy |]
             |> ZCR
-            |> unpackField
+            |> Unpack.fromField
 
         match field with
         | LengthDelimited (num, seg) ->
@@ -286,7 +286,7 @@ module UnpackField =
     let ``Unpack fixed32 field`` () =
         [| byte ((9<<<3) ||| 5); 0x00uy;0x01uy;0x02uy;0x03uy |]
         |> ZCR
-        |> unpackField
+        |> Unpack.fromField
         |> should equal (Fixed32 (9, 0x03020100u))
 
     [<Fact>]
@@ -294,14 +294,14 @@ module UnpackField =
         fun () ->
             [| byte ((1<<<3) ||| 3) |]
             |> ZCR
-            |> unpackField
+            |> Unpack.fromField
             |> ignore
         |> should throw typeof<WireFormatException>
 
         fun () ->
             [| byte ((1<<<3) ||| 4) |]
             |> ZCR
-            |> unpackField
+            |> Unpack.fromField
             |> ignore
         |> should throw typeof<WireFormatException>
 
@@ -317,7 +317,7 @@ module PackField =
     [<Fact>]
     let ``Pack tag`` () =
         ZCW(256)
-        |> packTag 2 WireType.Fixed64
+        |> Pack.toTag 2 WireType.Fixed64
         |> toArray
         |> should equal [| 0x11uy |]
 
@@ -325,35 +325,35 @@ module PackField =
     let ``Field number validated to range [1, 2^28)`` () =
         let buf = ZCW(256)
 
-        fun () -> buf |> packTag 1 WireType.Fixed64 |> ignore
+        fun () -> buf |> Pack.toTag 1 WireType.Fixed64 |> ignore
         |> should not' (throw typeof<WireFormatException>)
 
-        fun () -> buf |> packTag RawField.MaxFieldNum WireType.Fixed64 |> ignore
+        fun () -> buf |> Pack.toTag RawField.MaxFieldNum WireType.Fixed64 |> ignore
         |> should not' (throw typeof<WireFormatException>)
 
-        fun () -> buf |> packTag 0 WireType.Fixed64 |> ignore
+        fun () -> buf |> Pack.toTag 0 WireType.Fixed64 |> ignore
         |> should throw typeof<WireFormatException>
 
-        fun () -> buf |> packTag (RawField.MaxFieldNum+1) WireType.Fixed64 |> ignore
+        fun () -> buf |> Pack.toTag (RawField.MaxFieldNum+1) WireType.Fixed64 |> ignore
         |> should throw typeof<WireFormatException>
 
-        fun () -> buf |> packTag -1 WireType.Fixed64 |> ignore
+        fun () -> buf |> Pack.toTag -1 WireType.Fixed64 |> ignore
         |> should throw typeof<WireFormatException>
 
-        fun () -> buf |> packTag (Int32.MinValue) WireType.Fixed64 |> ignore
+        fun () -> buf |> Pack.toTag (Int32.MinValue) WireType.Fixed64 |> ignore
         |> should throw typeof<WireFormatException>
 
     [<Fact>]
     let ``Pack varint field`` () =
         ZCW(256)
-        |> packFieldVarint 2 42UL 
+        |> Pack.toFieldVarint 2 42UL 
         |> toArray
         |> should equal [| 0x10uy; 42uy |]
 
     [<Fact>]
     let ``Pack fixed64 field`` () =
         ZCW(256)
-        |> packFieldFixed64 2 42UL 
+        |> Pack.toFieldFixed64 2 42UL 
         |> toArray
         |> should equal [| 0x11uy; 42uy; 0uy; 0uy; 0uy; 0uy; 0uy; 0uy; 0uy|]
 
@@ -363,7 +363,7 @@ module PackField =
         let len = src.Length
 
         ZCW(256)
-        |> packFieldLengthDelimited 2
+        |> Pack.toFieldLengthDelimited 2
             (uint32 len)
             (fun dest-> Array.Copy(src, 0L, dest.Array, int64 dest.Offset, int64 len) )
         |> toArray
@@ -373,7 +373,7 @@ module PackField =
         let src = [| for i in 1..64 -> byte i|]
 
         ZCW(256)
-        |> packFieldBytes 2 (ArraySegment(src))
+        |> Pack.toFieldBytes 2 (ArraySegment(src))
         |> toArray
         |> should equal (Array.append [| 0x12uy; 64uy |] src)
 
@@ -381,14 +381,14 @@ module PackField =
         let src = "123"
 
         ZCW(256)
-        |> packFieldString 2 src
+        |> Pack.toFieldString 2 src
         |> toArray
         |> should equal [| 0x12uy; 3uy; 0x31uy; 0x32uy; 0x33uy |]
 
     [<Fact>]
     let ``Pack fixed32 field`` () =
         ZCW(256)
-        |> packFieldFixed32 2 42u 
+        |> Pack.toFieldFixed32 2 42u 
         |> toArray
         |> should equal [| 0x15uy; 42uy; 0uy; 0uy; 0uy|]
 
@@ -397,25 +397,25 @@ module PackField =
 
         // Varint
         ZCW(256)
-        |> packFieldRaw (Varint(2, 42UL))
+        |> Pack.toFieldRaw (Varint(2, 42UL))
         |> toArray
         |> should equal [| 0x10uy; 42uy |]
 
         // Fixed32
         ZCW(256)
-        |> packFieldRaw (Fixed32(2, 42u))
+        |> Pack.toFieldRaw (Fixed32(2, 42u))
         |> toArray
         |> should equal [| 0x15uy; 42uy; 0uy; 0uy; 0uy |]
 
         // Fixed64
         ZCW(256)
-        |> packFieldRaw (Fixed64(2, 42UL)) 
+        |> Pack.toFieldRaw (Fixed64(2, 42UL)) 
         |> toArray
         |> should equal [| 0x11uy; 42uy; 0uy; 0uy; 0uy; 0uy; 0uy; 0uy; 0uy|]
 
         // LengthDelimited
         ZCW(256)
-        |> packFieldRaw (LengthDelimited(2, ArraySegment([| 0x00uy; 0x01uy; 0x02uy; 0x03uy; 0x04uy |])))
+        |> Pack.toFieldRaw (LengthDelimited(2, ArraySegment([| 0x00uy; 0x01uy; 0x02uy; 0x03uy; 0x04uy |])))
         |> toArray
         |> should equal [| 0x12uy; 0x05uy; 0x00uy; 0x01uy; 0x02uy; 0x03uy; 0x04uy |]
 
