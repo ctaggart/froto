@@ -83,7 +83,6 @@ module Serializer =
 
     open System
     open Froto.Serialization.Encoding
-    open Froto.Serialization.Encoding.Utility
 
 (* Serialize *)
 

@@ -2,7 +2,17 @@
 ### 0.3.0 _ under construction
   * [#3](https://github.com/ctaggart/froto/issues/3) F# type provider
   * [#15](https://github.com/ctaggart/froto/issues/15) froto.exe code generator for proto3
-  * [#39](https://github.com/ctaggart/froto/issues/15) Record Serialization
+  * [#37](https://github.com/ctaggart/froto/issues/38) Fix bug: O(n^2) Performance Problem on repeated fields
+  * [#38](https://github.com/ctaggart/froto/issues/38) Record Serialization
+  * Reimplement Class serialization using the new Record Serialization structure
+  * Project reorganization for accessibility, readability and consistency
+    * Rename base namespace from Froto.Core to Froto.Serialization and assembly from Froto.Core.dll to Froto.Serialization.dll
+    * At the WireFormat level, rename encodeXXX/decodeXXX functions to Pack.toXXX/Unpack.fromXXX
+    * At the RawField level, and rename dehydrateXXX/hydrateXXX functions to Encode.fromXXX and Decode.toXXX
+    * At the Serialization level, created functions for serializing to/from ZeroCopyBuffer and ArraySegment
+    * Rename “Exe” solution to “Froto.Compiler.Exe”
+    * Rename “froto.exe” to “frotoc.exe”
+    * Rename several folders; e.g., “ProtoParser” to “Parser” and “Exe” to “Compiler.Exe”
 
 ### 0.2.1 _ 2016-04
   * [#19](https://github.com/ctaggart/froto/issues/19) Improve support for serialization/deserialization
