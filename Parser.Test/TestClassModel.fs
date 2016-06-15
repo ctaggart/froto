@@ -6,11 +6,11 @@ open System
 open System.IO
 open Xunit
 open FsUnit.Xunit
-open Froto.Parser.Model
+open Froto.Parser.ClassModel
 
-let parseFile s = ProtoFile.ParseFile(s)
-let parseStream name stream = ProtoFile.ParseStream(name, stream)
-let parseString s = ProtoFile.ParseString(s)
+let parseFile s = ProtoFile.fromFile(s)
+let parseStream name stream = ProtoFile.fromStream(name, stream)
+let parseString s = ProtoFile.fromString(s)
 
 /// gets the path for a test file based on the relative path from the executing assembly
 let getTestFile file =

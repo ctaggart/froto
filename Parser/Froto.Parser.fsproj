@@ -34,7 +34,7 @@
     <Compile Include="AssemblyInfo.fs" Condition="Exists('AssemblyInfo.fs')" />
     <Compile Include="Ast.fs" />
     <Compile Include="Parser.fs" />
-    <Compile Include="Model.fs" />
+    <Compile Include="ClassModel.fs" />
     <None Include="Froto.Parser.nuspec" />
     <None Include="paket.references" />
   </ItemGroup>

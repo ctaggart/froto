@@ -4,8 +4,11 @@
   * [#15](https://github.com/ctaggart/froto/issues/15) froto.exe code generator for proto3
 
 
+### 0.3.1 _ 2016-06
+  * [#41](https://github.com/ctaggart/froto/issues/41) Make Parser functions more discoverable and easier to use.
+
 ### 0.3.0 _ 2016-06
-  * [#37](https://github.com/ctaggart/froto/issues/38) Fix bug: O(n^2) Performance Problem on repeated fields
+  * [#37](https://github.com/ctaggart/froto/issues/37) Fix bug: O(n^2) Performance Problem on repeated fields
   * [#38](https://github.com/ctaggart/froto/issues/38) Record Serialization
   * Reimplement Class serialization using the new Record Serialization structure
   * Project reorganization for accessibility, readability and consistency
