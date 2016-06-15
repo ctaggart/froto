@@ -10,6 +10,7 @@
 * [Froto.Serialization](http://www.nuget.org/packages/Froto.Serialization) - Protobuf F# Serialization Framework and low-level WireFormat library
 
 ## Status
+* 0.3.1 2016-06 Made Parser functions more discoverable and easier to use.
 * 0.3.0 2016-06 Rewrote F# serialization to support both Record and Class serialization.  Significant project structure, serialization namespace, and serialization module refactor.
 * 0.2.1 2016-04 Added F# serialization framework to Core, w/full wire format support
   See the [0.2.1 release details](https://github.com/ctaggart/froto/releases/tag/0.2.1) for help upgrading from 0.1.0.
