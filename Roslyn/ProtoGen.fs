@@ -3,7 +3,7 @@ module Froto.Roslyn.ProtoGen
 
 open System
 open System.IO
-open Froto.Parser.Model
+open Froto.Parser.ClassModel
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
@@ -38,7 +38,7 @@ let scalarToSyntaxKind =
 
 let createCompilation path rootNsName rootTpName =
 
-    let proto = ProtoFile.ParseFile(path)
+    let proto = ProtoFile.fromFile(path)
         
     let rec listMessages (messages:ProtoMessage list) =
         [   for message in messages do
