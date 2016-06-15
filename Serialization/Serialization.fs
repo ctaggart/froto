@@ -79,61 +79,90 @@
 /// Extracts the list of unknown fields (fields not on the decoder ring)
 /// from the supplied type instance.
 
-module Serializer =
+open System
+open Froto.Serialization.Encoding
 
-    open System
-    open Froto.Serialization.Encoding
+module Serialize =
 
-(* Serialize *)
+    module Helpers =
+        let arraySegtoArray (seg:ArraySegment<'a>) =
+            seg.Array.[ seg.Offset .. (seg.Count-1) ]
 
-    /// Serialize message into a ZeroCopyBuffer
-    let inline serializeTo m zcb =
+    /// Serialize message into a ZeroCopyBuffer.
+    let inline toZeroCopyBuffer m zcb =
         (^msg : (static member Serializer : ^msg * ZeroCopyBuffer -> ZeroCopyBuffer) (m, zcb) )
 
-    /// Get serialized length of a message
+    /// Serialize message into a ZeroCopyBuffer.
+    let inline toZcb m zcb = toZeroCopyBuffer m zcb
+
+    /// Get serialized length of a message.
     let inline serializedLength m =
         let nwb = NullWriteBuffer()
-        nwb |> serializeTo m |> ignore
+        nwb |> toZcb m |> ignore
         nwb.Length
 
-    /// Get serialized length of a length-delimited message
+    /// Get serialized length of a length-delimited message.
     let inline serializedLengthLengthDelimited m =
         let len = serializedLength m
         let lenlen = Utility.varIntLenNoDefault (uint64 len)
         (uint32 lenlen) + len
 
-    /// Get serialized length of a length-delimited message
+    /// Get serialized length of a length-delimited message.
+    /// Shorthand for Serialize.serializedLengthLengthDelimited.
     let inline serializedLengthLD m = serializedLengthLengthDelimited m
 
-    /// Serialize a message, length delimited, into a ZeroCopyBuffer
-    let inline serializeLengthDelimitedTo m zcb =
+    /// Serialize a message, length delimited, into a ZeroCopyBuffer.
+    let inline toZeroCopyBufferLengthDelimited m zcb =
         zcb
         |> WireFormat.Pack.toVarint (uint64 (serializedLength m))
-        |> serializeTo m
+        |> toZeroCopyBuffer m
 
-    /// Serialize a message, length delimited, into a ZeroCopyBuffer
-    let inline serializeToLD m zcb = serializeLengthDelimitedTo m zcb
+    /// Serialize a message, length delimited, into a ZeroCopyBuffer.
+    /// Shorthand for Serialize.toZeroCopyBufferLengthDelimited.
+    let inline toZcbLD m zcb = toZeroCopyBufferLengthDelimited m zcb
 
 
-    /// Serialize a message into an ArraySegment backed by a new Array
-    let inline serialize m =
+    /// Serialize a message into an existing ArraySegment.
+    /// Note: exception thrown if ArraySegment is not large enough.
+    let inline toArraySegment m (arraySeg:ArraySegment<byte>) =
+        arraySeg
+        |> ZeroCopyBuffer
+        |> toZcb m
+        |> ZeroCopyBuffer.asArraySegment
+
+    /// Serialize a message, length-delimited, into an existing ArraySegment.
+    /// Note: exception thrown if ArraySegment is not large enough.
+    let inline toArraySegmentLengthDelimited m (arraySeg:ArraySegment<byte>) =
+        arraySeg
+        |> ZeroCopyBuffer
+        |> toZcbLD m
+        |> ZeroCopyBuffer.asArraySegment
+
+    /// Serialize a message, length-delimited, into an existing ArraySegment.
+    /// Shorthand for Serialize.toZeroCopyBufferLengthDelimited.
+    /// Note: exception thrown if ArraySegment is not large enough.
+    let inline toArraySegmentLD m arraySeg = toArraySegmentLengthDelimited m arraySeg
+
+    /// Serialize a message into a new byte array
+    let inline toArray m =
         Array.zeroCreate (serializedLength m |> int32 )
-        |> ZeroCopyBuffer
-        |> serializeTo m
-        |> ZeroCopyBuffer.asArraySegment
+        |> ArraySegment
+        |> toArraySegment m
+        |> Helpers.arraySegtoArray
 
-    /// Serialize a message, length-delimited, into an ArraySegment backed by a new Array
-    let inline serializeLengthDelimited m =
+    /// Serialize a message, length-delimited, into a new byte array.
+    let inline toArrayLengthDelimited m =
         Array.zeroCreate (serializedLengthLD m |> int32 )
-        |> ZeroCopyBuffer
-        |> serializeToLD m
-        |> ZeroCopyBuffer.asArraySegment
+        |> ArraySegment
+        |> toArraySegmentLD m
+        |> Helpers.arraySegtoArray
 
-    /// Serialize a message, length-delimited, into an ArraySegment backed by a new Array
-    let inline serializeLD m = serializeLengthDelimited m
+    /// Serialize a message, length-delimited, into a new byte array.
+    /// Shorthand for Serialize.toArrayLengthDelimited
+    let inline toArrayLD m = toArrayLengthDelimited m
 
 
-(* Deserialize *)
+module Deserialize =
 
     module Helpers =
 
@@ -168,10 +197,12 @@ module Serializer =
                     | None ->
                         raise <| SerializerException(sprintf "Invalid decoder ring; encountered unknown field '%d' and ring must include an entry for field number 0 to handle unknown fields" n)
 
-            let inline decode decoderRing state fields =
+            /// decode a sequence of fields, given a decoder ring and a default or mutable message.
+            /// Note that a List would perform slightly better, but demand more memory during operation.
+            let inline decode decoderRing m fields =
                 fields
                 |> Seq.map (fetchDecoder decoderRing)
-                |> Seq.fold (fun acc (fn, fld) -> fn acc fld) state
+                |> Seq.fold (fun acc (fn, fld) -> fn acc fld) m
 
 
             let m = decode (decoderRing m) m fields
@@ -182,25 +213,30 @@ module Serializer =
             else
                 raise <| SerializerException(sprintf "Missing required fields %A" missingFields)
 
-    /// Deserialize a message from a ZeroCopyBuffer, given a default message
-    let inline deserializeFrom m zcb =
+    /// Deserialize a message from a ZeroCopyBuffer, given a default message.
+    let inline fromZeroCopyBuffer m zcb =
         zcb
         |> Utility.decodeBuffer
         |> Helpers.deserializeFields m
         |> Helpers.decodeFixup
 
-    /// Deserialize a length-delimited message from a ZeroCopyBuffer, given a default message
-    let inline deserializeFromLengthDelimited m zcb =
+    /// Deserialize a message from a ZeroCopyBuffer, given a default message.
+    /// Shorthand for Deserialize.fromZeroCopyBuffer.
+    let inline fromZcb m zcb = fromZeroCopyBuffer m zcb
+
+    /// Deserialize a length-delimited message from a ZeroCopyBuffer, given a default message.
+    let inline fromZeroCopyBufferLengthDelimited m zcb =
         zcb
         |> Utility.unpackLengthDelimited
         |> Helpers.deserializeFields m
         |> Helpers.decodeFixup
 
-    /// Deserialize a length-delimited message from a ZeroCopyBuffer, given a default message
-    let inline deserializeFromLD m zcb = deserializeFromLengthDelimited m zcb
+    /// Deserialize a length-delimited message from a ZeroCopyBuffer, given a default message.
+    /// Shorthand for Deserialize.fromZeroCopyBufferLengthDelimited.
+    let inline fromZcbLD m zcb = fromZeroCopyBufferLengthDelimited m zcb
 
-    /// Deserialize a message from a length-delimited RawField, given a default message
-    let inline deserializeFromRawField m (rawField:RawField) =
+    /// Deserialize a message from a length-delimited RawField, given a default message.
+    let inline fromRawField m (rawField:RawField) =
         let buf = 
             match rawField with
             | LengthDelimited (fieldId, buf) ->
@@ -209,25 +245,45 @@ module Serializer =
                 raise <| SerializerException(sprintf "Expected LengthDelimited field, found %s" (rawField.GetType().Name) )
         buf
         |> ZeroCopyBuffer
-        |> deserializeFrom m
+        |> fromZeroCopyBuffer m
 
     /// Deserialize a message from a length-delimited RawField, given a default message,
     /// and return Some(message).  Used to simplify the call-site when deserializing
     /// inner messages.
-    let inline deserializeOptionalMessage m rawField =
-        Some (deserializeFromRawField m rawField)
+    let inline optionalMessage m rawField =
+        Some (fromRawField m rawField)
 
-    /// Deserialize a message from an ArraySegment, given a default message
-    let inline deserialize m (buf:ArraySegment<byte>) =
+    /// Deserialize a message from an ArraySegment, given a default message.
+    let inline fromArraySegment m (buf:ArraySegment<byte>) =
         buf
         |> ZeroCopyBuffer
-        |> deserializeFrom m
+        |> fromZcb m
 
-    /// Deserialize a length-delimited message from an ArraySegment, given a default message
-    let inline deserializeLengthDelimited m (buf:ArraySegment<byte>) =
+    /// Deserialize a length-delimited message from an ArraySegment, given a default message.
+    let inline fromArraySegmentLengthDelimited m (buf:ArraySegment<byte>) =
         buf
         |> ZeroCopyBuffer
-        |> deserializeFromLD m
+        |> fromZcbLD m
 
-    /// Deserialize a length-delimited message from an ArraySegment, given a default message
-    let inline deserializeLD m buf = deserializeLengthDelimited m buf
+    /// Deserialize a length-delimited message from an ArraySegment, given a default message.
+    /// Shorthand for Deserialize.fromArraySegmentLengthDelimited.
+    let inline fromArraySegmentLD m buf = fromArraySegmentLengthDelimited m buf
+
+    /// Deserialize a message from a byte array, given a default message.
+    let inline fromArray m buf =
+        buf
+        |> ArraySegment
+        |> fromArraySegment m
+
+    /// Deserialize a length-delimited message from a byte array, given a default message.
+    let inline fromArrayLengthDelimited m buf =
+        buf
+        |> ArraySegment
+        |> fromArraySegmentLD m
+
+    /// Deserialize a length-delimited message from a byte array, given a default message.
+    /// Shorthand for Deserialize.fromArrayLengthDelimited.
+    let inline fromArrayLD m buf = fromArrayLengthDelimited m buf
+
+
+

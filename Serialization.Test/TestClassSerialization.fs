@@ -6,14 +6,10 @@ open FsUnit.Xunit
 open System
 
 open Froto.Serialization
-open Froto.Serialization.Serializer
 open Froto.Serialization.Encoding
 
 [<Xunit.Trait("Kind", "Unit")>]
 module ClassSerialization =
-
-    let toArray (seg:ArraySegment<'a>) =
-        seg.Array.[ seg.Offset .. (seg.Count-1) ]
 
     type InnerMessage () =
         member val Id = 0 with get,set
@@ -52,14 +48,18 @@ module ClassSerialization =
         static member UnknownFields (m:InnerMessage) =
             List.empty
 
-        member m.Serialize ()                   = serialize m
-        member m.SerializeLengthDelimited ()    = serializeLD m
-        member m.SerializeLD ()                 = serializeLD m
+        member m.Serialize ()                   = Serialize.toArray m
+        member m.Serialize buf                  = Serialize.toArraySegment m buf
+        member m.Serialize zcb                  = Serialize.toZeroCopyBuffer m zcb
+        member m.SerializeLengthDelimited ()    = Serialize.toArrayLD m
 
-        static member Deserialize buf                   = buf |> deserialize (InnerMessage())
-        static member Deserialize raw                   = raw |> deserializeFromRawField (InnerMessage())
-        static member DeserializeLengthDelimited buf    = buf |> deserializeLD (InnerMessage())
-        static member DeserializeLD buf                 = buf |> deserializeLD (InnerMessage())
+        static member Deserialize buf                   = buf |> Deserialize.fromArray (InnerMessage())
+        static member Deserialize buf                   = buf |> Deserialize.fromArraySegment (InnerMessage())
+        static member Deserialize zcb                   = zcb |> Deserialize.fromZeroCopyBuffer (InnerMessage())
+        static member Deserialize raw                   = raw |> Deserialize.fromRawField (InnerMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArrayLD (InnerMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArraySegmentLD (InnerMessage())
+        static member DeserializeLengthDelimited zcb    = zcb |> Deserialize.fromZcbLD (InnerMessage())
 
 
     [<Fact>]
@@ -72,7 +72,7 @@ module ClassSerialization =
                 12uy;               // length = 12
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
-            |] |> ArraySegment
+            |]
         let msg = InnerMessage.Deserialize(buf)
         msg.Id |> should equal 99
         msg.Name |> should equal "Test message"
@@ -87,7 +87,7 @@ module ClassSerialization =
                 12uy;               // length = 12
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
-            |] |> ArraySegment
+            |]
         fun () -> InnerMessage.Deserialize(buf) |> ignore
         |> should throw typeof<Froto.Serialization.SerializerException>
 
@@ -97,7 +97,6 @@ module ClassSerialization =
         msg.Id <- 98
         msg.Name <- "ABC0"
         msg.Serialize()
-        |> toArray
         |> should equal
             [|
                 0x01uy<<<3 ||| 0uy; // tag: id=1; varint
@@ -121,7 +120,7 @@ module ClassSerialization =
 
         static member Serializer (m:OuterMessage, zcb) =
             (m.Id         |> Encode.fromVarint 1) >>
-            (m.Inner      |> Encode.fromOptionalMessage serializeToLD 42) >>
+            (m.Inner      |> Encode.fromOptionalMessage Serialize.toZcbLD 42) >>
             (m.HasMore    |> Encode.fromBool 43)
             <| zcb
 
@@ -151,14 +150,18 @@ module ClassSerialization =
         static member UnknownFields (m:OuterMessage) =
             List.empty
 
-        member m.Serialize ()                   = serialize m
-        member m.SerializeLengthDelimited ()    = serializeLD m
-        member m.SerializeLD ()                 = serializeLD m
+        member m.Serialize ()                   = Serialize.toArray m
+        member m.Serialize buf                  = Serialize.toArraySegment m buf
+        member m.Serialize zcb                  = Serialize.toZeroCopyBuffer m zcb
+        member m.SerializeLengthDelimited ()    = Serialize.toArrayLD m
 
-        static member Deserialize buf                   = buf |> deserialize (OuterMessage())
-        static member Deserialize raw                   = raw |> deserializeFromRawField (OuterMessage())
-        static member DeserializeLengthDelimited buf    = buf |> deserializeLD (OuterMessage())
-        static member DeserializeLD buf                 = buf |> deserializeLD (OuterMessage())
+        static member Deserialize buf                   = buf |> Deserialize.fromArray (OuterMessage())
+        static member Deserialize buf                   = buf |> Deserialize.fromArraySegment (OuterMessage())
+        static member Deserialize zcb                   = zcb |> Deserialize.fromZeroCopyBuffer (OuterMessage())
+        static member Deserialize raw                   = raw |> Deserialize.fromRawField (OuterMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArrayLD (OuterMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArraySegmentLD (OuterMessage())
+        static member DeserializeLengthDelimited zcb    = zcb |> Deserialize.fromZcbLD (OuterMessage())
 
 
     [<Fact>]
@@ -177,7 +180,7 @@ module ClassSerialization =
                                         // value "Test message"
                 0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
                 0x01uy;                 // value true
-            |] |> ArraySegment
+            |]
         let msg = OuterMessage.Deserialize(buf)
         msg.Id |> should equal 21
         msg.Inner.IsSome |> should equal true
@@ -193,7 +196,6 @@ module ClassSerialization =
         msg.Inner.Value.Name <- "ABC0"
         msg.HasMore <- true
         msg.Serialize()
-        |> toArray
         |> should equal
             [|
                 0x01uy<<<3 ||| 0uy;     // tag: id=1; varint
