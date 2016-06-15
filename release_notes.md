@@ -10,9 +10,8 @@
     * At the WireFormat level, rename encodeXXX/decodeXXX functions to Pack.toXXX/Unpack.fromXXX
     * At the RawField level, and rename dehydrateXXX/hydrateXXX functions to Encode.fromXXX and Decode.toXXX
     * At the Serialization level, created functions for serializing to/from ZeroCopyBuffer and ArraySegment
-    * Rename “Exe” solution to “Froto.Compiler.Exe”
-    * Rename “froto.exe” to “frotoc.exe”
-    * Rename several folders; e.g., “ProtoParser” to “Parser” and “Exe” to “Compiler.Exe”
+    * Rename “Exe” solution to “Froto.Compiler”
+    * Rename several folders; e.g., “ProtoParser” to “Parser” and “Exe” to “Compiler”
 
 ### 0.2.1 _ 2016-04
   * [#19](https://github.com/ctaggart/froto/issues/19) Improve support for serialization/deserialization

@@ -42,7 +42,7 @@ Target "AssemblyInfo" <| fun _ ->
     common |> CreateFSharpAssemblyInfo "Parser/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Serialization/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
-    common |> CreateFSharpAssemblyInfo "Compiler.Exe/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
 
 Target "Build" <| fun _ ->
     !! "Froto.sln" |> MSBuildRelease "" "Rebuild" |> ignore
@@ -78,7 +78,7 @@ Target "SourceLink" <| fun _ ->
     sourceIndex "Parser/Froto.Parser.fsproj" None
     sourceIndex "Serialization/Froto.Serialization.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
-    sourceIndex "Compiler.Exe/Froto.Compiler.Exe.fsproj" None
+    sourceIndex "Compiler/Froto.Compiler.fsproj" None
 
 Target "NuGet" <| fun _ ->
     CreateDir "bin"
@@ -130,9 +130,9 @@ Target "NuGet" <| fun _ ->
     NuGet (fun p ->
     { p with
         Version = buildVersion
-        WorkingDir = "Compiler.Exe/bin/Release"
+        WorkingDir = "Compiler/bin/Release"
         OutputPath = "bin"
-    }) "Compiler.Exe/Froto.Compiler.Exe.nuspec"
+    }) "Compiler/Froto.Compiler.nuspec"
 
 // chain targets together only on AppVeyor
 //let (==>) a b = a =?> (b, isAppVeyorBuild)

@@ -8,12 +8,12 @@
     <ProjectGuid>f5d8d709-919d-4539-8908-91c540c970b3</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Frotoc</RootNamespace>
-    <AssemblyName>frotoc</AssemblyName>
+    <AssemblyName>froto</AssemblyName>
     <TargetFrameworkVersion Condition="'$(OS)' == 'Unix'">v4.5</TargetFrameworkVersion>
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.5.2</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFSharpCoreVersion>4.4.0.0</TargetFSharpCoreVersion>
-    <Name>Frotoc</Name>
+    <Name>Froto.Compiler</Name>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -48,7 +48,7 @@
     <Compile Include="AssemblyInfo.fs" Condition="Exists('AssemblyInfo.fs')" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
-    <None Include="Froto.Compiler.Exe.nuspec" />
+    <None Include="Froto.Compiler.nuspec" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
