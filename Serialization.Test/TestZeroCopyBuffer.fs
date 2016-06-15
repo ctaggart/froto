@@ -6,7 +6,7 @@ open FsUnit.Xunit
 
 open System
 
-open Froto.Core
+open Froto.Serialization
 
 type System.ArraySegment<'a>
     with member x.ToArray() =
@@ -27,7 +27,7 @@ let ``Can read bytes`` () =
     c |> should equal 1uy
 
     fun () -> zc.ReadByte() |> ignore
-    |> should throw typeof<ProtobufWireFormatException>
+    |> should throw typeof<WireFormatException>
 
 [<Fact>]
 let ``Can read range`` () =
@@ -48,7 +48,7 @@ let ``Can read range`` () =
     r.ToArray() |> should equal [| 1uy |]
 
     fun () -> zc.ReadByte() |> ignore
-    |> should throw typeof<ProtobufWireFormatException>
+    |> should throw typeof<WireFormatException>
 
 [<Fact>]
 let ``Can write bytes`` () =
@@ -67,7 +67,7 @@ let ``Can write bytes`` () =
     zc.ToArray() |> should equal [| 42uy; 43uy; 44uy |]
 
     fun () -> zc.WriteByte(0uy) |> ignore
-    |> should throw typeof<ProtobufWireFormatException>
+    |> should throw typeof<WireFormatException>
 
 [<Fact>]
 let ``Can write range`` () =

@@ -1,19 +1,18 @@
 <?xml version="1.0"?>
 <package>
   <metadata>
-    <id>Froto</id>
+    <id>Froto.Serialization</id>
     <version>0.0.0</version>
-    <authors>Cameron Taggart</authors>
+    <authors>Cameron Taggart, James Hugard</authors>
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/ctaggart/froto</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A froto.exe code generator for Protocol Buffers.</description>
+    <description>A serialization library for Protocol Buffers.</description>
+    @dependencies@
     <tags>froto protobuf binary protocol buffers serialization deserialization</tags>
   </metadata>
   <files>
-    <file src="froto.exe" target="tools" />
-    <file src="froto.exe.config" target="tools" />
-    <file src="*.dll" target="tools" />
-    <file src="*.pdb" target="tools" />
+    <file src="Froto.Serialization.dll" target="lib\net45" />
+    <file src="Froto.Serialization.pdb" target="lib\net45" />
   </files>
 </package>

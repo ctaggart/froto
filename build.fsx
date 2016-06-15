@@ -39,10 +39,10 @@ Target "AssemblyInfo" <| fun _ ->
     let common = [
         Attribute.Version assemblyVersion
         Attribute.InformationalVersion iv.String ]
-    common |> CreateFSharpAssemblyInfo "ProtoParser/AssemblyInfo.fs"
-    common |> CreateFSharpAssemblyInfo "Core/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "Parser/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "Serialization/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
-    common |> CreateFSharpAssemblyInfo "Exe/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
 
 Target "Build" <| fun _ ->
     !! "Froto.sln" |> MSBuildRelease "" "Rebuild" |> ignore
@@ -52,13 +52,13 @@ Target "UnitTest" <| fun _ ->
     let dlls =
         // Mono can't load .NET 4.5.2 yet
         if isMono then
-            [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
+            [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
+                @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
                 //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
             ]
         else
-            [   @"ProtoParser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Froto.Core.Test/bin/Release/Froto.Core.Test.dll"
+            [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
+                @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
                 @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
             ]
     xUnit2 (fun p ->
@@ -75,17 +75,17 @@ Target "SourceLink" <| fun _ ->
         let pdbToIndex = if Option.isSome pdb then pdb.Value else p.OutputFilePdb
         let url = "https://raw.githubusercontent.com/ctaggart/froto/{0}/%var2%"
         SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
-    sourceIndex "ProtoParser/Froto.Parser.fsproj" None
-    sourceIndex "Core/Froto.Core.fsproj" None
+    sourceIndex "Parser/Froto.Parser.fsproj" None
+    sourceIndex "Serialization/Froto.Serialization.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
-    sourceIndex "Exe/Exe.fsproj" None
+    sourceIndex "Compiler/Froto.Compiler.fsproj" None
 
 Target "NuGet" <| fun _ ->
     CreateDir "bin"
     NuGet (fun p ->
     { p with
         Version = buildVersion
-        WorkingDir = "ProtoParser/bin/Release"
+        WorkingDir = "Parser/bin/Release"
         OutputPath = "bin"
         DependenciesByFramework =
         [{
@@ -95,12 +95,12 @@ Target "NuGet" <| fun _ ->
                 "FParsec", GetPackageVersion "./packages/" "FParsec"
                 ]
         }]
-    }) "ProtoParser/Froto.Parser.nuspec"
+    }) "Parser/Froto.Parser.nuspec"
 
     NuGet (fun p ->
     { p with
         Version = buildVersion
-        WorkingDir = "Core/bin/Release"
+        WorkingDir = "Serialization/bin/Release"
         OutputPath = "bin"
         DependenciesByFramework =
         [{
@@ -109,7 +109,7 @@ Target "NuGet" <| fun _ ->
                 [
                 ]
         }]
-    }) "Core/Froto.Core.nuspec"
+    }) "Serialization/Froto.Serialization.nuspec"
 
     NuGet (fun p ->
     { p with
@@ -130,9 +130,9 @@ Target "NuGet" <| fun _ ->
     NuGet (fun p ->
     { p with
         Version = buildVersion
-        WorkingDir = "Exe/bin/Release"
+        WorkingDir = "Compiler/bin/Release"
         OutputPath = "bin"
-    }) "Exe/Froto.nuspec"
+    }) "Compiler/Froto.Compiler.nuspec"
 
 // chain targets together only on AppVeyor
 //let (==>) a b = a =?> (b, isAppVeyorBuild)

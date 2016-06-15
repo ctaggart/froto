@@ -7,10 +7,10 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{c37745d0-275d-4dce-9ddc-c4663a462edd}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Core</RootNamespace>
-    <AssemblyName>Froto.Core</AssemblyName>
+    <RootNamespace>Serialization</RootNamespace>
+    <AssemblyName>Froto.Serialization</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <Name>Froto.Core</Name>
+    <Name>Froto.Serialization</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -35,8 +35,10 @@
     <Compile Include="ZeroCopyBuffer.fs" />
     <Compile Include="EncodingTypes.fs" />
     <Compile Include="WireFormat.fs" />
-    <Compile Include="Serializer.fs" />
-    <None Include="Froto.Core.nuspec" />
+    <Compile Include="Utility.fs" />
+    <Compile Include="Encoding.fs" />
+    <Compile Include="Serialization.fs" />
+    <None Include="Froto.Serialization.nuspec" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>

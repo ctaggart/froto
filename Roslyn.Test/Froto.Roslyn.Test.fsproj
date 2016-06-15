@@ -48,7 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ProtoParser\Froto.Parser.fsproj">
+    <ProjectReference Include="..\Parser\Froto.Parser.fsproj">
       <Name>Froto.Parser</Name>
       <Project>{1c31da31-bec5-4e73-9d83-e36d18847439}</Project>
       <Private>True</Private>

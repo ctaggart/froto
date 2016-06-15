@@ -7,13 +7,13 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>f5d8d709-919d-4539-8908-91c540c970b3</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Exe</RootNamespace>
+    <RootNamespace>Frotoc</RootNamespace>
     <AssemblyName>froto</AssemblyName>
     <TargetFrameworkVersion Condition="'$(OS)' == 'Unix'">v4.5</TargetFrameworkVersion>
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.5.2</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFSharpCoreVersion>4.4.0.0</TargetFSharpCoreVersion>
-    <Name>Exe</Name>
+    <Name>Froto.Compiler</Name>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -25,7 +25,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>bin\Debug\Exe.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Frotoc.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -36,7 +36,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>bin\Release\Exe.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Frotoc.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
@@ -48,11 +48,11 @@
     <Compile Include="AssemblyInfo.fs" Condition="Exists('AssemblyInfo.fs')" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
-    <None Include="Froto.nuspec" />
+    <None Include="Froto.Compiler.nuspec" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ProtoParser\Froto.Parser.fsproj">
+    <ProjectReference Include="..\Parser\Froto.Parser.fsproj">
       <Name>Froto.Parser</Name>
       <Project>{1c31da31-bec5-4e73-9d83-e36d18847439}</Project>
       <Private>True</Private>
