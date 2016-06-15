@@ -1,7 +1,10 @@
 
-### 0.3.0 _ under construction
+### 0.4.0 _ under construction
   * [#3](https://github.com/ctaggart/froto/issues/3) F# type provider
   * [#15](https://github.com/ctaggart/froto/issues/15) froto.exe code generator for proto3
+
+
+### 0.3.0 _ 2016-06
   * [#37](https://github.com/ctaggart/froto/issues/38) Fix bug: O(n^2) Performance Problem on repeated fields
   * [#38](https://github.com/ctaggart/froto/issues/38) Record Serialization
   * Reimplement Class serialization using the new Record Serialization structure
