@@ -31,7 +31,6 @@ module SampleNamespace =
 
     open System
     open Froto.Serialization
-    open Froto.Serialization.Serializer
     open Froto.Serialization.Encoding
     open Froto.Serialization.Encoding.Encode
     open Froto.Serialization.Encoding.Decode
@@ -104,14 +103,18 @@ module SampleNamespace =
         static member UnknownFields (m:InnerMessage) =
             m._UnknownFields
 
-        member m.Serialize ()                   = serialize m
-        member m.SerializeLengthDelimited ()    = serializeLD m
-        member m.SerializeLD ()                 = serializeLD m
+        member m.Serialize ()                   = Serialize.toArray m
+        member m.Serialize buf                  = Serialize.toArraySegment m buf
+        member m.Serialize zcb                  = Serialize.toZeroCopyBuffer m zcb
+        member m.SerializeLengthDelimited ()    = Serialize.toArrayLD m
 
-        static member Deserialize buf                   = buf |> deserialize (InnerMessage())
-        static member Deserialize raw                   = raw |> deserializeFromRawField (InnerMessage())
-        static member DeserializeLengthDelimited buf    = buf |> deserializeLD (InnerMessage())
-        static member DeserializeLD buf                 = buf |> deserializeLD (InnerMessage())
+        static member Deserialize buf                   = buf |> Deserialize.fromArray (InnerMessage())
+        static member Deserialize buf                   = buf |> Deserialize.fromArraySegment (InnerMessage())
+        static member Deserialize zcb                   = zcb |> Deserialize.fromZeroCopyBuffer (InnerMessage())
+        static member Deserialize raw                   = raw |> Deserialize.fromRawField (InnerMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArrayLD (InnerMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArraySegmentLD (InnerMessage())
+        static member DeserializeLengthDelimited zcb    = zcb |> Deserialize.fromZcbLD (InnerMessage())
                 
 
 
@@ -140,20 +143,20 @@ module PerformanceTest =
             ]
 
         let len =
-            xs |> List.sumBy (fun x -> Serializer.serializedLengthLD x)
+            xs |> List.sumBy (fun x -> Serialize.serializedLengthLD x)
 
         let buf : byte array = Array.zeroCreate (len |> int)
         let bufAS = System.ArraySegment(buf)
         let zcw = Froto.Serialization.ZeroCopyBuffer(bufAS)
 
         xs
-        |> List.iter (fun x -> zcw |> Serializer.serializeToLD x |> ignore)
+        |> List.iter (fun x -> zcw |> Serialize.toZcbLD x |> ignore)
 
         let ys =
             let zcr = Froto.Serialization.ZeroCopyBuffer(zcw.Array)
             seq {
                 while not zcr.IsEof do
-                    yield zcr |> Serializer.deserializeFromLD (InnerMessage())
+                    yield zcr |> Deserialize.fromZcbLD (InnerMessage())
             }
 
         ys |> Seq.iter ignore

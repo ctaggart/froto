@@ -2,8 +2,6 @@
 
 module SampleNamespace =
     open System
-    open Froto.Serialization
-    open Froto.Serialization.Serializer
     open Froto.Serialization.Encoding
 
     type ETest =
@@ -102,20 +100,20 @@ module PerformanceTest =
             ]
 
         let len =
-            xs |> List.sumBy (fun x -> Serializer.serializedLengthLD x)
+            xs |> List.sumBy (fun x -> Serialize.serializedLengthLD x)
 
         let buf : byte array = Array.zeroCreate (len |> int)
         let bufAS = System.ArraySegment(buf)
         let zcw = Froto.Serialization.ZeroCopyBuffer(bufAS)
 
         xs
-        |> List.iter (fun x -> zcw |> Serializer.serializeToLD x |> ignore)
+        |> List.iter (fun x -> zcw |> Serialize.toZcbLD x |> ignore)
 
         let ys =
             let zcr = Froto.Serialization.ZeroCopyBuffer(zcw.Array)
             seq {
                 while not zcr.IsEof do
-                    yield zcr |> Serializer.deserializeFromLD InnerSample.Default
+                    yield zcr |> Deserialize.fromZcbLD InnerSample.Default
             }
 
         ys |> Seq.iter ignore
