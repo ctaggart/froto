@@ -10,10 +10,9 @@ open Microsoft.FSharp.Quotations.Patterns
 open ProtoTypes.Core
 open ProviderImplementation.ProvidedTypes
 
-open Froto.Parser.Model
+open Froto.Parser.ClassModel
 open Froto.Parser.Ast
-open Froto.Core
-open Froto.Core.Encoding
+open Froto.Serialization
 
 [<RequireQualifiedAccess>]
 module internal TypeGen =
@@ -93,7 +92,7 @@ module internal TypeGen =
         
         providedEnum
 
-    let private createMap scope typesLookup (name: string) (keyTy: PKeyType) (valueTy: PType) (position: FieldNum) =
+    let private createMap scope typesLookup (name: string) (keyTy: PKeyType) (valueTy: PType) position =
         let keyTypeName = 
             match keyTy with 
             | TKInt32 -> TInt32 | TKInt64 -> TInt64 

@@ -1,6 +1,5 @@
 namespace ProtoTypes.Core
 
-
 [<RequireQualifiedAccess>]
 module ResizeArray =
 

@@ -2,8 +2,8 @@ namespace ProtoTypes.Generation
 
 open ProviderImplementation.ProvidedTypes
 
-open Froto.Parser.Model
-open Froto.Core.Encoding
+open Froto.Parser.ClassModel
+open Froto.Serialization.Encoding
 
 type TypeKind = 
     | Primitive

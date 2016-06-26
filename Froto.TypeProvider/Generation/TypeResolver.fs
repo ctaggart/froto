@@ -5,7 +5,7 @@ open System
 open ProtoTypes.Core
 open ProviderImplementation.ProvidedTypes
 
-open Froto.Parser.Model
+open Froto.Parser.ClassModel
 open Froto.Parser.Ast
     
 type TypesLookup = Map<string, TypeKind * ProvidedTypeDefinition>

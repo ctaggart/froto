@@ -6,14 +6,10 @@ open System.Reflection
 
 open ProtoTypes.Core
 open ProtoTypes.Generation
-open ProviderImplementation
 open ProviderImplementation.ProvidedTypes
-open ProviderImplementation.ProvidedTypesTesting
-
-open Microsoft.FSharp.Quotations
 open Microsoft.FSharp.Core.CompilerServices
 
-open Froto.Parser.Model
+open Froto.Parser.ClassModel
 
 [<TypeProvider>]
 type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this= 
@@ -47,7 +43,7 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
                 if Path.IsPathRooted pathToFile then pathToFile
                 else config.ResolutionFolder </> pathToFile
             
-            let protoFile = ProtoFile.ParseFile protoLocation
+            let protoFile = ProtoFile.fromFile protoLocation
             
             let rootScope = protoFile.Packages |> Seq.tryHead |> Option.getOrElse String.Empty
             
@@ -64,10 +60,6 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
             protoFile.Messages
             |> Seq.map (TypeGen.createType rootScope lookup)
             |> Seq.iter container.AddMember
-            
-            if config.IsHostedExecution then
-                Testing.FormatProvidedType(container, true)
-                |> printfn "%s"
             
             tempAssembly.AddTypes [provider]
             provider)

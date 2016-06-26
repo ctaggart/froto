@@ -7,9 +7,8 @@ open FSharp.Quotations
 open ProtoTypes.Core
 open ProviderImplementation.ProvidedTypes
 
-open Froto.Parser.Model
-open Froto.Core
-open Froto.Core.Encoding
+open Froto.Parser.ClassModel
+open Froto.Serialization.Encoding
 
 /// Contains an implementation of deserialization methods for types generated from ProtoBuf messages
 [<RequireQualifiedAccess>]

@@ -3,8 +3,8 @@ namespace ProtoTypes.Core
 open System
 open System.Collections.Generic
 
-open Froto.Core
-open Froto.Core.Encoding
+open Froto.Serialization
+open Froto.Serialization.Encoding
 
 // scalar type aliases based on https://developers.google.com/protocol-buffers/docs/proto3#scalar
 type proto_double = float

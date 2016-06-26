@@ -4,7 +4,7 @@ open System
 open System.Reflection
 open FSharp.Quotations
 
-open Froto.Parser.Model
+open Froto.Parser.ClassModel
 open Froto.Parser.Ast
 
 open ProtoTypes.Core

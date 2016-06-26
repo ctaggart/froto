@@ -1,6 +1,6 @@
 namespace ProtoTypes.Core
 
-open Froto.Core
+open Froto.Serialization
 
 // Eventually, this class might be replaced by Froto.Core.Encoding.MessageBase, but so far
 // this interface looks simpler and satisfies all needs.
