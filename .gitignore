@@ -3,6 +3,7 @@ bin/
 *.user
 *.suo
 packages/
+paket-files/
 TestResults/
 *.bak
 *.nupkg
