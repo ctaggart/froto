@@ -30,7 +30,7 @@ type internal Dummy() =
     override this.Serialize(buffer) = ()
     override this.ReadFrom(buffer) = ()
     
-/// Simple type used to simplify serialization and deserialization of map values
+/// Simple type used to simplify maps serialization and deserialization
 type internal MapItem<'Key, 'Value>
     ( keyReader: Reader<'Key>,
       valueReader: Reader<'Value>,

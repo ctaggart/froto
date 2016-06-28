@@ -8,7 +8,7 @@ open ProviderImplementation.ProvidedTypes
 open Froto.Parser.ClassModel
 open Froto.Parser.Ast
     
-type TypesLookup = Map<string, TypeKind * ProvidedTypeDefinition>
+type internal TypesLookup = Map<string, TypeKind * ProvidedTypeDefinition>
 
 module internal TypeResolver = 
         
