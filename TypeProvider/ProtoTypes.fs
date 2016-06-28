@@ -1,11 +1,11 @@
-namespace ProtoTypes
+namespace Froto.TypeProvider
 
 open System
 open System.IO
 open System.Reflection
 
-open ProtoTypes.Core
-open ProtoTypes.Generation
+open Froto.TypeProvider.Core
+open Froto.TypeProvider.Generation
 open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
 

@@ -1,4 +1,4 @@
-namespace ProtoTypes.Generation
+namespace Froto.TypeProvider.Generation
 
 open System
 open System.Reflection
@@ -7,7 +7,7 @@ open FSharp.Quotations
 open Froto.Parser.ClassModel
 open Froto.Parser.Ast
 
-open ProtoTypes.Core
+open Froto.TypeProvider.Core
 open ProviderImplementation.ProvidedTypes
 
 [<RequireQualifiedAccess>]

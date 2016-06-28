@@ -1,4 +1,4 @@
-namespace ProtoTypes.Generation
+namespace Froto.TypeProvider.Generation
 
 open System
 open System.Reflection
@@ -7,7 +7,7 @@ open System.Collections.Generic
 open Microsoft.FSharp.Quotations
 open Microsoft.FSharp.Quotations.Patterns
 
-open ProtoTypes.Core
+open Froto.TypeProvider.Core
 open ProviderImplementation.ProvidedTypes
 
 open Froto.Parser.ClassModel

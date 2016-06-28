@@ -1,4 +1,4 @@
-namespace ProtoTypes.Generation
+namespace Froto.TypeProvider.Generation
 
 open System
 open System.Collections.Generic
@@ -7,7 +7,7 @@ open Froto.Serialization
 open Froto.Serialization.Encoding
 open Froto.Serialization.Encoding.WireFormat
 
-open ProtoTypes.Core
+open Froto.TypeProvider.Core
 
 /// Contains helper functions to read/write values to/from ZeroCopyBuffer
 [<RequireQualifiedAccess>]

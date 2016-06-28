@@ -1,4 +1,4 @@
-namespace ProtoTypes.Core
+namespace Froto.TypeProvider.Core
 
 /// Some extensions over standard option API
 [<RequireQualifiedAccess>]

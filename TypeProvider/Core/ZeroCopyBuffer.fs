@@ -1,5 +1,5 @@
 [<RequireQualifiedAccess>]
-module ProtoTypes.Core.ZeroCopyBuffer
+module Froto.TypeProvider.Core.ZeroCopyBuffer
 
 open Froto.Serialization
 open Froto.Serialization.Encoding.WireFormat

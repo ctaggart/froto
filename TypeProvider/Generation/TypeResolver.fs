@@ -1,8 +1,8 @@
-namespace ProtoTypes.Generation
+namespace Froto.TypeProvider.Generation
 
 open System
 
-open ProtoTypes.Core
+open Froto.TypeProvider.Core
 open ProviderImplementation.ProvidedTypes
 
 open Froto.Parser.ClassModel

@@ -1,4 +1,4 @@
-namespace ProtoTypes.Generation
+namespace Froto.TypeProvider.Generation
 
 open ProviderImplementation.ProvidedTypes
 

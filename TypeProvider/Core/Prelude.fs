@@ -1,4 +1,4 @@
-namespace ProtoTypes.Core
+namespace Froto.TypeProvider.Core
 
 open System
 open System.IO
