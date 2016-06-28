@@ -55,6 +55,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Compiler", "Compiler\
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider", "TypeProvider\Froto.TypeProvider.fsproj", "{837AA4FC-E2DD-48A1-A793-50DC4404EE57}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Test", "TypeProvider.Test\Froto.TypeProvider.Test.fsproj", "{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +95,10 @@ Global
 		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

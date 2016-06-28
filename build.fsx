@@ -55,11 +55,13 @@ Target "UnitTest" <| fun _ ->
             [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
                 @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
                 //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+                @"TypeProvider.Test/bin/Release/Froto.TypeProvider.Test.dll"
             ]
         else
             [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
                 @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
                 @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+                @"TypeProvider.Test/bin/Release/Froto.TypeProvider.Test.dll"
             ]
     xUnit2 (fun p ->
         { p with
