@@ -34,6 +34,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{992FDC44-0
 		test\riak_search.proto = test\riak_search.proto
 		test\rpc.proto = test\rpc.proto
 		test\SearchRequest.proto = test\SearchRequest.proto
+                test\type_provider_test.proto = test\type_provider_test.proto
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "google", "google", "{E1A81C99-B921-4EAF-9912-2B2306779E22}"
