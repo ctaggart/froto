@@ -315,14 +315,28 @@ module Encode =
     [<Fact>]
     let ``Encode Fixed32`` () =
         ZCB(5)
-        |> Encode.fromFixed32 fid 5
+        |> Encode.fromFixed32 fid 5u
         |> toArray
         |> should equal [| 0x08uy ||| 5uy; 5uy;0uy;0uy;0uy |]
 
     [<Fact>]
     let ``Encode Fixed64`` () =
         ZCB(9)
-        |> Encode.fromFixed64 fid 5
+        |> Encode.fromFixed64 fid 5UL
+        |> toArray
+        |> should equal [| 0x08uy ||| 1uy; 5uy;0uy;0uy;0uy; 0uy;0uy;0uy;0uy |]
+
+    [<Fact>]
+    let ``Encode SFixed32`` () =
+        ZCB(5)
+        |> Encode.fromSFixed32 fid 5
+        |> toArray
+        |> should equal [| 0x08uy ||| 5uy; 5uy;0uy;0uy;0uy |]
+
+    [<Fact>]
+    let ``Encode SFixed64`` () =
+        ZCB(9)
+        |> Encode.fromSFixed64 fid 5L
         |> toArray
         |> should equal [| 0x08uy ||| 1uy; 5uy;0uy;0uy;0uy; 0uy;0uy;0uy;0uy |]
 
@@ -373,8 +387,10 @@ module Encode =
         checkGetsElided <| Encode.fromDefaultedSInt32 2 fid 2
         checkGetsElided <| Encode.fromDefaultedSInt64 3L fid 3L
         checkGetsElided <| Encode.fromDefaultedBool true fid true
-        checkGetsElided <| Encode.fromDefaultedFixed32 4 fid 4
-        checkGetsElided <| Encode.fromDefaultedFixed64 5L fid 5L
+        checkGetsElided <| Encode.fromDefaultedFixed32 4u fid 4u
+        checkGetsElided <| Encode.fromDefaultedFixed64 5UL fid 5UL
+        checkGetsElided <| Encode.fromDefaultedSFixed32 4 fid 4
+        checkGetsElided <| Encode.fromDefaultedSFixed64 5L fid 5L
         checkGetsElided <| Encode.fromDefaultedSingle 0.60f fid 0.60f
         checkGetsElided <| Encode.fromDefaultedDouble 0.70 fid 0.70
         checkGetsElided <| Encode.fromDefaultedString "Hello" fid "Hello"
@@ -411,15 +427,29 @@ module Encode =
     [<Fact>]
     let ``Encode Packed Fixed32`` () =
         ZCB(10)
-        |> Encode.fromPackedFixed32 fid [ 0; -1 ]
+        |> Encode.fromPackedFixed32 fid [ 0u; uint32 -1 ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 8uy; 0x00uy;0x00uy;0x00uy;0x00uy; 0xFFuy;0xFFuy;0xFFuy;0xFFuy |]
+
+    [<Fact>]
+    let ``Encode Packed Fixed64`` () =
+        ZCB(18)
+        |> Encode.fromPackedFixed64 fid [ 0UL; uint64 -1 ]
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 16uy; 0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy; 0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy |]
+
+    [<Fact>]
+    let ``Encode Packed SFixed32`` () =
+        ZCB(10)
+        |> Encode.fromPackedSFixed32 fid [ 0; -1 ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 8uy; 0x00uy;0x00uy;0x00uy;0x00uy; 0xFFuy;0xFFuy;0xFFuy;0xFFuy |]
         
 
     [<Fact>]
-    let ``Encode Packed Fixed64`` () =
+    let ``Encode Packed SFixed64`` () =
         ZCB(18)
-        |> Encode.fromPackedFixed64 fid [ 0; -1 ]
+        |> Encode.fromPackedSFixed64 fid [ 0L; -1L ]
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 16uy; 0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy;0x00uy; 0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy;0xFFuy |]
 
