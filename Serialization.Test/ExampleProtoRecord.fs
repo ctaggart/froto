@@ -1,4 +1,4 @@
-﻿module SampleProtoRecord
+﻿module ExampleProtoRecord
 
 module SampleNamespace =
     open System
@@ -85,7 +85,9 @@ module PerformanceTest =
     let ``Test Serialization and Deserialization Performance`` () =
         let xs =
             [
-                for id = 1 to 1000 do
+                // let count = 10000
+                let count = 100
+                for id = 1 to count do
                     let inner = {
                         id=1
                         name="Jerry Smith"
