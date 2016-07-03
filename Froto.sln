@@ -34,7 +34,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{992FDC44-0
 		test\riak_search.proto = test\riak_search.proto
 		test\rpc.proto = test\rpc.proto
 		test\SearchRequest.proto = test\SearchRequest.proto
-                test\type_provider_test.proto = test\type_provider_test.proto
+		test\type_provider_test.proto = test\type_provider_test.proto
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "google", "google", "{E1A81C99-B921-4EAF-9912-2B2306779E22}"
@@ -56,7 +56,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Compiler", "Compiler\
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider", "TypeProvider\Froto.TypeProvider.fsproj", "{837AA4FC-E2DD-48A1-A793-50DC4404EE57}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Test", "TypeProvider.Test\Froto.TypeProvider.Test.fsproj", "{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Test", "TypeProvider.Test\Froto.TypeProvider.Test.fsproj", "{710D3AFE-1EB9-4ABB-B9B3-D30991B862DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -96,10 +96,10 @@ Global
 		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EBE7B74B-3D9A-44DD-8CE9-958E9CBC409A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{710D3AFE-1EB9-4ABB-B9B3-D30991B862DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{710D3AFE-1EB9-4ABB-B9B3-D30991B862DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{710D3AFE-1EB9-4ABB-B9B3-D30991B862DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{710D3AFE-1EB9-4ABB-B9B3-D30991B862DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -2,6 +2,7 @@
 module Froto.TypeProvider.Tests.TypeProviderTests
 
 open System
+open System.Linq
 
 open Xunit
 open FsUnit.Xunit
@@ -112,28 +113,28 @@ let ``Primitive types``() =
             StringField = "string field value",
             BytesField = ArraySegment [| 1uy; 2uy; 42uy |])
     
-    let container' = serializeDeserialize container Sample.PrimitiveContainer.Deserialize
+    let container2 = serializeDeserialize container Sample.PrimitiveContainer.Deserialize
     
-    container'.DoubleField |> should be (equal container.DoubleField)
+    container2.DoubleField |> should be (equal container.DoubleField)
     
-    container'.Int32Field |> should be (equal container.Int32Field)
-    container'.Int64Field |> should be (equal container.Int64Field)
+    container2.Int32Field |> should be (equal container.Int32Field)
+    container2.Int64Field |> should be (equal container.Int64Field)
     
-    container'.Uint32Field |> should be (equal container.Uint32Field)
-    container'.Uint64Field |> should be (equal container.Uint64Field)
+    container2.Uint32Field |> should be (equal container.Uint32Field)
+    container2.Uint64Field |> should be (equal container.Uint64Field)
     
-    container'.Sint32Field |> should be (equal container.Sint32Field)
-    container'.Sint64Field |> should be (equal container.Sint64Field)
+    container2.Sint32Field |> should be (equal container.Sint32Field)
+    container2.Sint64Field |> should be (equal container.Sint64Field)
     
-    container'.Fixed32Field |> should be (equal container.Fixed32Field)
-    container'.Fixed64Field |> should be (equal container.Fixed64Field)
+    container2.Fixed32Field |> should be (equal container.Fixed32Field)
+    container2.Fixed64Field |> should be (equal container.Fixed64Field)
     
-    container'.Sfixed32Field |> should be (equal container.Sfixed32Field)
-    container'.Sfixed64Field |> should be (equal container.Sfixed64Field)
+    container2.Sfixed32Field |> should be (equal container.Sfixed32Field)
+    container2.Sfixed64Field |> should be (equal container.Sfixed64Field)
     
-    container'.BoolField |> should be (equal container.BoolField)
-    container'.StringField |> should be (equal container.StringField)
-    container'.BytesField |> should be (equal container.BytesField)
+    container2.BoolField |> should be (equal container.BoolField)
+    container2.StringField |> should be (equal container.StringField)
+    container2.BytesField.ToArray() |> should be (equal <| container.BytesField.ToArray())
     
 type ValueOneofCase = Sample.OneOfContainer.ValueOneofCase
 
