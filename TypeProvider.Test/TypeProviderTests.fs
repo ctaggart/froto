@@ -210,3 +210,13 @@ let ``Map test``() =
     mapContainer'.People |> should be (not' Null)
     mapContainer'.People |> should haveCount 1
     mapContainer'.People.["Vasya"].Name |> should be (equal "Name")
+
+[<Fact>]
+let ``SerializedSize test``() =
+    let address = Sample.Person.Address(Address1 = "", SomeInts = [], Whatever = [])
+    address.SerializedLength |> should be (equal 0u)
+
+    address.Address1 <- "add1"
+    address.Whatever <- [1; 2; 3]
+
+    address.SerializedLength |> should be (greaterThan 0u)

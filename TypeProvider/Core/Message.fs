@@ -7,16 +7,13 @@ open Froto.Serialization
 
 /// Base class for types generated from proto messages.
 [<AbstractClass>]
-type Message() as this =
- 
-    let mutable size = lazy (
+type Message() =
+
+    member this.SerializedLength =    
         let buffer = NullWriteBuffer()
         this.Serialize buffer
         buffer.Length
-    )
- 
-    member this.SerializedLength = size.Value
-    
+
     abstract Serialize: ZeroCopyBuffer -> unit
     
     abstract ReadFrom: ZeroCopyBuffer -> unit
