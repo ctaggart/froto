@@ -161,8 +161,10 @@ module Encode =
     let fromDefaultedSInt64 defV fldNum v = elideDefault defV v <| Pack.toFieldVarint fldNum (zigZag64 v |> uint64)
     let fromDefaultedBool   defV fldNum v = elideDefault defV v <| fromNondefaultedVarint fldNum (boolToInt64 v)
 
-    let inline fromDefaultedFixed32  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed32 fldNum (uint32 v)
-    let inline fromDefaultedFixed64  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed64 fldNum (uint64 v)
+    let fromDefaultedFixed32  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed32 fldNum (uint32 v)
+    let fromDefaultedFixed64  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed64 fldNum (uint64 v)
+    let fromDefaultedSFixed32  defV fldNum (v:int32) = elideDefault defV v <| Pack.toFieldFixed32 fldNum (uint32 v)
+    let fromDefaultedSFixed64  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed64 fldNum (uint64 v)
 
     let fromDefaultedSingle defV fldNum v = elideDefault defV v <| Pack.toFieldSingle fldNum v
     let fromDefaultedDouble defV fldNum v = elideDefault defV v <| Pack.toFieldDouble fldNum v
@@ -176,8 +178,11 @@ module Encode =
     let fromSInt64 fldNum v = fromDefaultedSInt64 0L fldNum v
     let fromBool   fldNum v = fromDefaultedBool false fldNum v
 
-    let inline fromFixed32 fldNum v = fromDefaultedFixed32 0 fldNum v
-    let inline fromFixed64 fldNum v = fromDefaultedFixed64 0 fldNum v
+    let fromFixed32 fldNum (v:uint32) = fromDefaultedFixed32 0u fldNum v
+    let fromFixed64 fldNum (v:uint64) = fromDefaultedFixed64 0UL fldNum v
+    let fromSFixed32 fldNum (v:int32) = fromDefaultedSFixed32 0 fldNum v
+    let fromSFixed64 fldNum (v:int64) = fromDefaultedSFixed64 0L fldNum v
+
 
     let fromSingle fldNum v = fromDefaultedSingle 0.0f fldNum v
     let fromDouble fldNum v = fromDefaultedDouble 0.0 fldNum v
@@ -237,17 +242,29 @@ module Encode =
             (encode >> Pack.toVarint)
             fieldNum xs
 
-    let inline fixedListPackedLen size = (List.length >> ((*) size))
-    let inline fixed32ListPackedLen xs = fixedListPackedLen 4 xs
-    let inline fixed64ListPackedLen xs = fixedListPackedLen 8 xs
+    let inline internal fixedListPackedLen size = (List.length >> ((*) size))
+    let inline internal fixed32ListPackedLen xs = fixedListPackedLen 4 xs
+    let inline internal fixed64ListPackedLen xs = fixedListPackedLen 8 xs
 
-    let inline fromPackedFixed32 fieldNum xs =
+    let fromPackedFixed32 fieldNum (xs:uint32 list) =
         fromPackedHelper
             fixed32ListPackedLen
             (uint32 >> Pack.toFixed32)
             fieldNum xs
 
-    let inline fromPackedFixed64 fieldNum xs =
+    let fromPackedFixed64 fieldNum (xs:uint64 list) =
+        fromPackedHelper
+            fixed64ListPackedLen
+            (uint64 >> Pack.toFixed64)
+            fieldNum xs
+
+    let fromPackedSFixed32 fieldNum (xs:int32 list) =
+        fromPackedHelper
+            fixed32ListPackedLen
+            (uint32 >> Pack.toFixed32)
+            fieldNum xs
+
+    let fromPackedSFixed64 fieldNum (xs:int64 list) =
         fromPackedHelper
             fixed64ListPackedLen
             (uint64 >> Pack.toFixed64)

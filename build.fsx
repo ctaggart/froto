@@ -55,17 +55,18 @@ Target "UnitTest" <| fun _ ->
             [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
                 @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
                 //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+                @"TypeProvider.Test/bin/Release/Froto.TypeProvider.Test.dll"
             ]
         else
             [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
                 @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
                 @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+                @"TypeProvider.Test/bin/Release/Froto.TypeProvider.Test.dll"
             ]
     xUnit2 (fun p ->
         { p with
             IncludeTraits = ["Kind", "Unit"]
             XmlOutputPath = Some @"bin/UnitTest.xml"
-            Parallel = ParallelMode.All
         })
         dlls
 
@@ -134,6 +135,8 @@ Target "NuGet" <| fun _ ->
         OutputPath = "bin"
     }) "Compiler/Froto.Compiler.nuspec"
 
+Target "Default" DoNothing
+
 // chain targets together only on AppVeyor
 //let (==>) a b = a =?> (b, isAppVeyorBuild)
 
@@ -143,6 +146,7 @@ Target "NuGet" <| fun _ ->
 ==> "Build"
 ==> "UnitTest"
 =?> ("SourceLink", isAppVeyorBuild)
-==> "NuGet"
+=?> ("NuGet", not isMono)
+==> "Default"
 
-RunTargetOrDefault "NuGet"
+RunTargetOrDefault "Default"

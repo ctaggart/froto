@@ -15,3 +15,6 @@ nuget xunit.runner.visualstudio version_in_path: true
 nuget FAKE
 nuget SourceLink.Fake
 nuget NuGet.CommandLine
+
+github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fs
+github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fsi
