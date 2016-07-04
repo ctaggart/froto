@@ -67,6 +67,8 @@ Target "UnitTest" <| fun _ ->
         { p with
             IncludeTraits = ["Kind", "Unit"]
             XmlOutputPath = Some @"bin/UnitTest.xml"
+            Parallel = ParallelMode.Assemblies
+            TimeOut = TimeSpan.FromMinutes 10.0
         })
         dlls
 
