@@ -19,7 +19,7 @@ let private applyRule rule (fieldType: Type) =
     match rule with
     | Required -> fieldType
     | Optional -> Expr.makeGenericType [fieldType] typedefof<option<_>> 
-    | Repeated -> Expr.makeGenericType [fieldType] typedefof<list<_>>
+    | Repeated -> Expr.makeGenericType [fieldType] typedefof<proto_repeated<_>>
 
 let private createProperty scope (lookup: TypesLookup) (field: ProtoField) =
 
@@ -31,7 +31,12 @@ let private createProperty scope (lookup: TypesLookup) (field: ProtoField) =
     
     let propertyType = applyRule field.Rule propertyType
     let propertyName = Naming.snakeToPascal field.Name
-    let property, backingField = Provided.readWriteProperty propertyType propertyName
+
+    let property, backingField = 
+        match field.Rule with
+        | Repeated -> Provided.readOnlyProperty propertyType propertyName
+        | _ -> Provided.readWriteProperty propertyType propertyName
+
     let propertyInfo = 
         { ProvidedProperty = property;
             TypeKind = typeKind;
@@ -40,7 +45,6 @@ let private createProperty scope (lookup: TypesLookup) (field: ProtoField) =
             Rule = field.Rule }
         
     propertyInfo, backingField
-
 
 let private createSerializeMethod typeInfo =
     let serialize =
@@ -116,7 +120,7 @@ let private createMap scope typesLookup (name: string) (keyTy: PKeyType) (valueT
                 valueType]
             typedefof<proto_map<_, _>>
             
-    let property, field = Provided.readWriteProperty mapType <| Naming.snakeToPascal name
+    let property, field = Provided.readOnlyProperty mapType <| Naming.snakeToPascal name
     
     let descriptor = 
         { KeyType = keyTypeName;
@@ -142,7 +146,6 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
 
         providedType.AddMembers(properties |> List.map snd)
         providedType.AddMembers(propertiesInfo |> List.map (fun p -> p.ProvidedProperty))
-        providedType.AddMember <| Provided.ctor()
         
         let oneOfGroups = 
             message.Parts 
@@ -150,17 +153,28 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
             |> Seq.map (fun (name, members) -> OneOf.generateOneOf nestedScope lookup name members)
             |> Seq.fold (fun all (info, members) -> providedType.AddMembers members; info::all) []
             
-        let maps = 
+        let maps, mapFields = 
             message.Parts
             |> Seq.choose (fun x -> 
                 match x with 
                 | TMap(name, keyTy, valueTy, position) -> Some <| createMap nestedScope lookup name keyTy valueTy (int position) 
                 | _ -> None)
-            |> Seq.fold (fun all (descriptor, field) -> 
+            |> Seq.fold (fun (maps, fields) (map, field) -> 
                 providedType.AddMember field
-                providedType.AddMember descriptor.Property
-                descriptor::all) 
-                []
+                providedType.AddMember map.Property
+                map::maps, field::fields) 
+                ([], [])
+
+        let ctor = ProvidedConstructor([], InvokeCode = fun args ->
+            properties
+            |> Seq.filter (fun (prop, _) -> prop.Rule = Repeated)
+            |> Seq.map snd
+            |> Seq.append mapFields
+            |> Seq.map (fun field -> 
+                Expr.FieldSet(args.[0], field, Expr.callStaticGeneric [field.FieldType] [] <@@ create<_>() @@>))
+            |> Expr.sequence)
+
+        providedType.AddMember ctor
 
         let typeInfo = { Type = providedType; Properties = propertiesInfo; OneOfGroups = oneOfGroups; Maps = maps }
 

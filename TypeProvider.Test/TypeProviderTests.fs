@@ -18,9 +18,10 @@ let private createPerson() =
     let address = 
         Sample.Person.Address(
             Address1 = "Street", 
-            HouseNumber = 12, 
-            Whatever = [1; 2; 3], 
-            SomeInts = [Sample.Person.IntContainer(Value = 5); Sample.Person.IntContainer(Value = 7)])
+            HouseNumber = 12)
+
+    address.Whatever.AddRange [1; 2; 3]
+    address.SomeInts.AddRange [Sample.Person.IntContainer(Value = 5); Sample.Person.IntContainer(Value = 7)]
 
     Sample.Person(
         Name = "Name",
@@ -69,8 +70,12 @@ let ``Deserialization test``() =
     let address' = person'.PersonAddress.Value
     address'.Address1 |> should be (equal address.Address1)
     address'.HouseNumber |> should be (equal address.HouseNumber)
-    address'.Whatever |> should be (equal address.Whatever)
-    address'.SomeInts |> List.map (fun v -> v.Value) |> should be (equal (address.SomeInts |> List.map(fun v -> v.Value)))
+    address'.Whatever |> List.ofSeq |> should be (equal <| List.ofSeq address.Whatever)
+    
+    address'.SomeInts 
+    |> Seq.map (fun v -> v.Value) 
+    |> List.ofSeq 
+    |> should be (equal (address.SomeInts |> Seq.map(fun v -> v.Value) |> List.ofSeq))
     
 [<Fact>]
 let ``Deserialize None optional value``() =
@@ -86,8 +91,8 @@ let ``Deserialize empty repeated value``() =
     let person = createPerson()
     let address = person.PersonAddress.Value
     
-    address.SomeInts <- []
-    address.Whatever <- []
+    address.SomeInts.Clear()
+    address.Whatever.Clear()
 
     let address' = serializeDeserialize address Sample.Person.Address.Deserialize
     
@@ -181,18 +186,12 @@ let ``Oneof properties serialization test``() =
 [<Fact>]
 let ``Map test``() =
     let mapContainer = Sample.MapContainer()
-    let map = proto_concrete_map<_, _>()
-    map.Add(1, "foo")
-    map.Add(2, "bar")
-    mapContainer.PrimitiveMap <- map
+    mapContainer.PrimitiveMap.Add(1, "foo")
+    mapContainer.PrimitiveMap.Add(2, "bar")
     
-    let people = proto_concrete_map<_, _>()
-    people.Add("Vasya", createPerson())
-    mapContainer.People <- people
+    mapContainer.People.Add("Vasya", createPerson())
     
-    let switches = proto_concrete_map<_, _>()
-    switches.Add(1, Sample.MapContainer.Switch.On)
-    mapContainer.Switches <- switches
+    mapContainer.Switches.Add(1, Sample.MapContainer.Switch.On)
     
     let buffer = mapContainer.SerializedLength |> int |> ZeroCopyBuffer
     mapContainer.Serialize buffer
@@ -213,10 +212,10 @@ let ``Map test``() =
 
 [<Fact>]
 let ``SerializedSize test``() =
-    let address = Sample.Person.Address(Address1 = "", SomeInts = [], Whatever = [])
+    let address = Sample.Person.Address(Address1 = "")
     address.SerializedLength |> should be (equal 0u)
 
     address.Address1 <- "add1"
-    address.Whatever <- [1; 2; 3]
+    address.Whatever.AddRange [1; 2; 3]
 
     address.SerializedLength |> should be (greaterThan 0u)
