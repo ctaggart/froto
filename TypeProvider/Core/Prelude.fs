@@ -17,6 +17,7 @@ let (+.+) scope1 scope2 = (scope1 + "." + scope2).Trim('.')
 
 let x<'T> : 'T = Unchecked.defaultof<'T>
 
-let notNull x = not <| isNull x
-
+/// Calls default constructor of type 'T. Useful when constructor can't be called directly,
+/// e.g. when creating an expression that creates an instance of generic type where generic argument
+/// is a generated type (e.g. ResizeArray<SomeProtoMessage>)
 let create<'T when 'T: (new: unit -> 'T)>() = new 'T()

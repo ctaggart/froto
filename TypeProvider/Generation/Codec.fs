@@ -2,9 +2,6 @@
 [<RequireQualifiedAccess>]
 module Froto.TypeProvider.Generation.Codec
 
-open System
-open System.Collections.Generic
-
 open Froto.Serialization
 open Froto.Serialization.Encoding
 open Froto.Serialization.Encoding.WireFormat
@@ -13,13 +10,6 @@ open Froto.TypeProvider.Core
 
 let private write f (fieldNumber: FieldNum) (buffer: ZeroCopyBuffer) value =
     f fieldNumber value buffer |> ignore
-
-let private map f pack (fieldNumber: FieldNum) x = pack fieldNumber (f x)
-
-let inline private packVarInt fieldNumber x =  map uint64 Pack.toFieldVarint fieldNumber x
-
-let inline private packSint32 fieldNumber x = packVarInt fieldNumber (Utility.zigZag32 x)
-let inline private packSint64 fieldNumber x = packVarInt fieldNumber (Utility.zigZag64 x)
 
 let writeDouble: Writer<proto_double> = write Encode.fromDouble
 let writeFloat: Writer<proto_float> = write Encode.fromSingle
@@ -55,7 +45,7 @@ let writeEmbedded position buffer (value: Message) =
 /// more strongly-typed writeOptional function
 let writeOptionalEmbedded<'T when 'T :> Message> : Writer<obj> =
     fun position buffer value ->
-        if value <> null
+        if not <| isNull value
         then value :?> option<'T> |> Option.get |> writeEmbedded position buffer
 
 let writeRepeated (writeItem: Writer<'T>) position buffer value =

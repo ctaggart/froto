@@ -58,7 +58,7 @@ module internal TypeResolver =
         | "bool" -> Some typeof<proto_bool>
         | "string" -> Some typeof<proto_string>
         | "bytes" -> Some typeof<proto_bytes>
-        | x -> None
+        | _ -> None
         
     let ptypeToString = function
         | TDouble  -> "double" | TFloat -> "float"
@@ -70,8 +70,7 @@ module internal TypeResolver =
         
     let resolveNonScalar scope targetType (lookup: TypesLookup) =
         allScopes scope
-        |> Seq.map (fun s -> s +.+ targetType)
-        |> Seq.map (fun tp -> lookup |> Map.tryFind tp)
+        |> Seq.map (fun s -> Map.tryFind (s +.+ targetType) lookup )
         |> Seq.tryFind Option.isSome
         |> Option.unwrap
 

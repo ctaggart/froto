@@ -3,10 +3,8 @@ module internal Froto.TypeProvider.Generation.TypeGen
 
 open System
 open System.Reflection
-open System.Collections.Generic
 
 open Microsoft.FSharp.Quotations
-open Microsoft.FSharp.Quotations.Patterns
 
 open Froto.TypeProvider.Core
 open ProviderImplementation.ProvidedTypes
@@ -25,7 +23,7 @@ let private createProperty scope (lookup: TypesLookup) (field: ProtoField) =
 
     let typeKind, propertyType = 
         match TypeResolver.resolve scope field.Type lookup with
-        | Some(Enum, t) -> TypeKind.Enum, typeof<int>
+        | Some(Enum, _) -> TypeKind.Enum, typeof<int>
         | Some(kind, t) -> kind, t
         | None -> invalidOp <| sprintf "Unable to resolve type '%s'" field.Type
     
@@ -70,7 +68,7 @@ let private createReadFromMethod typeInfo =
 
     readFrom
     
-let private createDeserializeMethod properties targetType =
+let private createDeserializeMethod targetType =
     let deserializeMethod = 
         ProvidedMethod(
             "Deserialize", 
@@ -186,7 +184,7 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
         providedType.AddMember readFromMethod
         providedType.DefineMethodOverride(readFromMethod, typeof<Message>.GetMethod("ReadFrom"))
         
-        providedType.AddMember <| createDeserializeMethod properties providedType
+        providedType.AddMember <| createDeserializeMethod providedType
         
         providedType
     with
@@ -206,7 +204,9 @@ let createNamespaceContainer (package: string) =
             current.AddMember nested
             loop xs nested
             
-    let rootName::rest = package.Split('.') |> List.ofSeq
-    let root = ProvidedTypeDefinition(Naming.snakeToPascal rootName, Some typeof<obj>, IsErased = false)
-    let deepest = loop rest root
-    root, deepest
+    match package.Split('.') |> List.ofArray with
+    | rootName::rest ->
+        let root = ProvidedTypeDefinition(Naming.snakeToPascal rootName, Some typeof<obj>, IsErased = false)
+        let deepest = loop rest root
+        root, deepest
+    | _ -> invalidArg "package" "Package name cannot be empty."
