@@ -63,7 +63,7 @@ let writeRepeated (writeItem: Writer<'T>) position buffer value =
 
 let writeRepeatedEmbedded<'T when 'T :> Message> : Writer<obj> =
     fun position buffer value ->
-        value :?> list<'T> |> writeRepeated writeEmbedded position buffer
+        value :?> proto_repeated<'T> |> writeRepeated writeEmbedded position buffer
 
 let private writeMap writeKey writeValue convertValue : Writer<proto_map<_, _>> =
     fun position buffer value ->
@@ -116,13 +116,13 @@ let readEmbedded<'T when 'T :> Message and 'T : (new: unit -> 'T)> field =
     | LengthDelimited(_, segment) -> ZeroCopyBuffer segment |> deserialize<'T>
     | _ -> failwithf "Invalid format of the field: %O" field
 
-let readMapElement<'Key, 'Value> (map: proto_concrete_map<_, _>) keyReader (valueReader: Reader<'Value>) field =
+let readMapElement<'Key, 'Value> (map: proto_map<_, _>) keyReader (valueReader: Reader<'Value>) field =
     match field with
     | LengthDelimited(_, segment) ->
         let item = MapItem(keyReader, valueReader, x, x)
         item.ReadFrom <| ZeroCopyBuffer segment
-        (map :?> proto_concrete_map<'Key, 'Value>).Add(item.Key, item.Value)
+        (map :?> proto_map<'Key, 'Value>).Add(item.Key, item.Value)
     | _ -> failwithf "Invalid format of the field: %O" field
 
 let readMessageMapElement<'Key, 'Value when 'Value :> Message and 'Value : (new: unit -> 'Value)> (map: obj) keyReader field =
-    readMapElement (map :?> proto_concrete_map<'Key, 'Value>) keyReader readEmbedded<'Value> field
+    readMapElement (map :?> proto_map<'Key, 'Value>) keyReader readEmbedded<'Value> field
