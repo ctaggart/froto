@@ -41,7 +41,7 @@ let callStaticGeneric types arguments =
     getMethodDef >> makeGenericMethod types >> callStatic arguments
 
 let rec private typeHierarchy (ty: Type) = seq {
-    if notNull ty
+    if not <| isNull ty
     then
         yield ty
         yield! typeHierarchy ty.BaseType

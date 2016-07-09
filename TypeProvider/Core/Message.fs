@@ -24,8 +24,8 @@ type Message() =
 type internal Dummy() = 
     inherit Message()
     
-    override this.Serialize(buffer) = ()
-    override this.ReadFrom(buffer) = ()
+    override __.Serialize(_) = ()
+    override __.ReadFrom(_) = ()
     
 /// Simple type used to simplify maps serialization and deserialization
 type internal MapItem<'Key, 'Value>

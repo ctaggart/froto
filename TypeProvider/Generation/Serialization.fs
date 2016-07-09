@@ -2,14 +2,11 @@
 [<RequireQualifiedAccess>]
 module internal Froto.TypeProvider.Generation.Serialization
 
-open System.Collections.Generic
 open Microsoft.FSharp.Quotations
 
 open Froto.TypeProvider.Core
-open ProviderImplementation.ProvidedTypes
 
 open Froto.Parser.ClassModel
-open Froto.Serialization
 
 let private primitiveWriter = function
     | "double" -> <@@ Codec.writeDouble @@>
@@ -52,7 +49,6 @@ let private serializeMapExpr buffer this (map: MapDescriptor) =
             [keyType]
             [keyWriter; positionExpr; buffer; mapExpr]
             <@@ Codec.writeEnumMap x x x x @@>
-    | _ -> notsupportedf "Serializing of a map with values of type %s is not supported" valueType.Name
     
 /// Creates an expression that serializes all given properties to the given instance of ZeroCopyBuffer
 let private serializeProperty buffer this prop =
@@ -68,8 +64,6 @@ let private serializeProperty buffer this prop =
             | Primitive -> primitiveWriter prop.ProtobufType
             | Class -> <@@ Codec.writeEmbedded @@>
             | Enum -> <@@ Codec.writeInt32 @@>
-            
-    let write f value = Expr.callStaticGeneric [prop.UnderlyingType] [writer; value] f
     
     let callPrimitive writer rule =
         let args =  [Expr.Value(position); buffer; value]

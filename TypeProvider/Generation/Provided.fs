@@ -1,6 +1,7 @@
 [<RequireQualifiedAccess>]
 module internal Froto.TypeProvider.Generation.Provided
 
+open System.IO
 open System.Reflection
 open FSharp.Quotations
 
@@ -19,7 +20,10 @@ let readOnlyProperty propertyType name =
     let field = ProvidedField(Naming.pascalToCamel name, propertyType)
     field.SetFieldAttributes(FieldAttributes.InitOnly ||| FieldAttributes.Private)
     let property = 
-        ProvidedProperty(name, propertyType, GetterCode = (fun args -> Expr.FieldGet(args.[0], field)))
+        ProvidedProperty(
+            name, 
+            propertyType, 
+            GetterCode = (fun args -> Expr.FieldGet(args.[0], field)))
 
     property, field
 
@@ -29,5 +33,5 @@ let readWriteProperty propertyType name =
 
     property, field
 
-/// Creates an empty parameterless constructor
-let ctor () = ProvidedConstructor([], InvokeCode = (fun _ -> Expr.Value(())))
+let assembly () =
+    Path.ChangeExtension(Path.GetTempFileName(), ".dll") |> ProvidedAssembly
