@@ -55,11 +55,14 @@ let generateOneOf scope (typesLookup: TypesLookup) (name: string) (members: POne
                     Expr.FieldSet(args.[0], caseField, case))
                     
             let propertyInfo =
-                { ProvidedProperty = property;
-                    Position = int position;
-                    Rule = Optional;
-                    ProtobufType = TypeResolver.ptypeToString ptype;
-                    TypeKind = kind }
+                { ProvidedProperty = property
+                  Position = int position
+                  Rule = Optional
+                  ProvidedField = None
+                  Type = 
+                    { Kind = kind
+                      ProtobufType = TypeResolver.ptypeToString ptype
+                      RuntimeType = propertyType } }
 
             i, propertyInfo)
 

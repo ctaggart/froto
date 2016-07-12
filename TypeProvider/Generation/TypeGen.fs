@@ -35,14 +35,14 @@ let private createProperty scope (lookup: TypesLookup) (field: ProtoField) =
         | Repeated -> Provided.readOnlyProperty propertyType propertyName
         | _ -> Provided.readWriteProperty propertyType propertyName
 
-    let propertyInfo = 
-        { ProvidedProperty = property;
-            TypeKind = typeKind;
-            Position = field.Position;
-            ProtobufType = field.Type;
-            Rule = field.Rule }
-        
-    propertyInfo, backingField
+    { ProvidedProperty = property
+      ProvidedField = Some backingField
+      Position = field.Position
+      Rule = field.Rule
+      Type = 
+        { ProtobufType = field.Type
+          Kind = typeKind
+          RuntimeType = propertyType } }
 
 let private createSerializeMethod typeInfo =
     let serialize =
@@ -140,11 +140,11 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
         message.Messages |> Seq.map (createType nestedScope lookup) |> Seq.iter providedType.AddMember
 
         let properties = message.Fields |> List.map (createProperty nestedScope lookup)
-        let propertiesInfo = properties |> List.map fst
 
-        providedType.AddMembers(properties |> List.map snd)
-        providedType.AddMembers(propertiesInfo |> List.map (fun p -> p.ProvidedProperty))
-        
+        for prop in properties do
+            providedType.AddMember prop.ProvidedProperty
+            providedType.AddMember prop.ProvidedField.Value
+
         let oneOfGroups = 
             message.Parts 
             |> Seq.choose (fun x -> match x with | TOneOf(name, members) -> Some((name, members)) | _ -> None)
@@ -165,8 +165,8 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
 
         let ctor = ProvidedConstructor([], InvokeCode = fun args ->
             properties
-            |> Seq.filter (fun (prop, _) -> prop.Rule = Repeated)
-            |> Seq.map snd
+            |> Seq.filter (fun prop -> prop.Rule = Repeated)
+            |> Seq.map (fun prop -> prop.ProvidedField.Value)
             |> Seq.append mapFields
             |> Seq.map (fun field -> 
                 Expr.FieldSet(args.[0], field, Expr.callStaticGeneric [field.FieldType] [] <@@ create<_>() @@>))
@@ -174,7 +174,7 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
 
         providedType.AddMember ctor
 
-        let typeInfo = { Type = providedType; Properties = propertiesInfo; OneOfGroups = oneOfGroups; Maps = maps }
+        let typeInfo = { Type = providedType; Properties = properties; OneOfGroups = oneOfGroups; Maps = maps }
 
         let serializeMethod = createSerializeMethod typeInfo
         providedType.AddMember serializeMethod

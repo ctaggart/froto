@@ -1,26 +1,34 @@
 namespace Froto.TypeProvider.Generation
 
+open System
 open ProviderImplementation.ProvidedTypes
 
 open Froto.Parser.ClassModel
 open Froto.Serialization.Encoding
+
+type ProtobufType = string
 
 type TypeKind = 
     | Primitive
     | Class
     | Enum
 
-type PropertyDescriptor = 
-    { ProvidedProperty: ProvidedProperty;
-      Position: FieldNum;
-      ProtobufType: string;
-      Rule: ProtoFieldRule; 
-      TypeKind: TypeKind }
-      
+type TypeContext = 
+    { Kind: TypeKind
+      RuntimeType: Type
+      ProtobufType: ProtobufType }
+
     member this.UnderlyingType =
-        if this.ProvidedProperty.PropertyType.IsGenericType
-        then this.ProvidedProperty.PropertyType.GenericTypeArguments.[0]
-        else this.ProvidedProperty.PropertyType
+        if this.RuntimeType.IsGenericType
+        then this.RuntimeType.GenericTypeArguments.[0]
+        else this.RuntimeType
+
+type PropertyDescriptor = 
+    { ProvidedProperty: ProvidedProperty
+      ProvidedField: ProvidedField option
+      Position: FieldNum
+      Rule: ProtoFieldRule 
+      Type: TypeContext }
         
 type OneOfGroupDescriptor =
     { Properties: Map<int, PropertyDescriptor>;

@@ -32,10 +32,10 @@ let private primitiveReader = function
 
 /// Creates quotation that converts RawField quotation to target property type
 let private deserializeField (property: PropertyDescriptor) (rawField: Expr) =
-    match property.TypeKind with
-    | Primitive -> Expr.Application(primitiveReader property.ProtobufType, rawField)
+    match property.Type.Kind with
+    | Primitive -> Expr.Application(primitiveReader property.Type.ProtobufType, rawField)
     | Enum -> <@@ Codec.readInt32 %%rawField @@>
-    | Class -> Expr.callStaticGeneric [property.UnderlyingType] [rawField ] <@@ Codec.readEmbedded<Dummy> x @@> 
+    | Class -> Expr.callStaticGeneric [property.Type.UnderlyingType] [rawField ] <@@ Codec.readEmbedded<Dummy> x @@> 
 
 let private samePosition field idx = <@@ (%%field: RawField).FieldNum = idx @@>
 
@@ -73,10 +73,10 @@ let private handleOptional this propertyDescriptor field =
 let private handleRepeated this propertyDescriptor field =
     let value = deserializeField propertyDescriptor field
     let list = Expr.PropertyGet(this, propertyDescriptor.ProvidedProperty)
-    match propertyDescriptor.TypeKind with
+    match propertyDescriptor.Type.Kind with
     | Class ->
         Expr.callStaticGeneric 
-            [propertyDescriptor.UnderlyingType]
+            [propertyDescriptor.Type.UnderlyingType]
             [Expr.box list; value]
             <@@ ResizeArray.add x x @@>
     | _ ->
