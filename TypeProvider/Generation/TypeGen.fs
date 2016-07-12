@@ -132,6 +132,33 @@ let private createMap scope typesLookup (name: string) (keyTy: PKeyType) (valueT
       ProvidedProperty = property
       ProvidedField = field }
 
+let private createConstructor (typeDescriptor: TypeDescriptor) =
+    // constructor should set default values to fields: repeated fields should be initialized with empty collections
+    // and required string fiels - with ""
+
+    ProvidedConstructor([], InvokeCode = fun args ->
+        let this = args.[0]
+
+        let initializeRepeatedFields =
+            typeDescriptor.Properties
+            |> Seq.filter (fun prop -> prop.Rule = Repeated)
+            |> Seq.map (fun prop -> 
+                Expr.FieldSet(args.[0], prop.ProvidedField.Value, Expr.callStaticGeneric [prop.Type.RuntimeType] [] <@@ create<_>() @@>))
+
+        let initializeMapFields = 
+            typeDescriptor.Maps
+            |> Seq.map (fun map -> 
+                Expr.FieldSet(args.[0], map.ProvidedField, Expr.callStaticGeneric [map.ProvidedProperty.PropertyType] [] <@@ create<_>() @@>))
+
+        let initializeRequiredStringFields = 
+            typeDescriptor.Properties
+            |> Seq.filter (fun prop -> prop.Rule = Required && prop.Type.RuntimeType = typeof<proto_string>)
+            |> Seq.map (fun prop -> Expr.FieldSet(args.[0], prop.ProvidedField.Value, Expr.Value(String.Empty)))
+        
+        [initializeRepeatedFields; initializeMapFields; initializeRequiredStringFields]
+        |> Seq.concat
+        |> Expr.sequence)
+
 let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) = 
     try
         let _, providedType = 
@@ -166,18 +193,9 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
             providedType.AddMember map.ProvidedField
             providedType.AddMember map.ProvidedProperty
 
-        let ctor = ProvidedConstructor([], InvokeCode = fun args ->
-            properties
-            |> Seq.filter (fun prop -> prop.Rule = Repeated)
-            |> Seq.map (fun prop -> prop.ProvidedField.Value)
-            |> Seq.append (maps |> Seq.map (fun map -> map.ProvidedField))
-            |> Seq.map (fun field -> 
-                Expr.FieldSet(args.[0], field, Expr.callStaticGeneric [field.FieldType] [] <@@ create<_>() @@>))
-            |> Expr.sequence)
-
-        providedType.AddMember ctor
-
         let typeInfo = { Type = providedType; Properties = properties; OneOfGroups = oneOfGroups; Maps = maps }
+
+        providedType.AddMember <| createConstructor typeInfo
 
         let serializeMethod = createSerializeMethod typeInfo
         providedType.AddMember serializeMethod

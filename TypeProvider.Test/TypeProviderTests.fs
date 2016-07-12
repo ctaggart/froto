@@ -219,3 +219,13 @@ let ``SerializedSize test``() =
     address.Whatever.AddRange [1; 2; 3]
 
     address.SerializedLength |> should be (greaterThan 0u)
+
+[<Fact>]
+let ``Default values test``() =
+    let p = Sample.Person()
+    p.Name |> should be (equal String.Empty)
+    p.Email.IsSome |> should be False
+    
+    let address = Sample.Person.Address()
+    address.Whatever |> should be Empty
+    address.SomeInts |> should be Empty
