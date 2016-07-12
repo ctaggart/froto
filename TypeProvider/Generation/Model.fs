@@ -35,11 +35,11 @@ type OneOfGroupDescriptor =
       CaseField: ProvidedField }
       
 type MapDescriptor = 
-    { KeyType: string;
-      ValueType: string; 
-      ValueTypeKind: TypeKind;
-      Position: FieldNum;
-      Property: ProvidedProperty }
+    { KeyType: TypeContext
+      ValueType: TypeContext
+      Position: FieldNum
+      ProvidedProperty: ProvidedProperty
+      ProvidedField: ProvidedField }
       
 type TypeDescriptor = 
     { Type: ProvidedTypeDefinition;

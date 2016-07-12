@@ -27,17 +27,17 @@ let private primitiveWriter = function
     | x -> notsupportedf "Primitive type '%s' is not supported" x
 
 let private serializeMapExpr buffer this (map: MapDescriptor) =
-    let keyWriter = primitiveWriter map.KeyType
-    let keyType = map.Property.PropertyType.GenericTypeArguments.[0]
-    let valueType = map.Property.PropertyType.GenericTypeArguments.[1]
+    let keyWriter = primitiveWriter map.KeyType.ProtobufType
+    let keyType = map.ProvidedProperty.PropertyType.GenericTypeArguments.[0]
+    let valueType = map.ProvidedProperty.PropertyType.GenericTypeArguments.[1]
     let positionExpr = Expr.Value(map.Position)
-    let mapExpr = Expr.PropertyGet(this, map.Property)
+    let mapExpr = Expr.PropertyGet(this, map.ProvidedProperty)
     
-    match map.ValueTypeKind with
+    match map.ValueType.Kind with
     | Primitive ->
         Expr.callStaticGeneric 
             [keyType; valueType]
-            [keyWriter; primitiveWriter map.ValueType; positionExpr; buffer; mapExpr]
+            [keyWriter; primitiveWriter map.ValueType.ProtobufType; positionExpr; buffer; mapExpr]
             <@@ Codec.writePrimitiveMap x x x x x @@>
     | Class -> 
         Expr.callStaticGeneric
@@ -51,7 +51,7 @@ let private serializeMapExpr buffer this (map: MapDescriptor) =
             <@@ Codec.writeEnumMap x x x x @@>
     
 /// Creates an expression that serializes all given properties to the given instance of ZeroCopyBuffer
-let private serializeProperty buffer this prop =
+let private serializeProperty buffer this (prop: PropertyDescriptor) =
 
     let value = Expr.PropertyGet(this, prop.ProvidedProperty)
     let position = prop.Position

@@ -41,14 +41,14 @@ let private samePosition field idx = <@@ (%%field: RawField).FieldNum = idx @@>
 
 /// Adds key-value pair to the property that corresponds the map 
 let private handleMapElement this mapDescriptor field = 
-    let map = Expr.PropertyGet(this, mapDescriptor.Property)
-    let keyReader = primitiveReader mapDescriptor.KeyType
+    let map = Expr.PropertyGet(this, mapDescriptor.ProvidedProperty)
+    let keyReader = primitiveReader mapDescriptor.KeyType.ProtobufType
 
     let readMethod, args =
-        match mapDescriptor.ValueTypeKind with
+        match mapDescriptor.ValueType.Kind with
         | Primitive -> 
             <@@ Codec.readMapElement x x x x @@>,
-            [map; keyReader; primitiveReader mapDescriptor.ValueType; field]
+            [map; keyReader; primitiveReader mapDescriptor.ValueType.ProtobufType; field]
         | Enum -> 
             <@@ Codec.readMapElement x x x x @@>,
             [map; keyReader; <@@ Codec.readInt32 @@>; field]

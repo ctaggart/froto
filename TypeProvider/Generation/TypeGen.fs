@@ -111,23 +111,26 @@ let private createMap scope typesLookup (name: string) (keyTy: PKeyType) (valueT
         |> function
             | Enum, _ -> TypeKind.Enum, typeof<proto_int32>
             | kind, ty -> kind, ty
+
+    let keyType = 
+        TypeResolver.resolveScalar keyTypeName 
+        |> Option.require (sprintf "Can't resolve scalar type '%s'" keyTypeName)
     
-    let mapType = 
-        Expr.makeGenericType 
-            [ TypeResolver.resolveScalar keyTypeName |> Option.require (sprintf "Can't resolve scalar type '%s'" keyTypeName); 
-                valueType]
-            typedefof<proto_map<_, _>>
-            
+    let mapType = Expr.makeGenericType [ keyType; valueType] typedefof<proto_map<_, _>>
+
     let property, field = Provided.readOnlyProperty mapType <| Naming.snakeToPascal name
     
-    let descriptor = 
-        { KeyType = keyTypeName;
-            ValueType = valueTypeName;
-            ValueTypeKind = valueTypeKind;
-            Position = position;
-            Property = property }
-
-    descriptor, field
+    { KeyType = 
+        { ProtobufType = keyTypeName
+          RuntimeType = keyType
+          Kind = Primitive }
+      ValueType = 
+        { ProtobufType = valueTypeName
+          RuntimeType = valueType
+          Kind = valueTypeKind }
+      Position = position
+      ProvidedProperty = property
+      ProvidedField = field }
 
 let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) = 
     try
@@ -151,23 +154,23 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
             |> Seq.map (fun (name, members) -> OneOf.generateOneOf nestedScope lookup name members)
             |> Seq.fold (fun all (info, members) -> providedType.AddMembers members; info::all) []
             
-        let maps, mapFields = 
+        let maps = 
             message.Parts
             |> Seq.choose (fun x -> 
                 match x with 
                 | TMap(name, keyTy, valueTy, position) -> Some <| createMap nestedScope lookup name keyTy valueTy (int position) 
                 | _ -> None)
-            |> Seq.fold (fun (maps, fields) (map, field) -> 
-                providedType.AddMember field
-                providedType.AddMember map.Property
-                map::maps, field::fields) 
-                ([], [])
+            |> List.ofSeq
+
+        for map in maps do
+            providedType.AddMember map.ProvidedField
+            providedType.AddMember map.ProvidedProperty
 
         let ctor = ProvidedConstructor([], InvokeCode = fun args ->
             properties
             |> Seq.filter (fun prop -> prop.Rule = Repeated)
             |> Seq.map (fun prop -> prop.ProvidedField.Value)
-            |> Seq.append mapFields
+            |> Seq.append (maps |> Seq.map (fun map -> map.ProvidedField))
             |> Seq.map (fun field -> 
                 Expr.FieldSet(args.[0], field, Expr.callStaticGeneric [field.FieldType] [] <@@ create<_>() @@>))
             |> Expr.sequence)
