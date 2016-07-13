@@ -2,6 +2,11 @@ package Froto.Sample;
 
 message Person {
 
+  message Passport {
+      required string series = 1;
+      required string number = 2;
+  }
+
   enum Gender {
       MALE = 0;
       FEMALE = 1;
@@ -25,6 +30,7 @@ message Person {
   required Gender person_gender = 5;
   optional string email = 6;
   optional Address person_address = 7;
+  required Passport passport_details = 8;
 }
 
 message PrimitiveContainer {

@@ -92,10 +92,16 @@ let private serializeProperty buffer this (prop: PropertyDescriptor) =
                 [prop.Type.UnderlyingType] 
                 [Expr.Value(position); buffer; Expr.box value]  
                 <@@ Codec.writeRepeatedEmbedded x x x @@>
-        | Class, Required -> 
-            <@@ Codec.writeEmbedded x x x @@> 
-            |> Expr.getMethodDef 
-            |> Expr.callStatic [Expr.Value(position); buffer; value]
+        | Class, Required ->
+            let check =
+                <@@ Checks.ensureRequiredNotNull x x x @@>
+                |> Expr.getMethodDef 
+                |> Expr.callStatic [Expr.Value this.Type.Name; Expr.Value prop.ProvidedProperty.Name; Expr.box value]  
+            let serialize = 
+                <@@ Codec.writeEmbedded x x x @@> 
+                |> Expr.getMethodDef 
+                |> Expr.callStatic [Expr.Value position; buffer; Expr.Coerce(value, typeof<Message>)]
+            Expr.Sequential(check, serialize)
         | Enum, rule -> callPrimitive <@@ Codec.writeInt32 @@> rule
         | Primitive, rule -> callPrimitive (primitiveWriter prop.Type.ProtobufType) rule
     with

@@ -9,6 +9,7 @@ open FsUnit.Xunit
 
 open Froto.TypeProvider
 open Froto.TypeProvider.Core
+open Froto.TypeProvider.Generation.Checks
 open Froto.Serialization
 
 type Proto = ProtocolBuffersTypeProvider<"../test/type_provider_test.proto">
@@ -30,7 +31,8 @@ let private createPerson() =
          Weight = 82.3, 
          PersonGender = Sample.Person.Gender.Female, 
          Email = Some "Email", 
-         PersonAddress = Some address)
+         PersonAddress = Some address,
+         PassportDetails = Sample.Person.Passport())
 
 let serializeDeserialize<'T when 'T :> Message> (msg: 'T) (deserialize: ZeroCopyBuffer -> 'T) =
     let buffer = ZeroCopyBuffer 1000
@@ -229,3 +231,10 @@ let ``Default values test``() =
     let address = Sample.Person.Address()
     address.Whatever |> should be Empty
     address.SomeInts |> should be Empty
+
+[<Fact>]
+let ``Empty message serialization test``() =
+    let p = Sample.Person()
+    let b = ZeroCopyBuffer(100)
+    fun () -> p.Serialize b |> ignore
+    |> should throw typeof<RequiredPropertyNotSpecified>
