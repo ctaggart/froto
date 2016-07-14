@@ -1,6 +1,7 @@
 [<RequireQualifiedAccess>]
 module internal Froto.TypeProvider.Generation.Provided
 
+open System
 open System.IO
 open System.Reflection
 open FSharp.Quotations
@@ -27,9 +28,20 @@ let readOnlyProperty propertyType name =
 
     property, field
 
-let readWriteProperty propertyType name = 
+let readWriteProperty (ty: Type) propertyType name = 
     let property, field = readOnlyProperty propertyType name
-    property.SetterCode <- (fun args -> Expr.FieldSet(args.[0], field, args.[1]))
+    property.SetterCode <- (fun args ->
+        let setter = Expr.FieldSet(args.[0], field, args.[1])
+        if propertyType.IsValueType || 
+            // None appears to be represented as null.
+            (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() = typedefof<option<_>>) then
+            setter
+        else
+            Expr.Sequential(
+                <@@ Checks.ensureValueIsNotNull x x x @@>
+                |> Expr.getMethodDef
+                |> Expr.callStatic [Expr.Value ty.Name; Expr.Value name; Expr.box args.[1]],
+                setter))
 
     property, field
 

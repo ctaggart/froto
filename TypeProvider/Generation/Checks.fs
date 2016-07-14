@@ -8,6 +8,13 @@ type RequiredPropertyNotSpecified(typeName: string, propertyName: string) =
     member __.TypeName = typeName
     member __.PropertyName = propertyName
 
-let ensureRequiredNotNull typeName propertyName (value: obj) =
+type NullValueIsNotAllowedException(typeName: string, propertyName: string) =
+    inherit Exception(sprintf "Null is not allowed value for property %s.%s" typeName propertyName)
+
+let ensureRequiredPropertySpecified typeName propertyName (value: obj) =
     if isNull value 
-    then raise <| RequiredPropertyNotSpecified(typeName, propertyName) 
+    then raise <| RequiredPropertyNotSpecified(typeName, propertyName)
+
+let ensureValueIsNotNull typeName propertyName (value: obj) =
+    if isNull value
+    then raise <| NullValueIsNotAllowedException(typeName, propertyName)

@@ -19,7 +19,7 @@ let private applyRule rule (fieldType: Type) =
     | Optional -> Expr.makeGenericType [fieldType] typedefof<option<_>> 
     | Repeated -> Expr.makeGenericType [fieldType] typedefof<proto_repeated<_>>
 
-let private createProperty scope (lookup: TypesLookup) (field: ProtoField) =
+let private createProperty scope (lookup: TypesLookup) (ty: ProvidedTypeDefinition) (field: ProtoField) =
 
     let typeKind, propertyType = 
         match TypeResolver.resolve scope field.Type lookup with
@@ -33,7 +33,7 @@ let private createProperty scope (lookup: TypesLookup) (field: ProtoField) =
     let property, backingField = 
         match field.Rule with
         | Repeated -> Provided.readOnlyProperty propertyType propertyName
-        | _ -> Provided.readWriteProperty propertyType propertyName
+        | _ -> Provided.readWriteProperty ty propertyType propertyName
 
     { ProvidedProperty = property
       ProvidedField = Some backingField
@@ -169,7 +169,7 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
         message.Enums |> Seq.map (createEnum nestedScope lookup) |> Seq.iter providedType.AddMember
         message.Messages |> Seq.map (createType nestedScope lookup) |> Seq.iter providedType.AddMember
 
-        let properties = message.Fields |> List.map (createProperty nestedScope lookup)
+        let properties = message.Fields |> List.map (createProperty nestedScope lookup providedType)
 
         for prop in properties do
             providedType.AddMember prop.ProvidedProperty
