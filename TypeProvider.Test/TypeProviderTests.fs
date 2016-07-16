@@ -9,7 +9,6 @@ open FsUnit.Xunit
 
 open Froto.TypeProvider
 open Froto.TypeProvider.Core
-open Froto.TypeProvider.Generation.Checks
 open Froto.Serialization
 
 type Proto = ProtocolBuffersTypeProvider<"../test/type_provider_test.proto">
@@ -236,5 +235,5 @@ let ``Default values test``() =
 let ``Empty message serialization test``() =
     let p = Sample.Person()
     let b = ZeroCopyBuffer(100)
-    fun () -> p.Serialize b |> ignore
-    |> should throw typeof<RequiredPropertyNotSpecified>
+    p.Serialize b
+    b.Position |> should be (equal 0u)

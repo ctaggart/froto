@@ -80,7 +80,6 @@ let private serializeProperty buffer this (prop: PropertyDescriptor) =
                 (writer::args)
                 <@@ Codec.writeRepeated x x x x @@> 
     try
-    
         match prop.Type.Kind, prop.Rule with
         | Class, Optional -> 
             Expr.callStaticGeneric 
@@ -92,17 +91,10 @@ let private serializeProperty buffer this (prop: PropertyDescriptor) =
                 [prop.Type.UnderlyingType] 
                 [Expr.Value(position); buffer; Expr.box value]  
                 <@@ Codec.writeRepeatedEmbedded x x x @@>
-        | Class, Required ->
-            let valueVar = Var("value", value.Type)
-            let check =
-                <@@ Checks.ensureRequiredPropertySpecified x x x @@>
-                |> Expr.getMethodDef 
-                |> Expr.callStatic [Expr.Value this.Type.Name; Expr.Value prop.ProvidedProperty.Name; Expr.box <| Expr.Var valueVar]  
-            let serialize = 
-                <@@ Codec.writeEmbedded x x x @@> 
-                |> Expr.getMethodDef 
-                |> Expr.callStatic [Expr.Value position; buffer; Expr.Coerce(Expr.Var valueVar, typeof<Message>)]
-            Expr.Let(valueVar, value, Expr.Sequential(check, serialize))
+        | Class, Required ->  
+            <@@ Codec.writeEmbedded x x x @@> 
+            |> Expr.getMethodDef 
+            |> Expr.callStatic [Expr.Value position; buffer; Expr.Coerce(value, typeof<Message>)]
         | Enum, rule -> callPrimitive <@@ Codec.writeInt32 @@> rule
         | Primitive, rule -> callPrimitive (primitiveWriter prop.Type.ProtobufType) rule
     with

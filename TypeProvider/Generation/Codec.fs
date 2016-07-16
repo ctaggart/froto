@@ -34,10 +34,11 @@ let writeOptional (writeInner: Writer<'T>) position buffer value =
         | None -> ()
 
 let writeEmbedded position buffer (value: Message) =
-    buffer
-    |> Pack.toTag position WireType.LengthDelimited
-    |> Pack.toVarint (uint64 value.SerializedLength)
-    |> value.Serialize
+    if value |> box |> isNull |> not then
+        buffer
+        |> Pack.toTag position WireType.LengthDelimited
+        |> Pack.toVarint (uint64 value.SerializedLength)
+        |> value.Serialize
 
 /// Value is expected to be of type option<'T>. It's not possible
 /// to use this type directly in the signature because of type providers limitations.

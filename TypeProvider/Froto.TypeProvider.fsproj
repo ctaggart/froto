@@ -67,7 +67,7 @@
     <Compile Include="Core/ZeroCopyBuffer.fs" />
     <Compile Include="Core/Message.fs" />
     <Compile Include="Core/ResizeArray.fs" />
-    <Compile Include="Generation/Checks.fs" />
+    <Compile Include="Core/Ensure.fs" />
     <Compile Include="Generation/Codec.fs" />
     <Compile Include="Generation/Model.fs" />
     <Compile Include="Generation/Provided.fs" />

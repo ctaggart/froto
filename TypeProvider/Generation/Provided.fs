@@ -38,9 +38,9 @@ let readWriteProperty (ty: Type) propertyType name =
             setter
         else
             Expr.Sequential(
-                <@@ Checks.ensureValueIsNotNull x x x @@>
+                <@@ Ensure.argNotNull x x@@>
                 |> Expr.getMethodDef
-                |> Expr.callStatic [Expr.Value ty.Name; Expr.Value name; Expr.box args.[1]],
+                |> Expr.callStatic [Expr.Value property.Name; Expr.box args.[1]],
                 setter))
 
     property, field
