@@ -25,7 +25,7 @@ let private createProperty scope (lookup: TypesLookup) (ty: ProvidedTypeDefiniti
         match TypeResolver.resolve scope field.Type lookup with
         | Some(Enum, _) -> TypeKind.Enum, typeof<int>
         | Some(kind, t) -> kind, t
-        | None -> invalidOp <| sprintf "Unable to resolve type '%s'" field.Type
+        | None -> raise <| MessageDefinitionNotFoundException field.Type
     
     let propertyType = applyRule field.Rule propertyType
     let propertyName = Naming.snakeToPascal field.Name

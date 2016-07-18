@@ -38,7 +38,7 @@ module internal TypeResolver =
                 match kind with
                 | Class -> Provided.message name
                 | Enum -> Provided.enum name
-                | Primitive -> invalidOp <| sprintf "Primitive type '%s' does not require custom Type" fullName
+                | Primitive -> invalidOpf "Primitive type '%s' does not require custom Type" fullName
             fullName, (kind, ty))
         |> Map.ofSeq
         

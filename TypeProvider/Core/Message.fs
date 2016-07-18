@@ -9,7 +9,7 @@ open Froto.Serialization
 [<AbstractClass>]
 type Message() =
 
-    member this.SerializedLength =    
+    member this.SerializedLength =
         let buffer = NullWriteBuffer()
         this.Serialize buffer
         buffer.Length

@@ -28,7 +28,7 @@ let private primitiveReader = function
     | "bool" -> <@@ Codec.readBool @@>
     | "string" -> <@@ Codec.readString @@>
     | "bytes" -> <@@ Codec.readBytes @@>
-    | x -> notsupportedf "Primitive type '%s' is not supported" x
+    | x -> raise <| TypeNotSupportedException x
 
 /// Creates quotation that converts RawField quotation to target property type
 let private deserializeField (property: PropertyDescriptor) (rawField: Expr) =

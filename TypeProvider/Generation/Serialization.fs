@@ -24,7 +24,7 @@ let private primitiveWriter = function
     | "bool" -> <@@ Codec.writeBool @@>
     | "string" -> <@@ Codec.writeString @@>
     | "bytes" -> <@@ Codec.writeBytes @@>
-    | x -> notsupportedf "Primitive type '%s' is not supported" x
+    | x -> raise <| TypeNotSupportedException x
 
 let private serializeMapExpr buffer this (map: MapDescriptor) =
     let keyWriter = primitiveWriter map.KeyType.ProtobufType

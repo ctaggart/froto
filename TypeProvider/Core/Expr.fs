@@ -19,7 +19,7 @@ let getMethodDef = function
         if m.IsGenericMethod
         then m.GetGenericMethodDefinition()
         else m
-    | x -> notsupportedf "Expression %A is not supported" x
+    | x -> invalidOpf "Expression %A is not supported" x
 
 let private isGenerated (ty: Type) =
     ty :? ProvidedTypeDefinition || 
@@ -80,7 +80,7 @@ let equal (a: Expr) (b: Expr) =
     if a.Type = b.Type then
         callStaticGeneric [a.Type] [a; b] <@@ x = x @@>
     else
-        invalidOp <| sprintf "Arguments should have the same type, but their types: %s and %s" a.Type.FullName b.Type.FullName
+        invalidOpf "Arguments should have the same type, but their types: %s and %s" a.Type.FullName b.Type.FullName
         
 let defaultOf ty =
     callStaticGeneric [ty] [] <@@ Unchecked.defaultof<_> @@>

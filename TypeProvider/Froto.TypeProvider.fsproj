@@ -60,6 +60,7 @@
       <Link>lib/ProvidedTypes.fs</Link>
     </Compile>
     <Compile Include="Core/Prelude.fs" />
+    <Compile Include="Core/Exceptions.fs" />
     <Compile Include="Core/Option.fs" />
     <Compile Include="Core/Types.fs" />
     <Compile Include="Core/Expr.fs" />
