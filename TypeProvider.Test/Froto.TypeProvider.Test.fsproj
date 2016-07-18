@@ -121,6 +121,7 @@
     <Content Include="app.config" />
     <None Include="paket.references" />
     <Compile Include="TypeProviderTests.fs" />
+    <None Include="Script.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

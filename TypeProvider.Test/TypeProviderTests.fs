@@ -30,7 +30,8 @@ let private createPerson() =
          Weight = 82.3, 
          PersonGender = Sample.Person.Gender.Female, 
          Email = Some "Email", 
-         PersonAddress = Some address)
+         PersonAddress = Some address,
+         PassportDetails = Sample.Person.Passport())
 
 let serializeDeserialize<'T when 'T :> Message> (msg: 'T) (deserialize: ZeroCopyBuffer -> 'T) =
     let buffer = ZeroCopyBuffer 1000
@@ -219,3 +220,20 @@ let ``SerializedSize test``() =
     address.Whatever.AddRange [1; 2; 3]
 
     address.SerializedLength |> should be (greaterThan 0u)
+
+[<Fact>]
+let ``Default values test``() =
+    let p = Sample.Person()
+    p.Name |> should be (equal String.Empty)
+    p.Email.IsSome |> should be False
+    
+    let address = Sample.Person.Address()
+    address.Whatever |> should be Empty
+    address.SomeInts |> should be Empty
+
+[<Fact>]
+let ``Empty message serialization test``() =
+    let p = Sample.Person()
+    let b = ZeroCopyBuffer(100)
+    p.Serialize b
+    b.Position |> should be (equal 0u)
