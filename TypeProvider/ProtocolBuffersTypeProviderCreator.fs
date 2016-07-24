@@ -7,6 +7,7 @@ open System.Runtime.Caching
 
 open Froto.TypeProvider.Core
 open Froto.TypeProvider.Generation
+open FSharp.Configuration.Helper
 open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
 
@@ -27,6 +28,7 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
             HideObjectMethods = true)
 
     let cache = new MemoryCache("TypeProviderCache")
+    let disposables = ResizeArray<_>()
 
     let createProvidedTypes typeName protoPath = 
 
@@ -37,15 +39,11 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
                 IsErased = false)
                     
         let tempAssembly = Provided.assembly()
-
-        let protoLocation = 
-            if Path.IsPathRooted protoPath then protoPath
-            else config.ResolutionFolder </> protoPath
             
-        Logger.log "Generating types from %s" protoLocation
+        Logger.log "Generating types from %s" protoPath
 
-        let protoFile = ProtoFile.fromFile protoLocation
-            
+        let protoFile = ProtoFile.fromFile protoPath
+
         let rootScope = protoFile.Packages |> Seq.tryHead |> Option.getOrElse String.Empty
             
         let container = 
@@ -75,7 +73,22 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
                     cache.Get(typeName) :?> ProvidedTypeDefinition
                 else
                     Logger.log "Enclosing type was not found. Generating a new one."
-                    let provided = args.[0] :?> string |> createProvidedTypes typeName
+                    
+                    let protoPath = args.[0] :?> string
+                    let protoPath = 
+                        if Path.IsPathRooted protoPath then protoPath
+                        else config.ResolutionFolder </> protoPath
+                    
+                    Logger.log "Watching file '%s' for changes" protoPath
+
+                    File.watch false protoPath (fun _ ->
+                        Logger.log "File '%s' has been changed. Type provider %s will be invalidated" protoPath typeName
+                        cache.Remove(typeName) |> ignore
+                        this.Invalidate())
+                    |> disposables.Add
+
+                    let provided = createProvidedTypes typeName protoPath
+
                     cache.Add(CacheItem(typeName, provided), CacheItemPolicy(SlidingExpiration = TimeSpan.FromHours(24.0)))|> ignore
                     provided)
         

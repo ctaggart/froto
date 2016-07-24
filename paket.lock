@@ -46,3 +46,5 @@ GITHUB
   remote: fsprojects/FSharp.TypeProviders.StarterPack
     src/ProvidedTypes.fs (dfbca9b83fb70067e85abddcb8b89332aae4c28d)
     src/ProvidedTypes.fsi (dfbca9b83fb70067e85abddcb8b89332aae4c28d)
+  remote: fsprojects/FSharp.Configuration
+    src/FSharp.Configuration/TypeProviders.Helper.fs (0b53246539b38a86d815529bb047b3752d951546)

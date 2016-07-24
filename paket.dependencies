@@ -18,3 +18,4 @@ nuget NuGet.CommandLine
 
 github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fs
 github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fsi
+github fsprojects/FSharp.Configuration src/FSharp.Configuration/TypeProviders.Helper.fs
