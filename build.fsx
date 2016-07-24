@@ -44,6 +44,9 @@ Target "AssemblyInfo" <| fun _ ->
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
 
+Target "Debug" <| fun _ ->
+    !! "Froto.sln" |> MSBuildDebug "" "Rebuild" |> ignore
+
 Target "Build" <| fun _ ->
     !! "Froto.sln" |> MSBuildRelease "" "Rebuild" |> ignore
 

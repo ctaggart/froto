@@ -60,6 +60,7 @@
       <Link>lib/ProvidedTypes.fs</Link>
     </Compile>
     <Compile Include="Core/Prelude.fs" />
+    <Compile Include="Core/Logger.fs" />
     <Compile Include="Core/Exceptions.fs" />
     <Compile Include="Core/Option.fs" />
     <Compile Include="Core/Types.fs" />
@@ -88,6 +89,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Caching.dll" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Parser\Froto.Parser.fsproj">

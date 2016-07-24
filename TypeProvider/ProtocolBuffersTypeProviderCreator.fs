@@ -3,6 +3,7 @@ namespace Froto.TypeProvider
 open System
 open System.IO
 open System.Reflection
+open System.Runtime.Caching
 
 open Froto.TypeProvider.Core
 open Froto.TypeProvider.Generation
@@ -25,7 +26,10 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
             IsErased = false, 
             HideObjectMethods = true)
 
+    let cache = new MemoryCache("TypeProviderCache")
+
     let createProvidedTypes typeName protoPath = 
+
         let provider = 
             ProvidedTypeDefinition(
                 asm, ns, typeName, Some typeof<obj>, 
@@ -38,6 +42,8 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
             if Path.IsPathRooted protoPath then protoPath
             else config.ResolutionFolder </> protoPath
             
+        Logger.log "Generating types from %s" protoLocation
+
         let protoFile = ProtoFile.fromFile protoLocation
             
         let rootScope = protoFile.Packages |> Seq.tryHead |> Option.getOrElse String.Empty
@@ -62,7 +68,16 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
     do 
         protobufProvider.DefineStaticParameters(
             [ProvidedStaticParameter("pathToFile", typeof<string>)], 
-            fun typeName args -> args.[0] :?> string |> createProvidedTypes typeName)
+            fun typeName args ->
+                Logger.log "Generating enclosing type \"%s\" with args %A" typeName args
+                if cache.Contains(typeName) then
+                    Logger.log "Enclosing type found in cache, returning existing."
+                    cache.Get(typeName) :?> ProvidedTypeDefinition
+                else
+                    Logger.log "Enclosing type was not found. Generating a new one."
+                    let provided = args.[0] :?> string |> createProvidedTypes typeName
+                    cache.Add(CacheItem(typeName, provided), CacheItemPolicy(SlidingExpiration = TimeSpan.FromHours(24.0)))|> ignore
+                    provided)
         
         tempAssembly.AddTypes [protobufProvider]
         this.AddNamespace(ns, [protobufProvider])
