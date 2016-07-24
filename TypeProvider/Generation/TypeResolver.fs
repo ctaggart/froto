@@ -21,7 +21,7 @@ module internal TypeResolver =
         then yield! scope.Substring(0, lowestScopePosition) |> allScopes
     } 
 
-    let discoverTypes scope (messages: ProtoMessage seq): TypesLookup =
+    let discoverTypes scope (file: ProtoFile): TypesLookup =
     
         let rec loop scope (message: ProtoMessage) = seq {
             let fullName = scope +.+ message.Name
@@ -30,7 +30,11 @@ module internal TypeResolver =
             yield! message.Messages |> Seq.collect (loop fullName)
         }
         
-        messages
+        let enums =
+            file.Enums
+            |> Seq.map (fun e -> scope +.+ e.Name, (TypeKind.Enum, Provided.enum e.Name))
+
+        file.Messages
         |> Seq.collect (loop scope)
         |> Seq.map (fun (kind, fullName) -> 
             let name = getShortName fullName
@@ -40,6 +44,7 @@ module internal TypeResolver =
                 | Enum -> Provided.enum name
                 | Primitive -> invalidOpf "Primitive type '%s' does not require custom Type" fullName
             fullName, (kind, ty))
+        |> Seq.append enums
         |> Map.ofSeq
         
     let resolveScalar = function

@@ -54,11 +54,17 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
                 provider.AddMember root
                 deepest
 
-        let lookup = TypeResolver.discoverTypes rootScope protoFile.Messages
+        let lookup = TypeResolver.discoverTypes rootScope protoFile
+
+        protoFile.Enums
+        |> Seq.map (TypeGen.createEnum rootScope lookup)
+        |> Seq.iter container.AddMember
 
         protoFile.Messages
         |> Seq.map (TypeGen.createType rootScope lookup)
         |> Seq.iter container.AddMember
+
+
             
         tempAssembly.AddTypes [provider]
         provider

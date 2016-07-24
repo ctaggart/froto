@@ -81,7 +81,7 @@ let private createDeserializeMethod targetType =
     
     deserializeMethod
 
-let private createEnum scope lookup (enum: ProtoEnum) =
+let createEnum scope lookup (enum: ProtoEnum) =
     let _, providedEnum = 
         TypeResolver.resolveNonScalar scope enum.Name lookup
         |> Option.require (sprintf "Enum '%s' is not defined" enum.Name)

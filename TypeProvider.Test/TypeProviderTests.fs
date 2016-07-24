@@ -237,3 +237,14 @@ let ``Empty message serialization test``() =
     let b = ZeroCopyBuffer(100)
     p.Serialize b
     b.Position |> should be (equal 0u)
+
+[<Fact>]
+let ``Root enum usage test``() =
+    let action = Sample.Action()
+    action.Action <- "test"
+    action.State <- Sample.State.Pending
+
+    let action' = serializeDeserialize action Sample.Action.Deserialize
+
+    action'.Action |> should be (equal action.Action)
+    action'.State |> should be (equal action.State)

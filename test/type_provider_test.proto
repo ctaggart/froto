@@ -71,3 +71,14 @@ message MapContainer {
     map<string, Person> people = 3;
     map<int32, Switch> switches = 4;
 }
+
+enum State {
+    SUCCESSFUL = 0;
+    PENDING = 1;
+    FAILED = 2;
+}
+
+message Action {
+    required string action = 1;
+    required State state = 2;
+}
