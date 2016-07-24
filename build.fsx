@@ -20,6 +20,7 @@ let buildVersion =
     if hasRepoVersionTag then assemblyVersion
     else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion (Int32.Parse(AppVeyorEnvironment.BuildNumber).ToString("000"))
     else sprintf "%s-a%s" assemblyVersion (buildDate.ToString "yyMMddHHmm")
+let mutable configuration = "Release"
 
 MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Minimal }
 
@@ -44,27 +45,27 @@ Target "AssemblyInfo" <| fun _ ->
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
 
-Target "Debug" <| fun _ ->
-    !! "Froto.sln" |> MSBuildDebug "" "Rebuild" |> ignore
+Target "SwitchToDebug" <| fun _ ->
+    configuration <- "Debug"
 
 Target "Build" <| fun _ ->
-    !! "Froto.sln" |> MSBuildRelease "" "Rebuild" |> ignore
+    !! "Froto.sln" |> MSBuild "" "Rebuild" ["Configuration", configuration] |> ignore
 
 Target "UnitTest" <| fun _ ->
     CreateDir "bin"
     let dlls =
         // Mono can't load .NET 4.5.2 yet
         if isMono then
-            [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
-                //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
-                @"TypeProvider.Test/bin/Release/Froto.TypeProvider.Test.dll"
+            [   sprintf @"Parser.Test/bin/%s/Froto.Parser.Test.dll" configuration
+                sprintf @"Serialization.Test/bin/%s/Froto.Serialization.Test.dll" configuration
+                //sprintf @"Roslyn.Test/bin/%s/Froto.Roslyn.Test.dll" configuration
+                sprintf @"TypeProvider.Test/bin/%s/Froto.TypeProvider.Test.dll" configuration
             ]
         else
-            [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
-                @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
-                @"TypeProvider.Test/bin/Release/Froto.TypeProvider.Test.dll"
+            [   sprintf @"Parser.Test/bin/%s/Froto.Parser.Test.dll" configuration
+                sprintf @"Serialization.Test/bin/%s/Froto.Serialization.Test.dll" configuration
+                sprintf @"Roslyn.Test/bin/%s/Froto.Roslyn.Test.dll" configuration
+                sprintf @"TypeProvider.Test/bin/%s/Froto.TypeProvider.Test.dll" configuration
             ]
     xUnit2 (fun p ->
         { p with
@@ -142,6 +143,8 @@ Target "NuGet" <| fun _ ->
 
 Target "Default" DoNothing
 
+Target "Debug" DoNothing
+
 // chain targets together only on AppVeyor
 //let (==>) a b = a =?> (b, isAppVeyorBuild)
 
@@ -153,5 +156,10 @@ Target "Default" DoNothing
 =?> ("SourceLink", isAppVeyorBuild)
 =?> ("NuGet", not isMono)
 ==> "Default"
+
+"UnitTest" ==> "Debug"
+"SwitchToDebug" ==> "Debug"
+"SwitchToDebug" ?=> "Build"
+
 
 RunTargetOrDefault "Default"
