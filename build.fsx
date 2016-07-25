@@ -86,6 +86,7 @@ Target "SourceLink" <| fun _ ->
     sourceIndex "Serialization/Froto.Serialization.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
     sourceIndex "Compiler/Froto.Compiler.fsproj" None
+    sourceIndex "TypeProvider/Froto.TypeProvider.fsproj" None
 
 Target "NuGet" <| fun _ ->
     CreateDir "bin"
@@ -140,6 +141,23 @@ Target "NuGet" <| fun _ ->
         WorkingDir = "Compiler/bin/Release"
         OutputPath = "bin"
     }) "Compiler/Froto.Compiler.nuspec"
+
+    NuGet (fun p ->
+    { p with
+        Version = buildVersion
+        WorkingDir = "TestProvider/bin/Release"
+        OutputPath = "bin"
+        DependenciesByFramework =
+        [{
+            FrameworkVersion = "net45"
+            Dependencies =
+            [
+                "FParsec", GetPackageVersion "./packages/" "FParsec"
+                "Froto.Parser", sprintf "[%s]" buildVersion 
+                "Froto.Serialization", sprintf "[%s]" buildVersion 
+            ]
+        }]
+    }) "TypeProvider/Froto.TypeProvider.nuspec"
 
 Target "Default" DoNothing
 
