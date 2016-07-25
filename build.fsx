@@ -44,6 +44,7 @@ Target "AssemblyInfo" <| fun _ ->
     common |> CreateFSharpAssemblyInfo "Serialization/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "TypeProvider/AssemblyInfo.fs"
 
 Target "SwitchToDebug" <| fun _ ->
     configuration <- "Debug"
@@ -145,7 +146,7 @@ Target "NuGet" <| fun _ ->
     NuGet (fun p ->
     { p with
         Version = buildVersion
-        WorkingDir = "TestProvider/bin/Release"
+        WorkingDir = "TypeProvider/bin/Release"
         OutputPath = "bin"
         DependenciesByFramework =
         [{
