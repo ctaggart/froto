@@ -50,7 +50,9 @@ Target "SwitchToDebug" <| fun _ ->
     configuration <- "Debug"
 
 Target "Build" <| fun _ ->
-    !! "Froto.sln" |> MSBuild "" "Rebuild" ["Configuration", configuration] |> ignore
+    ["Froto.sln"; "TypeProvider.Test/Froto.TypeProvider.Test.sln"] 
+    |> MSBuild "" "Rebuild" ["Configuration", configuration] 
+    |> ignore
 
 Target "UnitTest" <| fun _ ->
     CreateDir "bin"

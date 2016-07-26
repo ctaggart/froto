@@ -123,6 +123,28 @@
     <Compile Include="TypeProviderTests.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
+    <Choose>
+      <When Condition="$(Configuration) == 'Debug'">
+        <ItemGroup>
+          <Reference Include="Froto.TypeProvider">
+            <HintPath>..\TypeProvider\bin\Debug\Froto.TypeProvider.dll</HintPath>
+          </Reference>
+          <Reference Include="Froto.Serialization">
+            <HintPath>..\Serialization\bin\Debug\Froto.Serialization.dll</HintPath>
+          </Reference>
+        </ItemGroup>
+      </When>
+      <When Condition="$(Configuration) == 'Release'">
+        <ItemGroup>
+          <Reference Include="Froto.TypeProvider">
+            <HintPath>..\TypeProvider\bin\Release\Froto.TypeProvider.dll</HintPath>
+          </Reference>
+          <Reference Include="Froto.Serialization">
+            <HintPath>..\Serialization\bin\Release\Froto.Serialization.dll</HintPath>
+          </Reference>
+        </ItemGroup>
+      </When>
+    </Choose>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -133,17 +155,5 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj">
-      <Name>Froto.Serialization</Name>
-      <Project>{c37745d0-275d-4dce-9ddc-c4663a462edd}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\TypeProvider\Froto.TypeProvider.fsproj">
-      <Name>Froto.TypeProvider</Name>
-      <Project>{837aa4fc-e2dd-48a1-a793-50dc4404ee57}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
 </Project>
