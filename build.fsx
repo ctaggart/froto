@@ -84,7 +84,8 @@ Target "SourceLink" <| fun _ ->
         let p = VsProj.LoadRelease proj
         let pdbToIndex = if Option.isSome pdb then pdb.Value else p.OutputFilePdb
         let url = "https://raw.githubusercontent.com/ctaggart/froto/{0}/%var2%"
-        SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
+        let sourceFiles = p.Compiles |> Seq.filter (fun file -> not <| file.Contains "paket-files")
+        SourceLink.Index sourceFiles pdbToIndex __SOURCE_DIRECTORY__ url
     sourceIndex "Parser/Froto.Parser.fsproj" None
     sourceIndex "Serialization/Froto.Serialization.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
