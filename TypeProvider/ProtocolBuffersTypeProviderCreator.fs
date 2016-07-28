@@ -101,5 +101,8 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
         tempAssembly.AddTypes [protobufProvider]
         this.AddNamespace(ns, [protobufProvider])
 
+    static do
+        AppDomain.CurrentDomain.add_AssemblyResolve(fun _ args -> AssemblyResolver.resolve args.Name)
+
 [<assembly:TypeProviderAssembly>] 
 do()

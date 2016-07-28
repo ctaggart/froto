@@ -82,6 +82,7 @@
     <Compile Include="Generation/Serialization.fs" />
     <Compile Include="Generation/Deserialization.fs" />
     <Compile Include="Generation/TypeGen.fs" />
+    <Compile Include="AssemblyResolver.fs" />
     <Compile Include="ProtocolBuffersTypeProviderCreator.fs" />
     <None Include="paket.references" />
   </ItemGroup>

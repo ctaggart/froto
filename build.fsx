@@ -44,12 +44,15 @@ Target "AssemblyInfo" <| fun _ ->
     common |> CreateFSharpAssemblyInfo "Serialization/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "TypeProvider/AssemblyInfo.fs"
 
 Target "SwitchToDebug" <| fun _ ->
     configuration <- "Debug"
 
 Target "Build" <| fun _ ->
-    !! "Froto.sln" |> MSBuild "" "Rebuild" ["Configuration", configuration] |> ignore
+    ["Froto.sln"; "TypeProvider.Test/Froto.TypeProvider.Test.sln"] 
+    |> MSBuild "" "Rebuild" ["Configuration", configuration] 
+    |> ignore
 
 Target "UnitTest" <| fun _ ->
     CreateDir "bin"
@@ -81,11 +84,13 @@ Target "SourceLink" <| fun _ ->
         let p = VsProj.LoadRelease proj
         let pdbToIndex = if Option.isSome pdb then pdb.Value else p.OutputFilePdb
         let url = "https://raw.githubusercontent.com/ctaggart/froto/{0}/%var2%"
-        SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
+        let sourceFiles = p.Compiles |> Seq.filter (fun file -> not <| file.Contains "paket-files")
+        SourceLink.Index sourceFiles pdbToIndex __SOURCE_DIRECTORY__ url
     sourceIndex "Parser/Froto.Parser.fsproj" None
     sourceIndex "Serialization/Froto.Serialization.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
     sourceIndex "Compiler/Froto.Compiler.fsproj" None
+    sourceIndex "TypeProvider/Froto.TypeProvider.fsproj" None
 
 Target "NuGet" <| fun _ ->
     CreateDir "bin"
@@ -140,6 +145,23 @@ Target "NuGet" <| fun _ ->
         WorkingDir = "Compiler/bin/Release"
         OutputPath = "bin"
     }) "Compiler/Froto.Compiler.nuspec"
+
+    NuGet (fun p ->
+    { p with
+        Version = buildVersion
+        WorkingDir = "TypeProvider/bin/Release"
+        OutputPath = "bin"
+        DependenciesByFramework =
+        [{
+            FrameworkVersion = "net45"
+            Dependencies =
+            [
+                "FParsec", GetPackageVersion "./packages/" "FParsec"
+                "Froto.Parser", sprintf "[%s]" buildVersion 
+                "Froto.Serialization", sprintf "[%s]" buildVersion 
+            ]
+        }]
+    }) "TypeProvider/Froto.TypeProvider.nuspec"
 
 Target "Default" DoNothing
 
