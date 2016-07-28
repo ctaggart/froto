@@ -13,5 +13,6 @@
   </metadata>
   <files>
     <file src="Froto.TypeProvider.dll" target="lib\net45" />
+    <file src="Froto.TypeProvider.pdb" target="lib\net45" />
   </files>
 </package>
