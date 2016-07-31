@@ -11,3 +11,4 @@ TestResults/
 /paket.exe
 /.fake
 AssemblyInfo.fs
+docs/type-provider/paket.lock
