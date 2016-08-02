@@ -11,8 +11,11 @@ open Froto.TypeProvider
 open Froto.TypeProvider.Core
 open Froto.Serialization
 
-type Proto = ProtocolBuffersTypeProvider<"../test/type_provider_test.proto">
+type Proto = ProtocolBuffersTypeProvider<"Proto/type_provider_test.proto">
 type Sample = Proto.Froto.Sample
+type ValueOneofCase = Sample.OneOfContainer.ValueOneofCase
+
+type Books = ProtocolBuffersTypeProvider<"Proto/books.proto">
 
 let private createPerson() =
     let address = 
@@ -33,12 +36,12 @@ let private createPerson() =
          PersonAddress = Some address,
          PassportDetails = Sample.Person.Passport())
 
-let serializeDeserialize<'T when 'T :> Message> (msg: 'T) (deserialize: ZeroCopyBuffer -> 'T) =
+let inline private serializeDeserialize(msg: ^T when ^T :> Message) =
     let buffer = ZeroCopyBuffer 1000
     msg.Serialize buffer
     
     let buffer' = ZeroCopyBuffer buffer.AsArraySegment
-    deserialize buffer'
+    (^T : (static member Deserialize: ZeroCopyBuffer -> ^T) (buffer'))
 
 [<Fact>]
 let ``Person test``() = 
@@ -57,7 +60,7 @@ let ``Serialization test``() =
 [<Fact>]
 let ``Deserialization test``() =
     let person = createPerson()
-    let person' = serializeDeserialize person Sample.Person.Deserialize
+    let person' = serializeDeserialize person
     
     person'.Name |> should be (equal person.Name)
     person'.Id |> should be (equal person.Id)
@@ -82,11 +85,10 @@ let ``Deserialization test``() =
 let ``Deserialize None optional value``() =
     let person = createPerson()
     person.PersonAddress <- None
-    let person' = serializeDeserialize person Sample.Person.Deserialize
+    let person' = serializeDeserialize person
     
     person'.PersonAddress.IsSome |> should be False
     
-
 [<Fact>]
 let ``Deserialize empty repeated value``() =
     let person = createPerson()
@@ -95,7 +97,7 @@ let ``Deserialize empty repeated value``() =
     address.SomeInts.Clear()
     address.Whatever.Clear()
 
-    let address' = serializeDeserialize address Sample.Person.Address.Deserialize
+    let address' = serializeDeserialize address
     
     address'.SomeInts |> should be Empty
     address'.Whatever |> should be Empty
@@ -119,7 +121,7 @@ let ``Primitive types``() =
             StringField = "string field value",
             BytesField = ArraySegment [| 1uy; 2uy; 42uy |])
     
-    let container2 = serializeDeserialize container Sample.PrimitiveContainer.Deserialize
+    let container2 = serializeDeserialize container
     
     container2.DoubleField |> should be (equal container.DoubleField)
     
@@ -142,8 +144,6 @@ let ``Primitive types``() =
     container2.StringField |> should be (equal container.StringField)
     container2.BytesField.ToArray() |> should be (equal <| container.BytesField.ToArray())
     
-type ValueOneofCase = Sample.OneOfContainer.ValueOneofCase
-
 [<Fact>]
 let ``Oneof properties test``() =
     let oneofContainer = Sample.OneOfContainer()
@@ -244,7 +244,17 @@ let ``Root enum usage test``() =
     action.Action <- "test"
     action.State <- Sample.State.Pending
 
-    let action' = serializeDeserialize action Sample.Action.Deserialize
+    let action' = serializeDeserialize action
 
     action'.Action |> should be (equal action.Action)
     action'.State |> should be (equal action.State)
+
+[<Fact>]
+let ``Books test``() =
+    let author = Books.BookAuthor(Name = Some "Author")
+    let details = Books.BookDetails(Author = Some author)
+
+    let details' = serializeDeserialize details
+
+    details'.Author.IsSome |> should be True
+    details'.Author.Value.Name |> should be (equal author.Name)

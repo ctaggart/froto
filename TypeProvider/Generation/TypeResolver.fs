@@ -13,12 +13,15 @@ type internal TypesLookup = Map<string, TypeKind * ProvidedTypeDefinition>
 module internal TypeResolver = 
         
     let private getShortName (fullName: string) = fullName.Split('.') |> Seq.last
-    
+
     let rec private allScopes (scope: string) = seq{
         yield scope
-        let lowestScopePosition = scope.LastIndexOf(".")
-        if lowestScopePosition > 0 
-        then yield! scope.Substring(0, lowestScopePosition) |> allScopes
+        if scope <> String.Empty then
+            let nextScope = 
+                match scope.LastIndexOf "." with
+                | index when index > 0 -> scope.Substring(0, index)
+                | _ -> String.Empty
+            yield! allScopes nextScope
     } 
 
     let discoverTypes scope (file: ProtoFile): TypesLookup =
@@ -33,7 +36,7 @@ module internal TypeResolver =
         let enums =
             file.Enums
             |> Seq.map (fun e -> scope +.+ e.Name, (TypeKind.Enum, Provided.enum e.Name))
-
+        
         file.Messages
         |> Seq.collect (loop scope)
         |> Seq.map (fun (kind, fullName) -> 
