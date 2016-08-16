@@ -1,0 +1,4 @@
+source ../../bin
+source ../../packages/FParsec
+
+nuget Froto.TypeProvider

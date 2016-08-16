@@ -5,14 +5,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>af2d437d-55a1-4f31-86bd-9b9d7e05caea</ProjectGuid>
+    <ProjectGuid>710d3afe-1eb9-4abb-b9b3-d30991b862db</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Froto.Serialization.Test</RootNamespace>
-    <AssemblyName>Froto.Serialization.Test</AssemblyName>
+    <RootNamespace>Froto.TypeProvider.Test</RootNamespace>
+    <AssemblyName>Froto.TypeProvider.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.4.0.0</TargetFSharpCoreVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Name>Froto.Serialization.Test</Name>
+    <Name>Froto.TypeProvider.Test</Name>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -23,7 +23,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Froto.Serialization.Test.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Froto.TypeProvider.Test.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,7 +32,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Froto.Serialization.Test.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Froto.TypeProvider.Test.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -58,7 +58,7 @@
     </When>
   </Choose>
   <Import Project="..\packages\xunit.runner.visualstudio.2.1.0\build\$(__paket__xunit_runner_visualstudio_props).props" Condition="Exists('..\packages\xunit.runner.visualstudio.2.1.0\build\$(__paket__xunit_runner_visualstudio_props).props')" Label="Paket" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
@@ -66,19 +66,36 @@
   </Target>
   -->
   <ItemGroup>
-    <Compile Include="TestZeroCopyBuffer.fs" />
-    <Compile Include="TestWireFormat.fs" />
-    <Compile Include="TestUtility.fs" />
-    <Compile Include="TestEncoding.fs" />
-    <Compile Include="TestSerialization.fs" />
-    <Compile Include="TestClassSerialization.fs" />
-    <Compile Include="ExampleProtoRecord.fs" />
-    <Compile Include="ExampleProtoClass.fs" />
+    <None Include="Proto\books.proto" />
+    <None Include="Proto\type_provider_test.proto" />
     <Content Include="app.config" />
     <None Include="paket.references" />
+    <Compile Include="TypeProviderTests.fs" />
+    <None Include="Script.fsx" />
   </ItemGroup>
+  <Choose>
+    <When Condition="$(Configuration) == 'Debug'">
+      <ItemGroup>
+        <Reference Include="Froto.TypeProvider">
+          <HintPath>..\TypeProvider\bin\Debug\Froto.TypeProvider.dll</HintPath>
+        </Reference>
+        <Reference Include="Froto.Serialization">
+          <HintPath>..\Serialization\bin\Debug\Froto.Serialization.dll</HintPath>
+        </Reference>
+      </ItemGroup>
+    </When>
+    <When Condition="$(Configuration) == 'Release'">
+      <ItemGroup>
+        <Reference Include="Froto.TypeProvider">
+          <HintPath>..\TypeProvider\bin\Release\Froto.TypeProvider.dll</HintPath>
+        </Reference>
+        <Reference Include="Froto.Serialization">
+          <HintPath>..\Serialization\bin\Release\Froto.Serialization.dll</HintPath>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
   <ItemGroup>
-    <Reference Include="FSharp.Data.TypeProviders" />
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
@@ -88,13 +105,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj">
-      <Name>Froto.Serialization</Name>
-      <Project>{c37745d0-275d-4dce-9ddc-c4663a462edd}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3' Or $(TargetFrameworkVersion) == 'v4.6' Or $(TargetFrameworkVersion) == 'v4.6.1' Or $(TargetFrameworkVersion) == 'v4.6.2' Or $(TargetFrameworkVersion) == 'v4.6.3')">

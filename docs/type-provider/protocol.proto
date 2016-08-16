@@ -1,0 +1,24 @@
+package Sample.People;
+
+message Person { 
+
+  message PersonAddress {
+    required string street = 1;
+    required uint32 house_number = 2;
+  }
+
+  enum PhoneType { 
+    MOBILE = 0; 
+    HOME = 1; 
+    WORK = 2; 
+  }
+
+  message PhoneNumber { 
+    required string number = 1; 
+    optional PhoneType type = 2;
+  }
+
+  required string name = 1;
+  optional string email = 4;
+  repeated PhoneNumber phones = 5; 
+}

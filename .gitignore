@@ -3,6 +3,7 @@ bin/
 *.user
 *.suo
 packages/
+paket-files/
 TestResults/
 *.bak
 *.nupkg
@@ -10,3 +11,4 @@ TestResults/
 /paket.exe
 /.fake
 AssemblyInfo.fs
+docs/type-provider/paket.lock

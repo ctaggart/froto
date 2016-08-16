@@ -20,6 +20,7 @@ let buildVersion =
     if hasRepoVersionTag then assemblyVersion
     else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion (Int32.Parse(AppVeyorEnvironment.BuildNumber).ToString("000"))
     else sprintf "%s-a%s" assemblyVersion (buildDate.ToString "yyMMddHHmm")
+let mutable configuration = "Release"
 
 MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Minimal }
 
@@ -43,28 +44,38 @@ Target "AssemblyInfo" <| fun _ ->
     common |> CreateFSharpAssemblyInfo "Serialization/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
+    common |> CreateFSharpAssemblyInfo "TypeProvider/AssemblyInfo.fs"
+
+Target "SwitchToDebug" <| fun _ ->
+    configuration <- "Debug"
 
 Target "Build" <| fun _ ->
-    !! "Froto.sln" |> MSBuildRelease "" "Rebuild" |> ignore
+    ["Froto.sln"; "Froto.TypeProvider.TestAndDocs.sln"] 
+    |> MSBuild "" "Rebuild" ["Configuration", configuration] 
+    |> ignore
 
 Target "UnitTest" <| fun _ ->
     CreateDir "bin"
     let dlls =
         // Mono can't load .NET 4.5.2 yet
         if isMono then
-            [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
-                //@"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+            [   sprintf @"Parser.Test/bin/%s/Froto.Parser.Test.dll" configuration
+                sprintf @"Serialization.Test/bin/%s/Froto.Serialization.Test.dll" configuration
+                //sprintf @"Roslyn.Test/bin/%s/Froto.Roslyn.Test.dll" configuration
+                sprintf @"TypeProvider.Test/bin/%s/Froto.TypeProvider.Test.dll" configuration
             ]
         else
-            [   @"Parser.Test/bin/Release/Froto.Parser.Test.dll"
-                @"Serialization.Test/bin/Release/Froto.Serialization.Test.dll"
-                @"Roslyn.Test/bin/Release/Froto.Roslyn.Test.dll"
+            [   sprintf @"Parser.Test/bin/%s/Froto.Parser.Test.dll" configuration
+                sprintf @"Serialization.Test/bin/%s/Froto.Serialization.Test.dll" configuration
+                sprintf @"Roslyn.Test/bin/%s/Froto.Roslyn.Test.dll" configuration
+                sprintf @"TypeProvider.Test/bin/%s/Froto.TypeProvider.Test.dll" configuration
             ]
     xUnit2 (fun p ->
         { p with
             IncludeTraits = ["Kind", "Unit"]
             XmlOutputPath = Some @"bin/UnitTest.xml"
+            Parallel = ParallelMode.Assemblies
+            TimeOut = TimeSpan.FromMinutes 10.0
         })
         dlls
 
@@ -73,11 +84,13 @@ Target "SourceLink" <| fun _ ->
         let p = VsProj.LoadRelease proj
         let pdbToIndex = if Option.isSome pdb then pdb.Value else p.OutputFilePdb
         let url = "https://raw.githubusercontent.com/ctaggart/froto/{0}/%var2%"
-        SourceLink.Index p.Compiles pdbToIndex __SOURCE_DIRECTORY__ url
+        let sourceFiles = p.Compiles |> Seq.filter (fun file -> not <| file.Contains "paket-files")
+        SourceLink.Index sourceFiles pdbToIndex __SOURCE_DIRECTORY__ url
     sourceIndex "Parser/Froto.Parser.fsproj" None
     sourceIndex "Serialization/Froto.Serialization.fsproj" None
     sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
     sourceIndex "Compiler/Froto.Compiler.fsproj" None
+    sourceIndex "TypeProvider/Froto.TypeProvider.fsproj" None
 
 Target "NuGet" <| fun _ ->
     CreateDir "bin"
@@ -133,7 +146,26 @@ Target "NuGet" <| fun _ ->
         OutputPath = "bin"
     }) "Compiler/Froto.Compiler.nuspec"
 
+    NuGet (fun p ->
+    { p with
+        Version = buildVersion
+        WorkingDir = "TypeProvider/bin/Release"
+        OutputPath = "bin"
+        DependenciesByFramework =
+        [{
+            FrameworkVersion = "net45"
+            Dependencies =
+            [
+                "FParsec", GetPackageVersion "./packages/" "FParsec"
+                "Froto.Parser", sprintf "[%s]" buildVersion 
+                "Froto.Serialization", sprintf "[%s]" buildVersion 
+            ]
+        }]
+    }) "TypeProvider/Froto.TypeProvider.nuspec"
+
 Target "Default" DoNothing
+
+Target "Debug" DoNothing
 
 // chain targets together only on AppVeyor
 //let (==>) a b = a =?> (b, isAppVeyorBuild)
@@ -146,5 +178,10 @@ Target "Default" DoNothing
 =?> ("SourceLink", isAppVeyorBuild)
 =?> ("NuGet", not isMono)
 ==> "Default"
+
+"UnitTest" ==> "Debug"
+"SwitchToDebug" ==> "Debug"
+"SwitchToDebug" ?=> "Build"
+
 
 RunTargetOrDefault "Default"

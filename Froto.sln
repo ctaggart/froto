@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Roslyn", "Roslyn\Froto.Roslyn.fsproj", "{49D025ED-F804-4D97-9027-461671B333B6}"
 EndProject
@@ -53,6 +53,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Serialization.Test", 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Compiler", "Compiler\Froto.Compiler.fsproj", "{F5D8D709-919D-4539-8908-91C540C970B3}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider", "TypeProvider\Froto.TypeProvider.fsproj", "{837AA4FC-E2DD-48A1-A793-50DC4404EE57}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{F5D8D709-919D-4539-8908-91C540C970B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5D8D709-919D-4539-8908-91C540C970B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5D8D709-919D-4539-8908-91C540C970B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{837AA4FC-E2DD-48A1-A793-50DC4404EE57}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
