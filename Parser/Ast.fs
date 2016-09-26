@@ -48,12 +48,15 @@ and PVisibility =
 
 // TOption
 and POption = TIdent * PConstant
+
+// 
 and PConstant =
     | TIntLit of int32
     | TFloatLit of float
     | TBoolLit of bool
     | TStrLit of string
     | TEnumLit of TIdent
+    | TMap of Map<string, string>
     with
         override x.ToString() =
             match x with
@@ -62,6 +65,8 @@ and PConstant =
             | TBoolLit b -> sprintf "%s" (if b then "true" else "false")
             | TStrLit s -> sprintf "\"%s\"" s
             | TEnumLit s -> sprintf "%s" s
+            | TMap s -> sprintf "%A" s
+
 
 // TMessage
 and PMessageStatement =

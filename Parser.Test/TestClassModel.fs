@@ -120,3 +120,10 @@ let ``can parse enum proto`` () =
     let proto = getTestFile "protoenum.proto" |> parseFile
     1 |> should equal proto.Enums.Length
     3 |> should equal proto.Enums.[0].Items.Length
+
+[<Fact>]
+// from https://github.com/googleapis/googleapis/blob/master/google/pubsub/v1/pubsub.proto
+let ``can parse PubSub proto`` () =
+    let proto = getTestFile "grpc.proto" |> parseFile
+    3 |> should equal proto.Sections.Length
+    "Bar" |> should equal proto.Messages.[1].Name

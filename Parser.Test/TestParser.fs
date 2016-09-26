@@ -804,3 +804,18 @@ module Proto2 =
             """ |> ignore
         |> should not' (throw typeof<System.FormatException>)
 
+    [<Fact>]
+    let ``Test map option`` () =
+        let optionValue = """{ put: "/v1/{name=projects/*/subscriptions/*}" body: "*" }"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        result
+        |> should not' (throw typeof<System.FormatException>)
+
+    [<Fact>]
+    let ``Test proto3 grpc option`` () =
+        let option = """option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: "*" };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        result
+        |> should not' (throw typeof<System.FormatException>)

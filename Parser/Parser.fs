@@ -297,9 +297,19 @@ module Parse =
         /// Parser for optionName + ws
         let pOptionName_ws = pOptionName .>> ws
 
+        /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
+        let normalChar = satisfy (fun c -> 
+            printfn "%c" c
+            c <> '\\' && c <> '}')
+        let pOptionStructure :Parser<Map<string, string>, State> =
+            between ((str "{") .>> ws) ((str "}") .>> ws) ((manyChars normalChar)) |>> TStrLit
+
+        let pOptionConstant = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit <|> pOptionStructure 
+        let pOptionConstant_ws = pConstant .>> ws
+
         /// Parser for optionClause: optionName "=" constant
         let pOption_ws =
-            pOptionName_ws .>> str_ws "=" .>>. pConstant_ws
+            pOptionName_ws .>> str_ws "=" .>>. pOptionConstant_ws
 
         /// Parser for option: "option" optionClause ";"
         let pOptionStatement =
