@@ -125,5 +125,5 @@ let ``can parse enum proto`` () =
 // from https://github.com/googleapis/googleapis/blob/master/google/pubsub/v1/pubsub.proto
 let ``can parse PubSub proto`` () =
     let proto = getTestFile "grpc.proto" |> parseFile
-    3 |> should equal proto.Sections.Length
-    "Bar" |> should equal proto.Messages.[1].Name
+    10 |> should equal proto.Sections.Length
+    "Subscriber" |> should equal proto.Services.[0].Name

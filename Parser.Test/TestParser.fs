@@ -612,7 +612,7 @@ module Proto =
 
             service TestService {
                 rpc TestMethod (outer) returns (foo) {
-                    option (google.api.http) = { get: "/v1/{project=projects/*}/subscriptions" };
+                    option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: "*" };
                 }
             }
             """
@@ -632,23 +632,20 @@ module Proto =
     [<Fact>]
     let ``Parse rpc optional option syntax`` () =
         let expectedMapResult =
-            [ ("put", "/v1/{name=projects/*/subscriptions/*}");
-              ("body", "*") ]
+            [ ("get", "/v1/{name=projects/*/subscriptions/*}") ]
             |> Map.ofList
 
-        Parse.fromStringWithParser pRpc ("""
+        let actual = 
+            Parse.fromStringWithParser pRpc ("""
             rpc TestMethod (outer) returns (foo) {
-                option (google.api.http) = { get: "/v1/{project=projects/*}/subscriptions" };
+                option (google.api.http) = { get: "/v1/{name=projects/*/subscriptions/*}" };
             }
             """.Trim())
-        |> should equal (
-            [
-                TRpc ("TestMethod", "outer", false, "foo", false, 
-                    [
-                        "google.api.http", PConstant.TMap expectedMapResult
-                    ])
-            ]
-        )
+
+        let expected = TRpc ("TestMethod", "outer", false, "foo", false, 
+                        [ "google.api.http", PConstant.TMap expectedMapResult ])
+
+        actual |> should equal expected
 
     open System.IO
 

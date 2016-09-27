@@ -640,19 +640,44 @@ module Parse =
                     <|>
                 (isProto3 >>. pStrMessageType_P3)
 
-            let pRpcOptions =
-                betweenCurly
-                    (sepBy pOption_ws (str_ws ",")) <!> "rpcOptions"
+            let optionStatment = 
+                str_ws1 "option" >>. pOption_ws .>> eostm
 
-            pipe4
-                (str_ws1 "rpc" >>. pRpcName_ws)
-                pStrMessageType
-                (str_ws "returns" >>. pStrMessageType)
-                (opt pRpcOptions |>> defArg [])
-                (fun ident (bsReq,req) (bsResp,resp) opts ->
-                    TRpc( ident, req, bsReq, resp, bsResp, opts)
-                    )
-            .>> eostm
+            let pRpcOptionsNew =
+                betweenCurly
+                    (many optionStatment)
+
+            let pRpcOptionsOld =
+                betweenCurly
+                    (sepBy pOption_ws (str_ws ","))
+
+            let pRpcOptions = pRpcOptionsNew <|> pRpcOptionsOld
+
+            /// TODO: RPC with options don't have a eostm...
+
+            let rpcPart1 = 
+                pipe3 
+                    (str_ws1 "rpc" >>. pRpcName_ws)
+                    pStrMessageType
+                    (str_ws "returns" >>. pStrMessageType)
+                    (fun ident (bsReq, req) (bsResp, resp) ->
+                        ident, req, bsReq, resp, bsResp)
+
+            let rpcPart2 = 
+                choice [ pRpcOptions; eostm |>> (fun _ -> []) ]
+
+            pipe2 rpcPart1 rpcPart2 (fun (ident, req, bsReq, resp, bsResp) opts ->
+                TRpc( ident, req, bsReq, resp, bsResp, opts)
+                )
+//            pipe4
+//                (str_ws1 "rpc" >>. pRpcName_ws)
+//                pStrMessageType
+//                (str_ws "returns" >>. pStrMessageType)
+//                (opt pRpcOptions |>> defArg [])
+//                (fun ident (bsReq,req) (bsResp,resp) opts ->
+//                    TRpc( ident, req, bsReq, resp, bsResp, opts)
+//                    )
+//            .>> eostm
 
 
         /// Parse protobuf: proto2: syntax | import | package | option | message | enum | extend | service | emptyStatement
