@@ -600,6 +600,56 @@ module Proto =
             ]
         )
 
+    [<Fact>]
+    let ``Parse proto with optional option syntax`` () =
+        let expectedMapResult =
+            [ ("put", "/v1/{name=projects/*/subscriptions/*}");
+              ("body", "*") ]
+            |> Map.ofList
+
+        Parse.fromStringWithParser pProto """
+            syntax = "proto3";
+
+            service TestService {
+                rpc TestMethod (outer) returns (foo) {
+                    option (google.api.http) = { get: "/v1/{project=projects/*}/subscriptions" };
+                }
+            }
+            """
+        |> should equal (
+            [
+                TSyntax TProto3
+                TService ("TestService",
+                    [
+                        TRpc ("TestMethod", "outer", false, "foo", false, 
+                            [
+                                "google.api.http", PConstant.TMap expectedMapResult
+                            ])
+                    ])
+            ]
+        )
+
+    [<Fact>]
+    let ``Parse rpc optional option syntax`` () =
+        let expectedMapResult =
+            [ ("put", "/v1/{name=projects/*/subscriptions/*}");
+              ("body", "*") ]
+            |> Map.ofList
+
+        Parse.fromStringWithParser pRpc ("""
+            rpc TestMethod (outer) returns (foo) {
+                option (google.api.http) = { get: "/v1/{project=projects/*}/subscriptions" };
+            }
+            """.Trim())
+        |> should equal (
+            [
+                TRpc ("TestMethod", "outer", false, "foo", false, 
+                    [
+                        "google.api.http", PConstant.TMap expectedMapResult
+                    ])
+            ]
+        )
+
     open System.IO
 
     /// gets the path for a test file based on the relative path from the executing assembly
@@ -723,8 +773,14 @@ module Proto3 =
         let option = """option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: "*" };"""
         let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
 
+        let expectedMapResult =
+            [ ("put", "/v1/{name=projects/*/subscriptions/*}");
+              ("body", "*") ]
+            |> Map.ofList
+        let expectedResult = TOption( "google.api.http", PConstant.TMap expectedMapResult )
+
         result
-        |> should not' (throw typeof<System.FormatException>)
+        |> should equal (expectedResult)
 
 [<Xunit.Trait("Kind", "Unit")>]
 module Proto2 =

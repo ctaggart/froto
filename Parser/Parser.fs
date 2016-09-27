@@ -9,6 +9,12 @@ module Parse =
         open System
         open FParsec
         open Froto.Parser.Ast
+        let (<!>) (p: Parser<_,_>) label : Parser<_,_> =
+            fun stream ->
+                printfn "%A: Entering %s" stream.Position label
+                let reply = p stream
+                printfn "%A: Leaving %s (%A)" stream.Position label reply.Status
+                reply
 
         // Parser State
         type State = { Syntax : PSyntax }
@@ -254,7 +260,7 @@ module Parse =
         let pOptionMapValue = pOptionMap |>> PConstant.TMap
 
         /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
-        let pConstant = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit <|> pOptionMapValue
+        let pConstant = pOptionMapValue <|> pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
         let pConstant_ws = pConstant .>> ws
 
         // Parser for end-of-statement
@@ -636,7 +642,7 @@ module Parse =
 
             let pRpcOptions =
                 betweenCurly
-                    (sepBy pOption_ws (str_ws ","))
+                    (sepBy pOption_ws (str_ws ",")) <!> "rpcOptions"
 
             pipe4
                 (str_ws1 "rpc" >>. pRpcName_ws)
