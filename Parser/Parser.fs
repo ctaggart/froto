@@ -237,8 +237,24 @@ module Parse =
             pFullyQualifiedIdent
             |>> TEnumLit
 
+        /// Parser for map values in constants
+        let internal pValue = strLit
+        let internal pColon = pstring ":" .>> ws
+        let internal pKey = manySatisfy (isAsciiLetter) .>> ws
+
+        let internal pKeyValue = pipe3 pKey pColon pValue (fun k _ v -> k,v)
+        let inline private listBetweenStrings sOpen sClose pElement f =
+            let ws = spaces
+            let str = pstring
+
+            between (str sOpen) (str sClose)
+                    (ws >>. many1 (pElement .>> ws) |>> f) 
+
+        let pOptionMap = listBetweenStrings "{" "}" pKeyValue Map.ofList
+        let pOptionMapValue = pOptionMap |>> PConstant.TMap
+
         /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
-        let pConstant = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
+        let pConstant = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit <|> pOptionMapValue
         let pConstant_ws = pConstant .>> ws
 
         // Parser for end-of-statement
@@ -297,19 +313,9 @@ module Parse =
         /// Parser for optionName + ws
         let pOptionName_ws = pOptionName .>> ws
 
-        /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
-        let normalChar = satisfy (fun c -> 
-            printfn "%c" c
-            c <> '\\' && c <> '}')
-        let pOptionStructure :Parser<Map<string, string>, State> =
-            between ((str "{") .>> ws) ((str "}") .>> ws) ((manyChars normalChar)) |>> TStrLit
-
-        let pOptionConstant = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit <|> pOptionStructure 
-        let pOptionConstant_ws = pConstant .>> ws
-
         /// Parser for optionClause: optionName "=" constant
         let pOption_ws =
-            pOptionName_ws .>> str_ws "=" .>>. pOptionConstant_ws
+            pOptionName_ws .>> str_ws "=" .>>. pConstant_ws
 
         /// Parser for option: "option" optionClause ";"
         let pOptionStatement =

@@ -717,6 +717,15 @@ module Proto3 =
             """ |> ignore
         |> should throw typeof<System.FormatException>
 
+        
+    [<Fact>]
+    let ``Proto3 grpc option`` () =
+        let option = """option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: "*" };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        result
+        |> should not' (throw typeof<System.FormatException>)
+
 [<Xunit.Trait("Kind", "Unit")>]
 module Proto2 =
 
@@ -802,20 +811,4 @@ module Proto2 =
 		        optional bool b = 1;
 		        }
             """ |> ignore
-        |> should not' (throw typeof<System.FormatException>)
-
-    [<Fact>]
-    let ``Test map option`` () =
-        let optionValue = """{ put: "/v1/{name=projects/*/subscriptions/*}" body: "*" }"""
-        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
-
-        result
-        |> should not' (throw typeof<System.FormatException>)
-
-    [<Fact>]
-    let ``Test proto3 grpc option`` () =
-        let option = """option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: "*" };"""
-        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
-
-        result
         |> should not' (throw typeof<System.FormatException>)
