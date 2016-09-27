@@ -9,12 +9,6 @@ module Parse =
         open System
         open FParsec
         open Froto.Parser.Ast
-        let (<!>) (p: Parser<_,_>) label : Parser<_,_> =
-            fun stream ->
-                printfn "%A: Entering %s" stream.Position label
-                let reply = p stream
-                printfn "%A: Leaving %s (%A)" stream.Position label reply.Status
-                reply
 
         // Parser State
         type State = { Syntax : PSyntax }
