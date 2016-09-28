@@ -56,7 +56,7 @@ and PConstant =
     | TBoolLit of bool
     | TStrLit of string
     | TEnumLit of TIdent
-    | TMap of Map<string, string>
+    | TAggregateOptionsLit of POption list
     with
         override x.ToString() =
             match x with
@@ -65,7 +65,7 @@ and PConstant =
             | TBoolLit b -> sprintf "%s" (if b then "true" else "false")
             | TStrLit s -> sprintf "\"%s\"" s
             | TEnumLit s -> sprintf "%s" s
-            | TMap s -> sprintf "%A" s
+            | TAggregateOptionsLit s -> sprintf "%A" s
 
 
 // TMessage

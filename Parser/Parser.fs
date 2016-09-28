@@ -242,7 +242,8 @@ module Parse =
         let internal pColon = pstring ":" .>> ws
         let internal pKey = manySatisfy (isAsciiLetter) .>> ws
 
-        let internal pKeyValue = pipe3 pKey pColon pValue (fun k _ v -> k,v)
+        let internal pKeyValue = pipe3 pKey pColon pValue (fun k _ v -> k, TStrLit v)
+
         let inline private listBetweenStrings sOpen sClose pElement f =
             let ws = spaces
             let str = pstring
@@ -250,8 +251,8 @@ module Parse =
             between (str sOpen) (str sClose)
                     (ws >>. many1 (pElement .>> ws) |>> f) 
 
-        let pOptionMap = listBetweenStrings "{" "}" pKeyValue Map.ofList
-        let pOptionMapValue = pOptionMap |>> PConstant.TMap
+        let pOptionMap = listBetweenStrings "{" "}" pKeyValue (List.map (fun x -> x))
+        let pOptionMapValue = pOptionMap |>> PConstant.TAggregateOptionsLit
 
         /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
         let pConstant = pOptionMapValue <|> pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit

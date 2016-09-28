@@ -603,9 +603,8 @@ module Proto =
     [<Fact>]
     let ``Parse proto with optional option syntax`` () =
         let expectedMapResult =
-            [ ("put", "/v1/{name=projects/*/subscriptions/*}");
-              ("body", "*") ]
-            |> Map.ofList
+            [ ("put",  TStrLit "/v1/{name=projects/*/subscriptions/*}");
+              ("body", TStrLit "*") ]
 
         Parse.fromStringWithParser pProto """
             syntax = "proto3";
@@ -623,7 +622,7 @@ module Proto =
                     [
                         TRpc ("TestMethod", "outer", false, "foo", false, 
                             [
-                                "google.api.http", PConstant.TMap expectedMapResult
+                                "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult
                             ])
                     ])
             ]
@@ -632,8 +631,7 @@ module Proto =
     [<Fact>]
     let ``Parse rpc optional option syntax`` () =
         let expectedMapResult =
-            [ ("get", "/v1/{name=projects/*/subscriptions/*}") ]
-            |> Map.ofList
+            [ ("get", TStrLit "/v1/{name=projects/*/subscriptions/*}") ]
 
         let actual = 
             Parse.fromStringWithParser pRpc ("""
@@ -643,7 +641,7 @@ module Proto =
             """.Trim())
 
         let expected = TRpc ("TestMethod", "outer", false, "foo", false, 
-                        [ "google.api.http", PConstant.TMap expectedMapResult ])
+                        [ "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult ])
 
         actual |> should equal expected
 
@@ -771,10 +769,9 @@ module Proto3 =
         let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
 
         let expectedMapResult =
-            [ ("put", "/v1/{name=projects/*/subscriptions/*}");
-              ("body", "*") ]
-            |> Map.ofList
-        let expectedResult = TOption( "google.api.http", PConstant.TMap expectedMapResult )
+            [ ("put",  TStrLit "/v1/{name=projects/*/subscriptions/*}");
+              ("body", TStrLit "*") ]
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
 
         result
         |> should equal (expectedResult)
