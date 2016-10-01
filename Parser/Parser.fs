@@ -281,11 +281,11 @@ module Parse =
             str_ws1 "package" >>. pFullIdent_ws .>> eostm
             |>> TPackage
 
-        /// Parser for map values in constants
+        /// Parser for aggregate option values in constants
         let internal pConstant, internal pOptionDefR = createParserForwardedToRef<PConstant,State>()
+        let internal pAggregateInnerBlock, internal pAggregateInnerBlockR = createParserForwardedToRef<POption,State>()
 
         let internal pColon = pstring ":" .>> ws
-        let internal pKey = manySatisfy (fun x -> isAsciiLetter x || x = '_') .>> ws
 
         let inline private listBetweenStrings sOpen sClose pElement f =
             let ws = spaces
@@ -294,13 +294,17 @@ module Parse =
             between (str sOpen) (str sClose)
                     (ws >>. many1 (pElement .>> ws) |>> f) 
 
-        let rec internal pKeyValue = pipe3 pKey pColon pConstant (fun k _ v -> k, v)
+        let rec internal pAggregateLit = pipe3 pIdent_ws pColon pConstant (fun k _ v -> k, v)
 
-        and pOptionMap = listBetweenStrings "{" "}" pKeyValue (List.map (fun x -> x))
-        and pAggregateOptionLit = pOptionMap |>> PConstant.TAggregateOptionsLit
+        and pAggregateBlock = listBetweenStrings "{" "}" pAggregateInnerBlock (List.map (fun x -> x))
+        and pAggregateOptionLit = pAggregateBlock |>> PConstant.TAggregateOptionsLit
+
+        and pRecursiveLit = pipe2 pIdent_ws pAggregateOptionLit (fun k v -> k, v)
+
+        do pAggregateInnerBlockR := (attempt pAggregateLit <|> pRecursiveLit)
 
         /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
-        do pOptionDefR := pAggregateOptionLit <|> pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
+        do pOptionDefR := pAggregateOptionLit<|> pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
         let pConstant_ws = pConstant .>> ws
 
 

@@ -791,7 +791,7 @@ module Proto3 =
 
     [<Fact>]
     let ``Proto3 grpc option recursive`` () =
-        // TODO: This breaks because of additional_bindinds isn't followed by a colon.
+        // TODO: This breaks because of additional_bindings isn't followed by a colon.
         let option = """option (google.api.http) = {
               get: "/v1/messages/{message_id}"
               additional_bindings {
@@ -807,6 +807,30 @@ module Proto3 =
 
         result
         |> should equal (expectedResult)
+
+    [<Fact>]
+    let ``Proto3 grpc option two recursive options`` () =
+        // TODO: This breaks because of additional_bindings isn't followed by a colon.
+        let option = """option (google.api.http) = {
+              get: "/v1/messages/{message_id}"
+              additional_bindings {
+                get: "/v1/users/{user_id}/messages/{message_id}"
+              }
+              additional_bindings {
+                put: "/v1/users/{user_id}/messages/{message_id}"
+              }
+            };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        let expectedMapResult =
+            [ ("get",  TStrLit "/v1/messages/{message_id}");
+              ("additional_bindings", TAggregateOptionsLit [ ("get",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) 
+              ("additional_bindings", TAggregateOptionsLit [ ("put",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) ]
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
+
+        result
+        |> should equal (expectedResult)
+
 
 [<Xunit.Trait("Kind", "Unit")>]
 module Proto2 =
