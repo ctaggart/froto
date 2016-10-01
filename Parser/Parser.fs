@@ -282,12 +282,14 @@ module Parse =
             |>> TPackage
 
         /// Parser for aggregate option values in constants
-        let internal pConstant, internal pOptionDefR = createParserForwardedToRef<PConstant,State>()
+        let internal pConstant, internal pConstantR = createParserForwardedToRef<PConstant,State>()
         let internal pAggregateInnerBlock, internal pAggregateInnerBlockR = createParserForwardedToRef<POption,State>()
 
         let internal pColon = pstring ":" .>> ws
 
-        let inline private listBetweenStrings sOpen sClose pElement f =
+        let inline private pAggregateCurlyBlock pElement f =
+            let sOpen = "{"
+            let sClose = "}"
             let ws = spaces
             let str = pstring
 
@@ -296,15 +298,23 @@ module Parse =
 
         let rec internal pAggregateLit = pipe3 pIdent_ws pColon pConstant (fun k _ v -> k, v)
 
-        and pAggregateBlock = listBetweenStrings "{" "}" pAggregateInnerBlock (List.map (fun x -> x))
-        and pAggregateOptionLit = pAggregateBlock |>> PConstant.TAggregateOptionsLit
+        and pAggregateBlock = pAggregateCurlyBlock pAggregateInnerBlock (List.map (fun x -> x))
+        and pAggregateOptionLit = 
+            pAggregateBlock 
+            |>> (fun x -> 
+                x
+                |> List.filter (function // Removes any empty literal.
+                    | _, TEmptyLit -> false
+                    | _ -> true)
+                |> PConstant.TAggregateOptionsLit)
 
         and pRecursiveLit = pipe2 pIdent_ws pAggregateOptionLit (fun k v -> k, v)
+        and pEmptyLit = str ";" |>> (fun _ -> ";", TEmptyLit)
 
-        do pAggregateInnerBlockR := (attempt pAggregateLit <|> pRecursiveLit)
+        do pAggregateInnerBlockR := (pEmptyLit <|> attempt pAggregateLit <|> pRecursiveLit) 
 
         /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
-        do pOptionDefR := pAggregateOptionLit<|> pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
+        do pConstantR := pAggregateOptionLit<|> pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
         let pConstant_ws = pConstant .>> ws
 
 
