@@ -664,32 +664,18 @@ module Parse =
 
             let pRpcOptions = pRpcOptionsNew <|> pRpcOptionsOld
 
-            /// TODO: RPC with options don't have a eostm...
+            /// RPC with options don't have an eostm...
+            let pRpcOptionalOptions =
+                choice [ pRpcOptions; eostm |>> (fun _ -> List.empty) ]
 
-            let rpcPart1 = 
-                pipe3 
-                    (str_ws1 "rpc" >>. pRpcName_ws)
-                    pStrMessageType
-                    (str_ws "returns" >>. pStrMessageType)
-                    (fun ident (bsReq, req) (bsResp, resp) ->
-                        ident, req, bsReq, resp, bsResp)
-
-            let rpcPart2 = 
-                choice [ pRpcOptions; eostm |>> (fun _ -> []) ]
-
-            pipe2 rpcPart1 rpcPart2 (fun (ident, req, bsReq, resp, bsResp) opts ->
-                TRpc( ident, req, bsReq, resp, bsResp, opts)
-                )
-//            pipe4
-//                (str_ws1 "rpc" >>. pRpcName_ws)
-//                pStrMessageType
-//                (str_ws "returns" >>. pStrMessageType)
-//                (opt pRpcOptions |>> defArg [])
-//                (fun ident (bsReq,req) (bsResp,resp) opts ->
-//                    TRpc( ident, req, bsReq, resp, bsResp, opts)
-//                    )
-//            .>> eostm
-
+            pipe4
+                (str_ws1 "rpc" >>. pRpcName_ws)
+                pStrMessageType
+                (str_ws "returns" >>. pStrMessageType)
+                pRpcOptionalOptions
+                (fun ident (bsReq,req) (bsResp,resp) opts ->
+                    TRpc( ident, req, bsReq, resp, bsResp, opts)
+                    )
 
         /// Parse protobuf: proto2: syntax | import | package | option | message | enum | extend | service | emptyStatement
         /// Parse protobuf: proto2: syntax | import | package | option | message | enum | service | emptyStatement
