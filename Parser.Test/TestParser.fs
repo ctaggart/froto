@@ -832,10 +832,14 @@ module Proto3 =
     [<Fact>]
     let ``Proto3 grpc option two recursive options with empty statements`` () =
         let option = """option (google.api.http) = {
+              ;
               get: "/v1/messages/{message_id}"
+              ;
               additional_bindings {
                 get: "/v1/users/{user_id}/messages/{message_id}"
               }
+              ;
+              ;
               additional_bindings {
                 put: "/v1/users/{user_id}/messages/{message_id}"
               };
@@ -850,6 +854,21 @@ module Proto3 =
 
         result
         |> should equal (expectedResult)
+
+    [<Fact>]
+    let ``Proto3 grpc option with only empty statement`` () =
+        let option = """option (google.api.http) = {
+              ;
+            };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        let expectedMapResult =
+            List.Empty
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
+
+        result
+        |> should equal (expectedResult)
+
 
 [<Xunit.Trait("Kind", "Unit")>]
 module Proto2 =

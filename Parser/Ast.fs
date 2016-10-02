@@ -56,7 +56,6 @@ and PConstant =
     | TBoolLit of bool
     | TStrLit of string
     | TEnumLit of TIdent
-    | TEmptyLit
     | TAggregateOptionsLit of POption list
     with
         override x.ToString() =
@@ -66,7 +65,6 @@ and PConstant =
             | TBoolLit b -> sprintf "%s" (if b then "true" else "false")
             | TStrLit s -> sprintf "\"%s\"" s
             | TEnumLit s -> sprintf "%s" s
-            | TEmptyLit -> ";"
             | TAggregateOptionsLit s -> sprintf "%A" s
 
 

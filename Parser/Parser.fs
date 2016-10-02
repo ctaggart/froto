@@ -51,8 +51,16 @@ module Parse =
             pSingleLineComment <|> pMultiLineComment
             |>> ignore
 
+        /// Skip empty statement (";")
+        let skipEmpty : Parser<unit,State> =
+            pstring ";"
+            |>> ignore
+
         /// Skip whitespace OR comment
         let ws  = skipMany (skipWhiteSpace <|> skipComment)
+
+        /// Skip empty statement OR whitespace OR comment
+        let empty_ws = skipMany (skipEmpty <|> skipWhiteSpace <|> skipComment)
 
         /// Skip at least 1 space followed by whitespace or comment
         let ws1 = spaces1 >>. ws
@@ -281,43 +289,32 @@ module Parse =
             str_ws1 "package" >>. pFullIdent_ws .>> eostm
             |>> TPackage
 
-        /// Parser for aggregate option values in constants
-        let internal pConstant, internal pConstantR = createParserForwardedToRef<PConstant,State>()
-        let internal pAggregateInnerBlock, internal pAggregateInnerBlockR = createParserForwardedToRef<POption,State>()
+        (* Parsers for optionClause
 
-        let internal pColon = pstring ":" .>> ws
+                optionStatement :="option" fullIdent "=" optionClause ";"
+                optionClause := ( literal | aggregateBlock )
+                literal := boolLit | strLit | numLit | enumLit
+                aggregateBlock := "{" [ aggregateLit | recursiveLit | emptyStatement ] "}"
+                aggregateLit := ident ":" literal
+                recursiveLit := ident aggregateBlock
+                emptyStatement := ";"
+        *)
 
-        let inline private pAggregateCurlyBlock pElement f =
-            let sOpen = "{"
-            let sClose = "}"
-            let ws = spaces
-            let str = pstring
+        let internal pAggregateBlock_ws, internal pAggregateBlockR = createParserForwardedToRef<PConstant,State>()
 
-            between (str sOpen) (str sClose)
-                    (ws >>. many1 (pElement .>> ws) |>> f) 
+        let internal pLiteral = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
+        let internal pLiteral_ws = pLiteral .>> ws
 
-        let rec internal pAggregateLit = pipe3 pIdent_ws pColon pConstant (fun k _ v -> k, v)
+        let internal pAggregateLit_ws = pIdent_ws .>> str_ws ":" .>>. pLiteral_ws .>> empty_ws
+        let internal pRecursiveLit_ws = pIdent_ws .>>. pAggregateBlock_ws .>> empty_ws
 
-        and pAggregateBlock = pAggregateCurlyBlock pAggregateInnerBlock (List.map (fun x -> x))
-        and pAggregateOptionLit = 
-            pAggregateBlock 
-            |>> (fun x -> 
-                x
-                |> List.filter (function // Removes any empty literal.
-                    | _, TEmptyLit -> false
-                    | _ -> true)
-                |> PConstant.TAggregateOptionsLit)
+        do pAggregateBlockR :=
+            betweenCurly <|
+                (empty_ws >>. many ( attempt pAggregateLit_ws <|> pRecursiveLit_ws ) .>> empty_ws)
+                |>> TAggregateOptionsLit
 
-        and pRecursiveLit = pipe2 pIdent_ws pAggregateOptionLit (fun k v -> k, v)
-        and pEmptyLit = str ";" |>> (fun _ -> ";", TEmptyLit)
-
-        do pAggregateInnerBlockR := (pEmptyLit <|> attempt pAggregateLit <|> pRecursiveLit) 
-
-        /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
-        do pConstantR := pAggregateOptionLit<|> pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
-        let pConstant_ws = pConstant .>> ws
-
-
+        /// Parser for optionClause
+        let pOptionClause_ws = pLiteral_ws <|> pAggregateBlock_ws
 
         /// Parser for optionName: (ident | "(" fullIdent ")") {"." ident}
         let rec pOptionName =
@@ -333,9 +330,9 @@ module Parse =
         /// Parser for optionName + ws
         and pOptionName_ws = pOptionName .>> ws
 
-        /// Parser for optionClause: optionName "=" constant
+        /// Parser for optionName "=" optionClause
         and pOption_ws =
-            pOptionName_ws .>> str_ws "=" .>>. pConstant_ws
+            pOptionName_ws .>> str_ws "=" .>>. pOptionClause_ws
 
         /// Parser for option: "option" optionClause ";"
         let pOptionStatement =
