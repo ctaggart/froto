@@ -52,7 +52,7 @@ module Parse =
             |>> ignore
 
         /// Skip empty statement (";")
-        let skipEmpty : Parser<unit,State> =
+        let internal skipEmpty : Parser<unit,State> =
             pstring ";"
             |>> ignore
 
