@@ -305,12 +305,12 @@ module Parse =
         let internal pLiteral = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
         let internal pLiteral_ws = pLiteral .>> ws
 
-        let internal pAggregateLit_ws = pIdent_ws .>> str_ws ":" .>>. pLiteral_ws .>> empty_ws
-        let internal pRecursiveLit_ws = pIdent_ws .>>. pAggregateBlock_ws .>> empty_ws
+        let internal pAggregateLit_wsOrEmpty = pIdent_ws .>> str_ws ":" .>>. pLiteral_ws .>> empty_ws
+        let internal pRecursiveLit_wsOrEmpty = pIdent_ws .>>. pAggregateBlock_ws .>> empty_ws
 
         do pAggregateBlockR :=
             betweenCurly <|
-                (empty_ws >>. many ( attempt pAggregateLit_ws <|> pRecursiveLit_ws ) .>> empty_ws)
+                (empty_ws >>. many ( attempt pAggregateLit_wsOrEmpty <|> pRecursiveLit_wsOrEmpty ) )
                 |>> TAggregateOptionsLit
 
         /// Parser for optionClause
