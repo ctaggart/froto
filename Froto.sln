@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Roslyn", "Roslyn\Froto.Roslyn.fsproj", "{49D025ED-F804-4D97-9027-461671B333B6}"
 EndProject
@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{992FDC44-0
 		test\addressbook.proto = test\addressbook.proto
 		test\addressbook1.proto = test\addressbook1.proto
 		test\FooOptions.proto = test\FooOptions.proto
+		test\grpc.proto = test\grpc.proto
 		test\javatutorial.proto = test\javatutorial.proto
 		test\nwind.proto = test\nwind.proto
 		test\person.proto = test\person.proto

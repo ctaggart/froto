@@ -432,6 +432,37 @@ module Service =
                     TRpc ("TestMethod", "outer", false, "foo", false, [])
                 ]))
 
+    [<Fact>]
+    let ``Parse service and rpc with options and empty statements`` () =
+        Parse.fromStringWithParser (ws >>. pService) """
+            service TestService {
+                ; // empty
+                option (foo).bar = "fee";
+                rpc TestMethod (outer) returns (foo) {
+                    ; // empty
+                    option (foo.baz) = "fie";
+                    ;  // empty
+                    option foo = { bat : "foe" qux : "foo" }
+                    ; // empty
+                    }
+                ; // empty
+                }"""
+        |> should equal (
+            TService ("TestService",
+                [
+                    TServiceOption ( "foo.bar", TStrLit "fee")
+                    TRpc ("TestMethod", "outer", false, "foo", false,
+                        [
+                            "foo.baz", TStrLit "fie"
+                            "foo", TAggregateOptionsLit [
+                                "bat", TStrLit "foe"
+                                "qux", TStrLit "foo"
+                                ]
+                        ])
+                ]))
+
+
+
 [<Xunit.Trait("Kind", "Unit")>]
 module Proto =
 

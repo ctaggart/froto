@@ -11,5 +11,5 @@ extend google.protobuf.FieldOptions {
 message Bar {
   optional int32 a = 1 [(foo_options.opt1) = 123, (foo_options.opt2) = "baz"];
   // alternative aggregate syntax (uses TextFormat):
-  //optional int32 b = 2 [(foo_options) = { opt1: 123 opt2: "baz" }];
+  optional int32 b = 2 [(foo_options) = { opt1: 123 opt2: "baz" }];
 }
