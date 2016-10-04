@@ -57,6 +57,17 @@ module Parse =
         /// Skip at least 1 space followed by whitespace or comment
         let ws1 = spaces1 >>. ws
 
+        /// Parse end-of-statement
+        let internal eostm = pstring ";"
+
+        /// Parse end-of-statement followed by zero or more whitespace
+        let internal eostm_ws = eostm .>> ws
+
+        /// Skip empty statements followed by zero or more whitespace
+        let internal skipEmptyStmts =
+            skipMany eostm_ws
+
+
         /// Alias for pstring
         let str = pstring
 
@@ -78,6 +89,9 @@ module Parse =
         let inline betweenParens p =
             between (str_ws "(") (str_ws ")") p
 
+        /// Parse many between curly braces, skipping empty statements
+        let manyBetweenCurlySkippingEmpty p =
+            betweenCurly (skipEmptyStmts >>. many (p .>> skipEmptyStmts))
 
         // Run parser on string between quote (") or single-quote (')
         let inline betweenQuotes p =
@@ -237,13 +251,6 @@ module Parse =
             pFullyQualifiedIdent
             |>> TEnumLit
 
-        /// Parser for constant: (boolLit | strLit | intLit | floatLit | Ident)
-        let pConstant = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
-        let pConstant_ws = pConstant .>> ws
-
-        // Parser for end-of-statement
-        let internal eostm = str ";" .>> ws // note the implicit ws
-
         (*--- Statement Parsers ---*)
 
         /// Parser for syntax: "syntax" "=" quote ("proto2" | "proto3") quote ";"
@@ -251,7 +258,7 @@ module Parse =
         let pSyntax =
             str_ws "syntax" >>. str_ws "=" >>. betweenQuotes
                 ( (str_ws "proto2" .>> setProto2) <|> (str_ws "proto3" .>> setProto3) )
-                 .>> eostm
+                 .>> eostm_ws
             |>> function
                 | "proto2" -> TSyntax TProto2
                 | "proto3" -> TSyntax TProto3
@@ -259,15 +266,15 @@ module Parse =
 
         // Import parsers
         let internal import =
-            str_ws1 "import" >>. strLit_ws .>> eostm
+            str_ws1 "import" >>. strLit_ws .>> eostm_ws
             |>> fun s -> (s,TNormal)
 
         let internal importPublic =
-            str_ws1 "import public" >>. strLit_ws .>> eostm
+            str_ws1 "import public" >>. strLit_ws .>> eostm_ws
             |>> fun s -> (s,TPublic)
 
         let internal importWeak =
-            str_ws1 "import weak" >>. strLit_ws .>> eostm
+            str_ws1 "import weak" >>. strLit_ws .>> eostm_ws
             |>> fun s -> (s,TWeak)
 
         /// Parser for import: "import" [ "public" | "weak" ] strLit ";"
@@ -280,8 +287,35 @@ module Parse =
 
         /// Parser for package: "package" fullIdent ";"
         let pPackage =
-            str_ws1 "package" >>. pFullIdent_ws .>> eostm
+            str_ws1 "package" >>. pFullIdent_ws .>> eostm_ws
             |>> TPackage
+
+        (* Parsers for optionClause
+
+                optionStatement :="option" fullIdent "=" optionClause ";"
+                optionClause := ( literal | aggregateBlock )
+                literal := boolLit | strLit | numLit | enumLit
+                aggregateBlock := "{" [ aggregateLit | recursiveLit | emptyStatement ] "}"
+                aggregateLit := ident ":" literal
+                recursiveLit := ident aggregateBlock
+                emptyStatement := ";"
+        *)
+
+        let internal pAggregateBlock_ws, internal pAggregateBlockR = createParserForwardedToRef<PConstant,State>()
+
+        let internal pLiteral = pBoolLit <|> pStrLit <|> pNumLit <|> pEnumLit
+        let internal pLiteral_ws = pLiteral .>> ws
+
+        let internal pAggregateLit_ws = pIdent_ws .>> str_ws ":" .>>. pLiteral_ws
+        let internal pRecursiveLit_ws = pIdent_ws .>>. pAggregateBlock_ws
+
+        do pAggregateBlockR :=
+            manyBetweenCurlySkippingEmpty
+                (attempt pAggregateLit_ws <|> pRecursiveLit_ws)
+                |>> TAggregateOptionsLit
+
+        /// Parser for optionClause
+        let pOptionClause_ws = pLiteral_ws <|> pAggregateBlock_ws
 
         /// Parser for optionName: (ident | "(" fullIdent ")") {"." ident}
         let pOptionName =
@@ -297,13 +331,13 @@ module Parse =
         /// Parser for optionName + ws
         let pOptionName_ws = pOptionName .>> ws
 
-        /// Parser for optionClause: optionName "=" constant
+        /// Parser for optionName "=" optionClause
         let pOption_ws =
-            pOptionName_ws .>> str_ws "=" .>>. pConstant_ws
+            pOptionName_ws .>> str_ws "=" .>>. pOptionClause_ws
 
         /// Parser for option: "option" optionClause ";"
         let pOptionStatement =
-            str_ws1 "option" >>. pOption_ws .>> eostm
+            str_ws1 "option" >>. pOption_ws .>> eostm_ws
             |>> TOption
 
         let pLabel : Parser<PLabel,State> =
@@ -379,7 +413,7 @@ module Parse =
                 (opt pFieldOption_ws |>> defArg [])
                 (fun lbl typ ident num opts ->
                     (ident,lbl,typ,num,opts) )
-            .>> eostm
+            .>> eostm_ws
 
         /// Parser for field: proto2: ("required" | "optional" | "repeated") ident "=" intLit [ "[" { fieldOptions } "]" ] ";"
         let pField =
@@ -395,9 +429,6 @@ module Parse =
         let internal pGroupCommon, internal pGroupCommonR = createParserForwardedToRef<TIdent * PLabel * FieldNum * PMessageStatement list,State>()
 
         // Top Level Statements
-
-        let internal skipEmptyStmts =
-            skipMany eostm
 
         let internal pEnumCommon =
 
@@ -415,11 +446,10 @@ module Parse =
                     )
 
             let pEnumStatement =
-                ( pEnumOption_ws <|> pEnumField_ws ) .>> eostm
-                .>> skipEmptyStmts
+                ( pEnumOption_ws <|> pEnumField_ws ) .>> eostm_ws
 
             let pEnumBody =
-                betweenCurly (skipEmptyStmts >>. many pEnumStatement)
+                manyBetweenCurlySkippingEmpty pEnumStatement
 
             str_ws1 "enum" >>. pEnumName_ws .>>. pEnumBody
 
@@ -442,8 +472,7 @@ module Parse =
             str_ws1 "message" >>. pMessageName_ws .>>. pMessageBody
 
         // Parse messageBody
-        and internal pMessageBody =
-            betweenCurly (many (skipEmptyStmts >>. pMessageStatement .>> skipEmptyStmts))
+        and internal pMessageBody = manyBetweenCurlySkippingEmpty pMessageStatement
 
         // Message statement: field | enum | etc.
         and internal pMessageStatement =
@@ -465,7 +494,7 @@ module Parse =
 
         /// Parse message option: "option" (ident | "(" fullIdent ")" { "." ident }
         and pMessageOption =
-            str_ws1 "option" >>. pOption_ws .>> eostm
+            str_ws1 "option" >>. pOption_ws .>> eostm_ws
             |>> TMessageOption
 
         /// Parse top-level group: label "group" groupName "=" fieldNumber messageBody
@@ -490,7 +519,7 @@ module Parse =
         ///       oneOfField: type fieldName "=" fieldNumber [ "[" fieldOptions "]" ] ";'
         and pOneOf =
             (str_ws1 "oneof" >>. pOneOfName_ws) .>>.
-            (betweenCurly (many (skipEmptyStmts >>. pOneOfField .>> skipEmptyStmts)) )
+            (manyBetweenCurlySkippingEmpty pOneOfField)
             |>> TOneOf
 
         and internal pOneOfField =
@@ -498,14 +527,9 @@ module Parse =
                 pType_ws
                 pFieldName_ws
                 pEq_FieldNum_ws
-                (opt pFieldOption_ws)
-                (fun typ ident num opts->
-                    let opts =
-                        match opts with
-                        | None -> []
-                        | Some(os) -> os
-                    TOneOfField (ident,typ,num,opts) )
-            .>> eostm
+                (opt pFieldOption_ws |>> defArg List.empty)
+                (fun typ ident num opts-> TOneOfField (ident,typ,num,opts) )
+            .>> eostm_ws
 
         /// Parse map: "map" "<" keyType "," type ">" manName "=" fieldNumber [ "[" fieldOptions "]" ] ";'
         and pMap =
@@ -533,19 +557,20 @@ module Parse =
                     ]
                 ) .>> ws |>> toKType
 
-            pipe4
+            pipe5
                 (str_ws "map" >>. str_ws "<" >>. pKeyType_ws)
                 (str_ws "," >>. pType_ws .>> str_ws ">")
                 pMapName_ws
                 pEq_FieldNum_ws
-                (fun ktype vtype name num -> TMap(name,ktype,vtype,num) )
-            .>> eostm
+                (opt pFieldOption_ws |>> defArg List.empty)
+                (fun ktype vtype name num opts -> TMap(name,ktype,vtype,num,opts) )
+            .>> eostm_ws
 
         /// Parse extensions: "extensions" ranges ";"
         ///       ranges: range { "," range }
         ///       range: intLit | "to" ( intLit | "max" ) ]
         and pExtensions =
-            str_ws1 "extensions" >>. pRanges .>> str_ws ";"
+            str_ws1 "extensions" >>. pRanges .>> eostm_ws
             |>> (fun xs -> TExtensions xs)
 
         /// Parse reserved: "reserved" ranges ";"
@@ -560,7 +585,7 @@ module Parse =
                 sepBy1 (betweenQuotes pFieldName_ws) (str_ws ",")
                     |>> (fun xs -> TReservedNames xs)
 
-            str_ws1 "reserved" >>. (pResRanges <|> pResNames) .>> eostm
+            str_ws1 "reserved" >>. (pResRanges <|> pResNames) .>> eostm_ws
 
         // Parse list of ranges
         and internal pRanges =
@@ -589,20 +614,20 @@ module Parse =
 
         and internal pExtendCommon =
             (str_ws1 "extend" >>. pMessageType_ws)
-                .>>. betweenCurly (many (skipEmptyStmts >>. (attempt pExtendField <|> pExtendGroup) .>> skipEmptyStmts))
+                .>>. manyBetweenCurlySkippingEmpty (attempt pExtendField <|> pExtendGroup)
 
         /// Parse service: "service" serviceName "{" { option | rpc | emptyStatement } "}"
         and pService : Parser<PStatement,State> =
-            str_ws1 "service" >>. pServiceName_ws .>>.
-                (betweenCurly (many (skipEmptyStmts >>. (attempt pServiceOption <|> pRpc) .>> skipEmptyStmts)))
+            str_ws1 "service" >>. pServiceName_ws
+                .>>. manyBetweenCurlySkippingEmpty (attempt pServiceOption <|> pRpc)
             |>> TService
 
         /// Parse service options
         and pServiceOption =
-            pOption_ws |>> TServiceOption
+            str_ws1 "option" >>. pOption_ws |>> TServiceOption
 
-        /// Parse rpc: proto2: "rpc" rpcName "{" messageType ")" "returns" "(" messageType ")" [ "{" { option | emptyStatement } "}" ] ";"
-        /// Parse rpc: proto3: "rpc" rpcName "{" ["stream"] messageType ")" "returns" "(" ["stream"] messageType ")" [ "{" { option | emptyStatement } "}" ] ";"
+        /// Parse rpc: proto2: "rpc" rpcName "(" messageType ")" "returns" "(" messageType ")" [ "{" { option | emptyStatement } "}" ] ";"
+        /// Parse rpc: proto3: "rpc" rpcName "(" ["stream"] messageType ")" "returns" "(" ["stream"] messageType ")" [ "{" { option | emptyStatement } "}" ] ";"
         and pRpc =
             let pStrMessageType_P2 =
                 betweenParens pMessageType_ws
@@ -618,20 +643,24 @@ module Parse =
                     <|>
                 (isProto3 >>. pStrMessageType_P3)
 
+            let optionStatment = 
+                str_ws1 "option" >>. pOption_ws .>> eostm_ws
+
             let pRpcOptions =
-                betweenCurly
-                    (sepBy pOption_ws (str_ws ","))
+                manyBetweenCurlySkippingEmpty optionStatment
+
+            /// RPC with options don't have an eostm...
+            let pRpcOptionalOptions =
+                choice [ pRpcOptions; eostm_ws |>> (fun _ -> List.empty) ]
 
             pipe4
                 (str_ws1 "rpc" >>. pRpcName_ws)
                 pStrMessageType
                 (str_ws "returns" >>. pStrMessageType)
-                (opt pRpcOptions |>> defArg [])
+                pRpcOptionalOptions
                 (fun ident (bsReq,req) (bsResp,resp) opts ->
                     TRpc( ident, req, bsReq, resp, bsResp, opts)
                     )
-            .>> eostm
-
 
         /// Parse protobuf: proto2: syntax | import | package | option | message | enum | extend | service | emptyStatement
         /// Parse protobuf: proto2: syntax | import | package | option | message | enum | service | emptyStatement

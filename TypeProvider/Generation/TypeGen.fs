@@ -185,7 +185,7 @@ let rec createType scope (lookup: TypesLookup) (message: ProtoMessage) =
             message.Parts
             |> Seq.choose (fun x -> 
                 match x with 
-                | TMap(name, keyTy, valueTy, position) -> Some <| createMap nestedScope lookup name keyTy valueTy (int position) 
+                | TMap(name, keyTy, valueTy, position, _) -> Some <| createMap nestedScope lookup name keyTy valueTy (int position) 
                 | _ -> None)
             |> List.ofSeq
 
