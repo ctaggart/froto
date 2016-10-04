@@ -318,7 +318,7 @@ module Parse =
         let pOptionClause_ws = pLiteral_ws <|> pAggregateBlock_ws
 
         /// Parser for optionName: (ident | "(" fullIdent ")") {"." ident}
-        let rec pOptionName =
+        let pOptionName =
             let pIdentCustom_ws =
                 betweenParens pFullIdent_ws .>>. opt (many (str "." >>. pIdent_ws))
                 |>> fun (left, optRight) ->
@@ -329,10 +329,10 @@ module Parse =
             pIdent_ws <|> pIdentCustom_ws
 
         /// Parser for optionName + ws
-        and pOptionName_ws = pOptionName .>> ws
+        let pOptionName_ws = pOptionName .>> ws
 
         /// Parser for optionName "=" optionClause
-        and pOption_ws =
+        let pOption_ws =
             pOptionName_ws .>> str_ws "=" .>>. pOptionClause_ws
 
         /// Parser for option: "option" optionClause ";"
@@ -527,13 +527,8 @@ module Parse =
                 pType_ws
                 pFieldName_ws
                 pEq_FieldNum_ws
-                (opt pFieldOption_ws)
-                (fun typ ident num opts->
-                    let opts =
-                        match opts with
-                        | None -> []
-                        | Some(os) -> os
-                    TOneOfField (ident,typ,num,opts) )
+                (opt pFieldOption_ws |>> defArg List.empty)
+                (fun typ ident num opts-> TOneOfField (ident,typ,num,opts) )
             .>> eostm_ws
 
         /// Parse map: "map" "<" keyType "," type ">" manName "=" fieldNumber [ "[" fieldOptions "]" ] ";'
@@ -562,12 +557,13 @@ module Parse =
                     ]
                 ) .>> ws |>> toKType
 
-            pipe4
+            pipe5
                 (str_ws "map" >>. str_ws "<" >>. pKeyType_ws)
                 (str_ws "," >>. pType_ws .>> str_ws ">")
                 pMapName_ws
                 pEq_FieldNum_ws
-                (fun ktype vtype name num -> TMap(name,ktype,vtype,num) )
+                (opt pFieldOption_ws |>> defArg List.empty)
+                (fun ktype vtype name num opts -> TMap(name,ktype,vtype,num,opts) )
             .>> eostm_ws
 
         /// Parse extensions: "extensions" ranges ";"

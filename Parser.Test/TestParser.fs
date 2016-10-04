@@ -266,6 +266,112 @@ module OptionStatement =
         Parse.fromStringWithParser pOptionStatement @"option (test).field.more = true;"
         |> should equal (TOption ("test.field.more", TBoolLit true))
 
+    [<Fact>]
+    let ``Alternate option syntax parses`` () =
+        let option = """option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: "*" };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        let expectedResults =
+            [ ("put",  TStrLit "/v1/{name=projects/*/subscriptions/*}");
+              ("body", TStrLit "*") ]
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedResults )
+
+        result
+        |> should equal (expectedResult)
+
+    [<Fact>]
+    let ``Numeric option parses`` () =
+        let option = """option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: 1 };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        let expectedResults =
+            [ ("put",  TStrLit "/v1/{name=projects/*/subscriptions/*}");
+              ("body", TIntLit 1) ]
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedResults )
+
+        result
+        |> should equal (expectedResult)
+
+    [<Fact>]
+    let ``Recursive option parses`` () =
+        let option = """option (google.api.http) = {
+              get: "/v1/messages/{message_id}"
+              additional_bindings {
+                get: "/v1/users/{user_id}/messages/{message_id}"
+              }
+            };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        let expectedResults =
+            [ ("get",  TStrLit "/v1/messages/{message_id}");
+              ("additional_bindings", TAggregateOptionsLit [ ("get",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) ]
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedResults )
+
+        result
+        |> should equal (expectedResult)
+
+    [<Fact>]
+    let ``Two recursive options parses`` () =
+        let option = """option (google.api.http) = {
+              get: "/v1/messages/{message_id}"
+              additional_bindings {
+                get: "/v1/users/{user_id}/messages/{message_id}"
+              }
+              additional_bindings {
+                put: "/v1/users/{user_id}/messages/{message_id}"
+              }
+            };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        let expectedResults =
+            [ ("get",  TStrLit "/v1/messages/{message_id}");
+              ("additional_bindings", TAggregateOptionsLit [ ("get",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) 
+              ("additional_bindings", TAggregateOptionsLit [ ("put",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) ]
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedResults )
+
+        result
+        |> should equal (expectedResult)
+
+    [<Fact>]
+    let ``Two recursive options with empty statements parses`` () =
+        let option = """option (google.api.http) = {
+              ;
+              get: "/v1/messages/{message_id}"
+              ;
+              additional_bindings {
+                get: "/v1/users/{user_id}/messages/{message_id}"
+              }
+              ;
+              ;
+              additional_bindings {
+                put: "/v1/users/{user_id}/messages/{message_id}"
+              };
+            };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        let expectedResults =
+            [ ("get",  TStrLit "/v1/messages/{message_id}");
+              ("additional_bindings", TAggregateOptionsLit [ ("get",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) 
+              ("additional_bindings", TAggregateOptionsLit [ ("put",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) ]
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedResults )
+
+        result
+        |> should equal (expectedResult)
+
+    [<Fact>]
+    let ``Option with only empty statement parses`` () =
+        let option = """option (google.api.http) = {
+              ;
+            };"""
+        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
+
+        let expectedResults =
+            List.Empty
+        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedResults )
+
+        result
+        |> should equal (expectedResult)
+
 [<Xunit.Trait("Kind", "Unit")>]
 module Message =
 
@@ -293,6 +399,17 @@ module Message =
                     )
 
     [<Fact>]
+    let ``Field with alt syntax options parses`` () =
+        Parse.fromStringWithParser pField @"repeated sint32 samples=2 [(custom) = { option:2 another:false }];"
+        |> should equal
+           (TField( "samples",
+                    TRepeated,
+                    TSInt32,
+                    2u,
+                    [ "custom",TAggregateOptionsLit( [ ("option",TIntLit 2); ("another",TBoolLit false) ] ) ]
+                    ))
+
+    [<Fact>]
     let ``Parse simple message`` () =
         Parse.fromStringWithParser (ws >>. pMessage .>> ws)
             """message Echo {
@@ -302,6 +419,21 @@ module Message =
         |> should equal
         <| TMessage ("Echo",
             [   TField( "msg", TRequired, TString, 1u, [] )
+                TField( "blob", TRequired, TBytes, 2u, [ ("myopt",TStrLit("yes")) ])
+            ])
+
+    [<Fact>]
+    let ``Parse simple message with option`` () =
+        Parse.fromStringWithParser (ws >>. pMessage .>> ws)
+            """message Echo {
+                    option (foo) = "bar";
+                    required string msg=1;
+                    required bytes  blob=2 [(myopt)="yes"] ;
+                }"""
+        |> should equal
+        <| TMessage ("Echo",
+            [   TMessageOption( "foo", TStrLit "bar")
+                TField( "msg", TRequired, TString, 1u, [] )
                 TField( "blob", TRequired, TBytes, 2u, [ ("myopt",TStrLit("yes")) ])
             ])
 
@@ -317,6 +449,20 @@ module Message =
             )
 
     [<Fact>]
+    let ``Parse group with option`` () =
+        Parse.fromStringWithParser (ws >>. pGroup) """
+            optional group MyGroup = 41 {
+                optional string abc = 42;
+                option (foo) = "bar";
+                }"""
+        |> should equal
+        <| TGroup( "MyGroup", TOptional, 41u,
+            [ TField( "abc", TOptional, TString, 42u, [] )
+              TMessageOption( "foo", TStrLit "bar" )
+            ]
+            )
+
+    [<Fact>]
     let ``Parse oneof`` () =
         Parse.fromStringWithParser (ws >>. pOneOf) """
             oneof MyOneof {
@@ -326,11 +472,27 @@ module Message =
         <| TOneOf("MyOneof", [ TOneOfField("name",TString,1u,[]) ])
 
     [<Fact>]
+    let ``Parse oneof with field option`` () =
+        Parse.fromStringWithParser (ws >>. pOneOf) """
+            oneof MyOneof {
+                string name = 1 [(foo)="bar"];
+                }"""
+        |> should equal
+        <| TOneOf("MyOneof", [ TOneOfField("name",TString,1u,[("foo",TStrLit("bar"))]) ])
+
+    [<Fact>]
     let ``Parse map`` () =
         Parse.fromStringWithParser (ws >>. pMap) """
             map<string,Project> projects = 3;"""
         |> should equal
-        <| TMap ("projects", TKString, TIdent("Project"), 3u)
+        <| TMap ("projects", TKString, TIdent("Project"), 3u, [])
+
+    [<Fact>]
+    let ``Parse map with option`` () =
+        Parse.fromStringWithParser (ws >>. pMap) """
+            map<string,Project> projects = 3 [(foo)="bar"];"""
+        |> should equal
+        <| TMap ("projects", TKString, TIdent("Project"), 3u, ["foo",TStrLit("bar")])
 
     [<Fact>]
     let ``Parse extensions`` () =
@@ -366,7 +528,7 @@ module Message =
             "bar" ]
 
     [<Fact>]
-    let ``Parse enum`` () =
+    let ``Parse enum with option`` () =
         Parse.fromStringWithParser (ws >>. pMessageEnum) """
             enum EnumAllowingAlias {
                 option allow_alias = true;
@@ -421,6 +583,23 @@ module Service =
         |> should equal (TRpc ("TestMethod", "outer", false, "foo", false, []))
 
     [<Fact>]
+    let ``Parse rpc with optional option syntax`` () =
+        let expectedResults =
+            [ ("get", TStrLit "/v1/{name=projects/*/subscriptions/*}") ]
+
+        let actual = 
+            Parse.fromStringWithParser pRpc ("""
+            rpc TestMethod (outer) returns (foo) {
+                option (google.api.http) = { get: "/v1/{name=projects/*/subscriptions/*}" };
+            }
+            """.Trim())
+
+        let expected = TRpc ("TestMethod", "outer", false, "foo", false, 
+                        [ "google.api.http", PConstant.TAggregateOptionsLit expectedResults ])
+
+        actual |> should equal expected
+
+    [<Fact>]
     let ``Parse service`` () =
         Parse.fromStringWithParser (ws >>. pService) """
             service TestService {
@@ -433,7 +612,7 @@ module Service =
                 ]))
 
     [<Fact>]
-    let ``Parse service and rpc with options and empty statements`` () =
+    let ``Parse service with rpc, options, and empty statements`` () =
         Parse.fromStringWithParser (ws >>. pService) """
             service TestService {
                 ; // empty
@@ -530,7 +709,7 @@ module Proto =
                         TMessageMessage ( "inner", [ TField ("ival", TRequired, TInt64, 1u, [] ) ])
                         TField ("inner_message", TRepeated, TIdent "inner", 2u, [])
                         TField ("enum_field", TOptional, TIdent "EnumAllowingAlias", 3u, [])
-                        TMap ("my_map", TKInt32, TString, 4u)
+                        TMap ("my_map", TKInt32, TString, 4u, [])
                         TExtensions ( [ (20u,Some(30u)) ])
                     ])
             ]
@@ -614,7 +793,7 @@ module Proto =
                         TMessageMessage ( "inner", [ TField ("ival", TRequired, TInt64, 1u, [] ) ])
                         TField ("inner_message", TRepeated, TIdent "inner", 2u, [])
                         TField ("enum_field", TOptional, TIdent "EnumAllowingAlias", 3u, [])
-                        TMap ("my_map", TKInt32, TString, 4u)
+                        TMap ("my_map", TKInt32, TString, 4u, [])
                         TExtensions ( [ (20u,Some(30u)) ])
                     ])
                 TMessage ( "foo",
@@ -633,7 +812,7 @@ module Proto =
 
     [<Fact>]
     let ``Parse proto with optional option syntax`` () =
-        let expectedMapResult =
+        let expectedResults =
             [ ("put",  TStrLit "/v1/{name=projects/*/subscriptions/*}");
               ("body", TStrLit "*") ]
 
@@ -653,28 +832,12 @@ module Proto =
                     [
                         TRpc ("TestMethod", "outer", false, "foo", false, 
                             [
-                                "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult
+                                "google.api.http", PConstant.TAggregateOptionsLit expectedResults
                             ])
                     ])
             ]
         )
 
-    [<Fact>]
-    let ``Parse rpc optional option syntax`` () =
-        let expectedMapResult =
-            [ ("get", TStrLit "/v1/{name=projects/*/subscriptions/*}") ]
-
-        let actual = 
-            Parse.fromStringWithParser pRpc ("""
-            rpc TestMethod (outer) returns (foo) {
-                option (google.api.http) = { get: "/v1/{name=projects/*/subscriptions/*}" };
-            }
-            """.Trim())
-
-        let expected = TRpc ("TestMethod", "outer", false, "foo", false, 
-                        [ "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult ])
-
-        actual |> should equal expected
 
     open System.IO
 
@@ -792,113 +955,6 @@ module Proto3 =
 		        }
             """ |> ignore
         |> should throw typeof<System.FormatException>
-
-        
-    [<Fact>]
-    let ``Proto3 grpc option strings`` () =
-        let option = """option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: "*" };"""
-        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
-
-        let expectedMapResult =
-            [ ("put",  TStrLit "/v1/{name=projects/*/subscriptions/*}");
-              ("body", TStrLit "*") ]
-        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
-
-        result
-        |> should equal (expectedResult)
-
-    [<Fact>]
-    let ``Proto3 grpc option numeric`` () =
-        let option = """option (google.api.http) = { put: "/v1/{name=projects/*/subscriptions/*}" body: 1 };"""
-        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
-
-        let expectedMapResult =
-            [ ("put",  TStrLit "/v1/{name=projects/*/subscriptions/*}");
-              ("body", TIntLit 1) ]
-        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
-
-        result
-        |> should equal (expectedResult)
-
-    [<Fact>]
-    let ``Proto3 grpc option recursive`` () =
-        let option = """option (google.api.http) = {
-              get: "/v1/messages/{message_id}"
-              additional_bindings {
-                get: "/v1/users/{user_id}/messages/{message_id}"
-              }
-            };"""
-        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
-
-        let expectedMapResult =
-            [ ("get",  TStrLit "/v1/messages/{message_id}");
-              ("additional_bindings", TAggregateOptionsLit [ ("get",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) ]
-        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
-
-        result
-        |> should equal (expectedResult)
-
-    [<Fact>]
-    let ``Proto3 grpc option two recursive options`` () =
-        let option = """option (google.api.http) = {
-              get: "/v1/messages/{message_id}"
-              additional_bindings {
-                get: "/v1/users/{user_id}/messages/{message_id}"
-              }
-              additional_bindings {
-                put: "/v1/users/{user_id}/messages/{message_id}"
-              }
-            };"""
-        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
-
-        let expectedMapResult =
-            [ ("get",  TStrLit "/v1/messages/{message_id}");
-              ("additional_bindings", TAggregateOptionsLit [ ("get",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) 
-              ("additional_bindings", TAggregateOptionsLit [ ("put",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) ]
-        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
-
-        result
-        |> should equal (expectedResult)
-
-    [<Fact>]
-    let ``Proto3 grpc option two recursive options with empty statements`` () =
-        let option = """option (google.api.http) = {
-              ;
-              get: "/v1/messages/{message_id}"
-              ;
-              additional_bindings {
-                get: "/v1/users/{user_id}/messages/{message_id}"
-              }
-              ;
-              ;
-              additional_bindings {
-                put: "/v1/users/{user_id}/messages/{message_id}"
-              };
-            };"""
-        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
-
-        let expectedMapResult =
-            [ ("get",  TStrLit "/v1/messages/{message_id}");
-              ("additional_bindings", TAggregateOptionsLit [ ("get",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) 
-              ("additional_bindings", TAggregateOptionsLit [ ("put",  TStrLit "/v1/users/{user_id}/messages/{message_id}") ]) ]
-        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
-
-        result
-        |> should equal (expectedResult)
-
-    [<Fact>]
-    let ``Proto3 grpc option with only empty statement`` () =
-        let option = """option (google.api.http) = {
-              ;
-            };"""
-        let result = Parse.fromStringWithParser Parse.Parsers.pOptionStatement option
-
-        let expectedMapResult =
-            List.Empty
-        let expectedResult = TOption( "google.api.http", PConstant.TAggregateOptionsLit expectedMapResult )
-
-        result
-        |> should equal (expectedResult)
 
 
 [<Xunit.Trait("Kind", "Unit")>]

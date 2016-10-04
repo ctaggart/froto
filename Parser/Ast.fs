@@ -71,7 +71,7 @@ and PConstant =
 // TMessage
 and PMessageStatement =
     | TField of TIdent * PLabel * PType * FieldNum * POption list
-    | TMap of TIdent * PKeyType * PType * FieldNum
+    | TMap of TIdent * PKeyType * PType * FieldNum * POption list
     | TGroup of TIdent * PLabel * FieldNum * PMessageStatement list // proto2
     | TExtensions of TRange list // proto2
     | TReservedRanges of TRange list
@@ -86,7 +86,7 @@ and PMessageStatement =
         override x.ToString() =
             match x with
             | TField (id, lbl, vt, num, opts)   -> sprintf "TField (%s,%A,%A,%u,[%A])" id lbl vt num opts
-            | TMap (id, kt, vt, num)            -> sprintf "TMap (%s,%A,%A,%u)" id kt vt num
+            | TMap (id, kt, vt, num, opts)      -> sprintf "TMap (%s,%A,%A,%u,[%A])" id kt vt num opts
             | TGroup (id, lbl, num, xs)         -> sprintf "TGroup (%s,%A,%u,%A)" id lbl num xs
             | TExtensions (es)                  -> sprintf "TExtensions %A" es
             | TReservedRanges (rs)              -> sprintf "TReservedRanges %A" rs
