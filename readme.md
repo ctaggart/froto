@@ -8,7 +8,7 @@
 ## NuGet
 * [Froto.Parser](http://www.nuget.org/packages/Froto.Parser) - Protocol Buffers Parser. Supports [proto2](https://developers.google.com/protocol-buffers/docs/proto), [proto3](https://developers.google.com/protocol-buffers/docs/proto3), & [gRPC](http://www.grpc.io/docs/guides/concepts.html) syntax.
 * [Froto.Serialization](http://www.nuget.org/packages/Froto.Serialization) - Protobuf F# Serialization Framework and low-level WireFormat library.
-* [Froto.TypeProvider](http://www.nuget.org/packages/Froto.TypeProvdider) - A type provider for Protocol Buffers. Supports proto2 so far. [Example usage](https://github.com/ctaggart/froto/blob/master/docs/type-provider/type-provider.md).
+* [Froto.TypeProvider](http://www.nuget.org/packages/Froto.TypeProvider) - A type provider for Protocol Buffers. Supports proto2 so far. [Example usage](https://github.com/ctaggart/froto/blob/master/docs/type-provider/type-provider.md).
 
 ## Status
 * 0.4.0 2016-10 Parser now supports gRPC. New Froto.TypeProvider package with support for proto2.
