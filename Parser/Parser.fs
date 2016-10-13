@@ -720,3 +720,58 @@ module Parse =
     /// Parse proto from a file.  Throws System.FormatException on failure.
     let fromFile fileName =
         fromFileWithParser Parsers.pProto fileName
+
+    /// Resolve imports using provided `fetch` function, each parsed with supplied `parse` function.
+    /// Returns list of (filename, ast) tuples.
+    /// Public imports are replaced in-line.
+    /// Weak imports ignore failure to fetch the import.
+    /// TODO: Should `import weak "filename"` ignore ALL errors?  Or just FileNotFound?
+    let rec resolveImports
+                (parse:'a -> Ast.PProto)
+                (fetch: string -> 'a)
+                (name:string,source:Ast.PProto)
+                    : (string * Ast.PProto) list =
+
+        // First, resolve public imports
+        let rec insertPublic (xs:Ast.PProto) : Ast.PProto =
+            let processStatement x acc =
+                match x with
+                | Ast.TImport( name, Ast.TPublic ) ->
+                    let imp =
+                        name
+                        |> fetch
+                        |> parse
+                        |> insertPublic
+                    imp @ acc
+                | statement ->
+                    statement :: acc
+            List.foldBack processStatement xs []
+
+        // Next, try to resovle weak imports
+
+            // TODO: implement - same as loadImports, but ignore fetch exceptions
+
+        // Finally, resolve normal imports
+        let loadImports parse (xs:Ast.PProto) =
+            xs
+            |> List.choose (function
+                | Ast.TImport (name, Ast.TNormal) -> Some(name) 
+                | _ -> None
+                )
+            |> List.map (fun name ->
+                name
+                |> fetch
+                |> parse
+                |> fun ast -> (name, ast)
+                |> resolveImports parse fetch
+                )
+            |> List.concat
+
+        let source =
+            source
+            |> insertPublic
+
+        source
+        |> loadImports parse
+        |> fun imports -> (name, source) :: imports
+

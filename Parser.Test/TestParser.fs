@@ -1043,3 +1043,95 @@ module Proto2 =
 		        }
             """ |> ignore
         |> should not' (throw typeof<System.FormatException>)
+
+[<Xunit.Trait("Kind", "Unit")>]
+module Import =
+
+    [<Fact>]
+    let ``Resolve Import Statement`` () =
+        let src = """
+            syntax = "proto2";
+
+            import "import.proto";
+
+            message Test {
+                optional MyEnum a = 1;
+                }
+            """
+
+        let fetch = function
+            | "import.proto" ->
+                    """
+                    enum MyEnum {
+                        DEFAULT = 0;
+                        ONE = 1;
+                        }
+                    """
+            | s -> raise <| System.ArgumentOutOfRangeException(s)
+
+        let ast =
+            src
+            |> Parse.fromString
+            |> fun ast -> ("test.proto", ast)
+            |> Parse.resolveImports Parse.fromString fetch
+
+        ast |> should equal (
+            [ ("test.proto", [
+                TSyntax TProto2
+                TImport ("import.proto", TNormal)
+                TMessage ("Test",
+                    [
+                        TField ("a", TOptional, TIdent("MyEnum"), 1u, [])
+                    ])
+              ]);
+              ("import.proto", [
+                TEnum ("MyEnum",
+                    [
+                       TEnumField ("DEFAULT", 0, [])
+                       TEnumField ("ONE", 1, []) 
+                    ])
+              ])
+            ])
+
+    [<Fact>]
+    let ``Resolve Public Import Statement`` () =
+        let src = """
+            syntax = "proto2";
+
+            import public "import.proto";
+
+            message Test {
+                optional MyEnum a = 1;
+                }
+            """
+
+        let fetch = function
+            | "import.proto" ->
+                    """
+                    enum MyEnum {
+                        DEFAULT = 0;
+                        ONE = 1;
+                        }
+                    """
+            | s -> raise <| System.ArgumentOutOfRangeException(s)
+
+        let ast =
+            src
+            |> Parse.fromString
+            |> fun ast -> ("test.proto", ast)
+            |> Parse.resolveImports Parse.fromString fetch
+
+        ast |> should equal (
+            [ ("test.proto", [
+                TSyntax TProto2
+                TEnum ("MyEnum",
+                    [
+                       TEnumField ("DEFAULT", 0, [])
+                       TEnumField ("ONE", 1, []) 
+                    ])
+                TMessage ("Test",
+                    [
+                        TField ("a", TOptional, TIdent("MyEnum"), 1u, [])
+                    ])
+              ])
+            ])

@@ -24,14 +24,14 @@ and PStatement =
             | TSyntax s -> sprintf "TSyntax %A" s
             | TImport (s,v) -> sprintf "TImport (\"%s\",%A)" s v
             | TPackage id -> sprintf "TPackage \"%s\"" id
-            | TOption (n,v) -> sprintf "TOption (%s,%A)" n v
+            | TOption (n,v) -> sprintf "TOption (\"%s\",%A)" n v
             | TMessage (id, xs) ->
-                sprintf "TMessage (%s,[%s]" id
+                sprintf "TMessage (\"%s\",[%s]" id
                     ( xs |> List.map (sprintf "%A")
                          |> List.reduce (sprintf "%s;%s") )
-            | TEnum (id, xs) -> sprintf "TEnum (%s,%A)" id xs
-            | TExtend (id,xs) -> sprintf "TEnum (%s,%A)" id xs
-            | TService (id,xs) -> sprintf "TService (%s,%A)" id xs
+            | TEnum (id, xs) -> sprintf "TEnum (\"%s\",%A)" id xs
+            | TExtend (id,xs) -> sprintf "TEnum (\"%s\",%A)" id xs
+            | TService (id,xs) -> sprintf "TService (\"%s\",%A)" id xs
 
 // TSyntax
 and PSyntax =
