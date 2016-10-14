@@ -1136,18 +1136,18 @@ module Import =
 
     [<Fact>]
     let ``Resolve Import Statement`` () =
-        let src = """
-            syntax = "proto2";
-
-            import "import.proto";
-
-            message Test {
-                optional MyEnum a = 1;
-                }
-            """
-
         let fetch name =
             let aux = function
+                | "test.proto" ->
+                        """
+                        syntax = "proto2";
+
+                        import "import.proto";
+
+                        message Test {
+                            optional MyEnum a = 1;
+                            }
+                        """
                 | "import.proto" ->
                         """
                         enum MyEnum {
@@ -1162,9 +1162,8 @@ module Import =
             (name, Parse.fromString s)
 
         let ast =
-            src
-            |> Parse.fromString
-            |> fun ast -> ("test.proto", ast)
+            fetch "test.proto"
+            |> parse
             |> Parse.resolveImports fetch parse
 
         ast |> should equal (
@@ -1186,18 +1185,18 @@ module Import =
 
     [<Fact>]
     let ``Resolve Recursive Import Statements`` () =
-        let src = """
-            syntax = "proto2";
-
-            import "import.proto";
-
-            message Test {
-                optional MyEnum a = 1;
-                }
-            """
-
         let fetch name =
             let aux = function
+                | "test.proto" ->
+                        """
+                        syntax = "proto2";
+
+                        import "import.proto";
+
+                        message Test {
+                            optional MyEnum a = 1;
+                            }
+                        """
                 | "import.proto" ->
                         """
                         import "inner.proto";
@@ -1216,9 +1215,8 @@ module Import =
             (name, Parse.fromString s)
 
         let ast =
-            src
-            |> Parse.fromString
-            |> fun ast -> ("test.proto", ast)
+            fetch "test.proto"
+            |> parse
             |> Parse.resolveImports fetch parse
 
         ast |> should equal (
@@ -1241,12 +1239,12 @@ module Import =
 
     [<Fact>]
     let ``Missing import throws`` () =
-        let src = """
-            import "missing.proto";
-            """
-
         let fetch name =
             let aux = function
+                | "test.proto" ->
+                    """
+                    import "missing.proto";
+                    """
                 | s -> raise <| System.IO.FileNotFoundException(s)
             (name, aux name)
 
@@ -1254,27 +1252,26 @@ module Import =
             (name, Parse.fromString s)
 
         fun () ->
-            src
-            |> Parse.fromString
-            |> fun ast -> ("test.proto", ast)
+            fetch "test.proto"
+            |> parse
             |> Parse.resolveImports fetch parse
             |> ignore
         |> should throw typeof<System.IO.FileNotFoundException>
 
     [<Fact>]
     let ``Resolve Public Import Statement`` () =
-        let src = """
-            syntax = "proto2";
-
-            import public "import.proto";
-
-            message Test {
-                optional MyEnum a = 1;
-                }
-            """
-
         let fetch name =
             let aux = function
+                | "test.proto" ->
+                        """
+                        syntax = "proto2";
+
+                        import public "import.proto";
+
+                        message Test {
+                            optional MyEnum a = 1;
+                            }
+                        """
                 | "import.proto" ->
                         """
                         enum MyEnum {
@@ -1289,9 +1286,8 @@ module Import =
             (name, Parse.fromString s)
 
         let ast =
-            src
-            |> Parse.fromString
-            |> fun ast -> ("test.proto", ast)
+            fetch "test.proto"
+            |> parse
             |> Parse.resolveImports fetch parse
 
         ast |> should equal (
@@ -1311,18 +1307,18 @@ module Import =
 
     [<Fact>]
     let ``Resolve recursive Public Import Statement`` () =
-        let src = """
-            syntax = "proto2";
-
-            import public "import.proto";
-
-            message Test {
-                optional MyEnum a = 1;
-                }
-            """
-
         let fetch name =
             let aux = function
+                | "test.proto" ->
+                        """
+                        syntax = "proto2";
+
+                        import public "import.proto";
+
+                        message Test {
+                            optional MyEnum a = 1;
+                            }
+                        """
                 | "import.proto" ->
                         """
                         import public "inner.proto";
@@ -1341,9 +1337,8 @@ module Import =
             (name, Parse.fromString s)
 
         let ast =
-            src
-            |> Parse.fromString
-            |> fun ast -> ("test.proto", ast)
+            fetch "test.proto"
+            |> parse
             |> Parse.resolveImports fetch parse
 
         ast |> should equal (
@@ -1363,12 +1358,12 @@ module Import =
 
     [<Fact>]
     let ``Missing public import throws`` () =
-        let src = """
-            import "missing.proto";
-            """
-
         let fetch name =
             let aux = function
+                | "test.proto" ->
+                    """
+                    import "missing.proto";
+                    """
                 | s -> raise <| System.IO.FileNotFoundException(s)
             (name, aux name)
 
@@ -1376,9 +1371,8 @@ module Import =
             (name, Parse.fromString s)
 
         fun () ->
-            src
-            |> Parse.fromString
-            |> fun ast -> ("test.proto", ast)
+            fetch "test.proto"
+            |> parse
             |> Parse.resolveImports fetch parse
             |> ignore
         |> should throw typeof<System.IO.FileNotFoundException>
@@ -1386,19 +1380,19 @@ module Import =
 
     [<Fact>]
     let ``Resolve Weak Import Statement and ignore missing weak import`` () =
-        let src = """
-            syntax = "proto2";
-
-            import weak "import.proto";
-            import weak "missing.proto";
-
-            message Test {
-                optional MyEnum a = 1;
-                }
-            """
-
         let fetch name =
             let aux = function
+                | "test.proto" ->
+                        """
+                        syntax = "proto2";
+
+                        import weak "import.proto";
+                        import weak "missing.proto";
+
+                        message Test {
+                            optional MyEnum a = 1;
+                            }
+                        """
                 | "import.proto" ->
                         """
                         enum MyEnum {
@@ -1413,9 +1407,8 @@ module Import =
             (name, Parse.fromString s)
 
         let ast =
-            src
-            |> Parse.fromString
-            |> fun ast -> ("test.proto", ast)
+            fetch "test.proto"
+            |> parse
             |> Parse.resolveImports fetch parse
 
         ast |> should equal (
