@@ -1136,9 +1136,9 @@ module Import =
 
     [<Fact>]
     let ``Resolve Import Statement`` () =
-        let fetch name =
-            let aux = function
-                | "test.proto" ->
+        let files =
+            [
+                "test.proto",
                         """
                         syntax = "proto2";
 
@@ -1148,24 +1148,18 @@ module Import =
                             optional MyEnum a = 1;
                             }
                         """
-                | "import.proto" ->
+
+                "import.proto",
                         """
                         enum MyEnum {
                             DEFAULT = 0;
                             ONE = 1;
                             }
                         """
-                | s -> raise <| System.IO.FileNotFoundException(s)
-            (name, aux name)
-
-        let parse (name, s) =
-            (name, Parse.fromString s)
-
-        let ast =
-            fetch "test.proto"
-            |> parse
-            |> Parse.resolveImports fetch parse
-
+            ] |> Map.ofList
+        
+        let ast = files |> Parse.loadFromString "test.proto"
+        
         ast |> should equal (
             [ ("test.proto", [
                 TSyntax TProto2
@@ -1185,9 +1179,9 @@ module Import =
 
     [<Fact>]
     let ``Resolve Recursive Import Statements`` () =
-        let fetch name =
-            let aux = function
-                | "test.proto" ->
+        let files =
+            [
+                "test.proto",
                         """
                         syntax = "proto2";
 
@@ -1197,27 +1191,20 @@ module Import =
                             optional MyEnum a = 1;
                             }
                         """
-                | "import.proto" ->
+                "import.proto",
                         """
                         import "inner.proto";
                         """
-                | "inner.proto" ->
+                "inner.proto",
                         """
                         enum MyEnum {
                             DEFAULT = 0;
                             ONE = 1;
                             }
                         """
-                | s -> raise <| System.IO.FileNotFoundException(s)
-            (name, aux name)
+            ] |> Map.ofList
 
-        let parse (name, s) =
-            (name, Parse.fromString s)
-
-        let ast =
-            fetch "test.proto"
-            |> parse
-            |> Parse.resolveImports fetch parse
+        let ast = files |> Parse.loadFromString "test.proto"
 
         ast |> should equal (
             [ ("test.proto", [
@@ -1239,56 +1226,45 @@ module Import =
 
     [<Fact>]
     let ``Missing import throws`` () =
-        let fetch name =
-            let aux = function
-                | "test.proto" ->
+
+        let files =
+            [
+                "test.proto",
                     """
                     import public "missing.proto";
                     """
-                | s -> raise <| System.IO.FileNotFoundException(s)
-            (name, aux name)
-
-        let parse (name, s) =
-            (name, Parse.fromString s)
+            ] |> Map.ofList
 
         fun () ->
-            fetch "test.proto"
-            |> parse
-            |> Parse.resolveImports fetch parse
+            files
+            |> Parse.loadFromString "test.proto"
             |> ignore
         |> should throw typeof<System.IO.FileNotFoundException>
 
     [<Fact>]
     let ``Resolve Public Import Statement`` () =
-        let fetch name =
-            let aux = function
-                | "test.proto" ->
-                        """
-                        syntax = "proto2";
+        let files =
+            [
+                "test.proto",
+                    """
+                    syntax = "proto2";
 
-                        import public "import.proto";
+                    import public "import.proto";
 
-                        message Test {
-                            optional MyEnum a = 1;
-                            }
-                        """
-                | "import.proto" ->
-                        """
-                        enum MyEnum {
-                            DEFAULT = 0;
-                            ONE = 1;
-                            }
-                        """
-                | s -> raise <| System.IO.FileNotFoundException(s)
-            (name, aux name)
+                    message Test {
+                        optional MyEnum a = 1;
+                        }
+                    """
+                "import.proto",
+                    """
+                    enum MyEnum {
+                        DEFAULT = 0;
+                        ONE = 1;
+                        }
+                    """
+            ] |> Map.ofList
 
-        let parse (name, s) =
-            (name, Parse.fromString s)
-
-        let ast =
-            fetch "test.proto"
-            |> parse
-            |> Parse.resolveImports fetch parse
+        let ast = files |> Parse.loadFromString "test.proto"
 
         ast |> should equal (
             [ ("test.proto", [
@@ -1307,39 +1283,32 @@ module Import =
 
     [<Fact>]
     let ``Resolve recursive Public Import Statement`` () =
-        let fetch name =
-            let aux = function
-                | "test.proto" ->
-                        """
-                        syntax = "proto2";
+        let files =
+            [
+                "test.proto",
+                    """
+                    syntax = "proto2";
 
-                        import public "import.proto";
+                    import public "import.proto";
 
-                        message Test {
-                            optional MyEnum a = 1;
-                            }
+                    message Test {
+                        optional MyEnum a = 1;
+                        }
+                    """
+                "import.proto",
+                    """
+                    import public "inner.proto";
+                    """
+                "inner.proto",
+                    """
+                    enum MyEnum {
+                        DEFAULT = 0;
+                        ONE = 1;
+                        }
                         """
-                | "import.proto" ->
-                        """
-                        import public "inner.proto";
-                        """
-                | "inner.proto" ->
-                        """
-                        enum MyEnum {
-                            DEFAULT = 0;
-                            ONE = 1;
-                            }
-                        """
-                | s -> raise <| System.IO.FileNotFoundException(s)
-            (name, aux name)
+            ] |> Map.ofList
 
-        let parse (name, s) =
-            (name, Parse.fromString s)
-
-        let ast =
-            fetch "test.proto"
-            |> parse
-            |> Parse.resolveImports fetch parse
+        let ast = files |> Parse.loadFromString "test.proto"
 
         ast |> should equal (
             [ ("test.proto", [
@@ -1358,58 +1327,46 @@ module Import =
 
     [<Fact>]
     let ``Missing public import throws`` () =
-        let fetch name =
-            let aux = function
-                | "test.proto" ->
+        let files =
+            [
+                "test.proto",
                     """
                     import "missing.proto";
                     """
-                | s -> raise <| System.IO.FileNotFoundException(s)
-            (name, aux name)
-
-        let parse (name, s) =
-            (name, Parse.fromString s)
+            ] |> Map.ofList
 
         fun () ->
-            fetch "test.proto"
-            |> parse
-            |> Parse.resolveImports fetch parse
+            files
+            |> Parse.loadFromString "test.proto"
             |> ignore
         |> should throw typeof<System.IO.FileNotFoundException>
 
 
     [<Fact>]
     let ``Resolve Weak Import Statement and ignore missing weak import`` () =
-        let fetch name =
-            let aux = function
-                | "test.proto" ->
-                        """
-                        syntax = "proto2";
+        let files =
+            [
+                "test.proto",
+                    """
+                    syntax = "proto2";
 
-                        import weak "import.proto";
-                        import weak "missing.proto";
+                    import weak "import.proto";
+                    import weak "missing.proto";
 
-                        message Test {
-                            optional MyEnum a = 1;
-                            }
-                        """
-                | "import.proto" ->
-                        """
-                        enum MyEnum {
-                            DEFAULT = 0;
-                            ONE = 1;
-                            }
-                        """
-                | s -> raise <| System.IO.FileNotFoundException(s)
-            (name, aux name)
+                    message Test {
+                        optional MyEnum a = 1;
+                        }
+                    """
+                "import.proto",
+                    """
+                    enum MyEnum {
+                        DEFAULT = 0;
+                        ONE = 1;
+                        }
+                    """
+            ] |> Map.ofList
 
-        let parse (name, s) =
-            (name, Parse.fromString s)
-
-        let ast =
-            fetch "test.proto"
-            |> parse
-            |> Parse.resolveImports fetch parse
+        let ast = files |> Parse.loadFromString "test.proto"
 
         ast |> should equal (
             [ ("test.proto", [

@@ -752,7 +752,7 @@ module Parse =
 
         // Wrap fetcher to ignore FNF exception on weak import
         let selectFetcher = function
-        | Ast.TNormal -> fun source -> Some(fetch source)
+        | Ast.TNormal -> fetch >> Some
         | Ast.TPublic -> fun _ -> None
         | Ast.TWeak   -> fun source -> try Some(fetch source) with :? System.IO.FileNotFoundException -> None
 
@@ -788,4 +788,36 @@ module Parse =
         (name, source)
         |> inlineImports
         |> loadImports
+
+    let fetchFromMap filesMap =
+        fun filename ->
+            match filesMap |> Map.tryFind filename with
+            | Some(source) -> (filename, source)
+            | None -> raise <| System.IO.FileNotFoundException(filename)
+
+    let fetchFromFile dirsList =
+        fun filename ->
+            let optFullPath =
+                dirsList
+                |> Seq.map (fun dir -> System.IO.Path.Combine(dir,filename))
+                |> Seq.tryFind (fun fn -> System.IO.File.Exists(fn))
+            match optFullPath with
+            | Some(fullPath) -> (fullPath,System.IO.File.OpenRead(fullPath))
+            | None -> raise <| System.IO.FileNotFoundException(filename)
+
+    let parseFromString (filename,string) =
+        (filename, fromString string)
+
+    let parseFromStream (filename,stream) =
+        (filename, fromStream filename stream)
+
+    let loadFromString fileName filesMap =
+        fetchFromMap filesMap fileName
+        |> parseFromString
+        |> resolveImports (fetchFromMap filesMap) parseFromString
+
+    let loadFromFile fileName dirsList =
+        fetchFromFile dirsList fileName
+        |> parseFromStream
+        |> resolveImports (fetchFromFile dirsList) parseFromStream
 
