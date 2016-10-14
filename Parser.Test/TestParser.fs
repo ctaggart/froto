@@ -1059,26 +1059,30 @@ module Import =
                 }
             """
 
-        let fetch = function
-            | "import.proto" ->
-                    """
-                    enum MyEnum {
-                        DEFAULT = 0;
-                        ONE = 1;
-                        }
-                    """
-            | s -> raise <| System.ArgumentOutOfRangeException(s)
+        let fetch name =
+            let aux = function
+                | "import.proto" ->
+                        """
+                        enum MyEnum {
+                            DEFAULT = 0;
+                            ONE = 1;
+                            }
+                        """
+                | s -> raise <| System.IO.FileNotFoundException(s)
+            (name, aux name)
+
+        let parse (name, s) =
+            (name, Parse.fromString s)
 
         let ast =
             src
             |> Parse.fromString
             |> fun ast -> ("test.proto", ast)
-            |> Parse.resolveImports Parse.fromString fetch
+            |> Parse.resolveImports fetch parse
 
         ast |> should equal (
             [ ("test.proto", [
                 TSyntax TProto2
-                TImport ("import.proto", TNormal)
                 TMessage ("Test",
                     [
                         TField ("a", TOptional, TIdent("MyEnum"), 1u, [])
@@ -1094,6 +1098,83 @@ module Import =
             ])
 
     [<Fact>]
+    let ``Resolve Recursive Import Statements`` () =
+        let src = """
+            syntax = "proto2";
+
+            import "import.proto";
+
+            message Test {
+                optional MyEnum a = 1;
+                }
+            """
+
+        let fetch name =
+            let aux = function
+                | "import.proto" ->
+                        """
+                        import "inner.proto";
+                        """
+                | "inner.proto" ->
+                        """
+                        enum MyEnum {
+                            DEFAULT = 0;
+                            ONE = 1;
+                            }
+                        """
+                | s -> raise <| System.IO.FileNotFoundException(s)
+            (name, aux name)
+
+        let parse (name, s) =
+            (name, Parse.fromString s)
+
+        let ast =
+            src
+            |> Parse.fromString
+            |> fun ast -> ("test.proto", ast)
+            |> Parse.resolveImports fetch parse
+
+        ast |> should equal (
+            [ ("test.proto", [
+                TSyntax TProto2
+                TMessage ("Test",
+                    [
+                        TField ("a", TOptional, TIdent("MyEnum"), 1u, [])
+                    ])
+              ]);
+              ("import.proto", []);
+              ("inner.proto", [
+                TEnum ("MyEnum",
+                    [
+                       TEnumField ("DEFAULT", 0, [])
+                       TEnumField ("ONE", 1, []) 
+                    ])
+              ])
+            ])
+
+    [<Fact>]
+    let ``Missing import throws`` () =
+        let src = """
+            import "missing.proto";
+            """
+
+        let fetch name =
+            let aux = function
+                | s -> raise <| System.IO.FileNotFoundException(s)
+            (name, aux name)
+
+        let parse (name, s) =
+            (name, Parse.fromString s)
+
+        fun () ->
+            src
+            |> Parse.fromString
+            |> fun ast -> ("test.proto", ast)
+            |> Parse.resolveImports fetch parse
+            |> ignore
+        |> should throw typeof<System.IO.FileNotFoundException>
+
+    [<Fact>]
     let ``Resolve Public Import Statement`` () =
         let src = """
             syntax = "proto2";
@@ -1105,21 +1186,26 @@ module Import =
                 }
             """
 
-        let fetch = function
-            | "import.proto" ->
-                    """
-                    enum MyEnum {
-                        DEFAULT = 0;
-                        ONE = 1;
-                        }
-                    """
-            | s -> raise <| System.ArgumentOutOfRangeException(s)
+        let fetch name =
+            let aux = function
+                | "import.proto" ->
+                        """
+                        enum MyEnum {
+                            DEFAULT = 0;
+                            ONE = 1;
+                            }
+                        """
+                | s -> raise <| System.IO.FileNotFoundException(s)
+            (name, aux name)
+
+        let parse (name, s) =
+            (name, Parse.fromString s)
 
         let ast =
             src
             |> Parse.fromString
             |> fun ast -> ("test.proto", ast)
-            |> Parse.resolveImports Parse.fromString fetch
+            |> Parse.resolveImports fetch parse
 
         ast |> should equal (
             [ ("test.proto", [
@@ -1132,6 +1218,132 @@ module Import =
                 TMessage ("Test",
                     [
                         TField ("a", TOptional, TIdent("MyEnum"), 1u, [])
+                    ])
+              ])
+            ])
+
+    [<Fact>]
+    let ``Resolve recursive Public Import Statement`` () =
+        let src = """
+            syntax = "proto2";
+
+            import public "import.proto";
+
+            message Test {
+                optional MyEnum a = 1;
+                }
+            """
+
+        let fetch name =
+            let aux = function
+                | "import.proto" ->
+                        """
+                        import public "inner.proto";
+                        """
+                | "inner.proto" ->
+                        """
+                        enum MyEnum {
+                            DEFAULT = 0;
+                            ONE = 1;
+                            }
+                        """
+                | s -> raise <| System.IO.FileNotFoundException(s)
+            (name, aux name)
+
+        let parse (name, s) =
+            (name, Parse.fromString s)
+
+        let ast =
+            src
+            |> Parse.fromString
+            |> fun ast -> ("test.proto", ast)
+            |> Parse.resolveImports fetch parse
+
+        ast |> should equal (
+            [ ("test.proto", [
+                TSyntax TProto2
+                TEnum ("MyEnum",
+                    [
+                       TEnumField ("DEFAULT", 0, [])
+                       TEnumField ("ONE", 1, []) 
+                    ])
+                TMessage ("Test",
+                    [
+                        TField ("a", TOptional, TIdent("MyEnum"), 1u, [])
+                    ])
+              ])
+            ])
+
+    [<Fact>]
+    let ``Missing public import throws`` () =
+        let src = """
+            import "missing.proto";
+            """
+
+        let fetch name =
+            let aux = function
+                | s -> raise <| System.IO.FileNotFoundException(s)
+            (name, aux name)
+
+        let parse (name, s) =
+            (name, Parse.fromString s)
+
+        fun () ->
+            src
+            |> Parse.fromString
+            |> fun ast -> ("test.proto", ast)
+            |> Parse.resolveImports fetch parse
+            |> ignore
+        |> should throw typeof<System.IO.FileNotFoundException>
+
+
+    [<Fact>]
+    let ``Resolve Weak Import Statement and ignore missing weak import`` () =
+        let src = """
+            syntax = "proto2";
+
+            import weak "import.proto";
+            import weak "missing.proto";
+
+            message Test {
+                optional MyEnum a = 1;
+                }
+            """
+
+        let fetch name =
+            let aux = function
+                | "import.proto" ->
+                        """
+                        enum MyEnum {
+                            DEFAULT = 0;
+                            ONE = 1;
+                            }
+                        """
+                | s -> raise <| System.IO.FileNotFoundException(s)
+            (name, aux name)
+
+        let parse (name, s) =
+            (name, Parse.fromString s)
+
+        let ast =
+            src
+            |> Parse.fromString
+            |> fun ast -> ("test.proto", ast)
+            |> Parse.resolveImports fetch parse
+
+        ast |> should equal (
+            [ ("test.proto", [
+                TSyntax TProto2
+                TMessage ("Test",
+                    [
+                        TField ("a", TOptional, TIdent("MyEnum"), 1u, [])
+                    ])
+              ]);
+              ("import.proto", [
+                TEnum ("MyEnum",
+                    [
+                       TEnumField ("DEFAULT", 0, [])
+                       TEnumField ("ONE", 1, []) 
                     ])
               ])
             ])
