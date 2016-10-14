@@ -1275,7 +1275,7 @@ module Import =
             let aux = function
                 | "test.proto" ->
                     """
-                    import "missing.proto";
+                    import public "missing.proto";
                     """
                 | s -> raise <| System.IO.FileNotFoundException(s)
             (name, aux name)
