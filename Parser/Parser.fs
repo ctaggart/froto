@@ -728,51 +728,64 @@ module Parse =
     /// Weak imports ignore failure to fetch the import.
     /// TODO: Should `import weak "filename"` ignore ALL errors?  Or just FileNotFound?
     let rec resolveImports
-                (parse:'a -> Ast.PProto)
-                (fetch: string -> 'a)
-                (name:string,source:Ast.PProto)
+                (fetch: string -> string * 'a)
+                (parse: string * 'a -> string * Ast.PProto)
+                (name:string, source:Ast.PProto)
                     : (string * Ast.PProto) list =
 
-        // First, resolve public imports
-        let rec insertPublic (xs:Ast.PProto) : Ast.PProto =
+        // Recursively inline public imports; imported file replaces import statement
+        // TODO: What should be done with the `syntax` line in an import public?
+        // TODO: Invalid? Override? Honor in a scope?
+        let rec inlineImports (name:string, xs:Ast.PProto) : (string * Ast.PProto) =
             let processStatement x acc =
                 match x with
                 | Ast.TImport( name, Ast.TPublic ) ->
-                    let imp =
+                    let _, imp =
                         name
                         |> fetch
                         |> parse
-                        |> insertPublic
+                        |> inlineImports
                     imp @ acc
                 | statement ->
                     statement :: acc
-            List.foldBack processStatement xs []
+            (name, List.foldBack processStatement xs [])
 
-        // Next, try to resovle weak imports
+        // Wrap fetcher to ignore FNF exception on weak import
+        let selectFetcher = function
+        | Ast.TNormal -> fun source -> Some(fetch source)
+        | Ast.TPublic -> fun _ -> None
+        | Ast.TWeak   -> fun source -> try Some(fetch source) with :? System.IO.FileNotFoundException -> None
 
-            // TODO: implement - same as loadImports, but ignore fetch exceptions
-
-        // Finally, resolve normal imports
-        let loadImports parse (xs:Ast.PProto) =
-            xs
+        // Filter imports
+        let filterImports (name,ast) =
+            ast
             |> List.choose (function
-                | Ast.TImport (name, Ast.TNormal) -> Some(name) 
+                | Ast.TImport _ -> None
+                | s -> Some(s)
+                )
+            |> fun ast -> (name,ast)
+
+        // Load normal imports
+        // Returns list with original source, followed by of parsed imports
+        // Recursively calls resolveImports
+        let loadImports (name, xs:Ast.PProto) : (string*Ast.PProto) list =
+            xs
+            |> Seq.ofList
+            |> Seq.choose (function
+                | Ast.TImport (name, visibility) -> Some(selectFetcher visibility, name)
                 | _ -> None
                 )
-            |> List.map (fun name ->
+            |> Seq.choose (fun (fetcher, name) ->
                 name
-                |> fetch
-                |> parse
-                |> fun ast -> (name, ast)
-                |> resolveImports parse fetch
+                |> fetcher
+                |> Option.map parse
+                |> Option.map (resolveImports fetch parse)
                 )
-            |> List.concat
+            |> Seq.concat
+            |> List.ofSeq
+            |> fun imports -> filterImports (name,xs) :: imports
 
-        let source =
-            source
-            |> insertPublic
-
-        source
-        |> loadImports parse
-        |> fun imports -> (name, source) :: imports
+        (name, source)
+        |> inlineImports
+        |> loadImports
 
