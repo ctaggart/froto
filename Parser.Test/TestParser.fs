@@ -1133,6 +1133,7 @@ module RegressionTests =
                     ])
             ])
 module Import =
+module StringImport =
 
     [<Fact>]
     let ``Resolve Import Statement`` () =
@@ -1384,3 +1385,50 @@ module Import =
                     ])
               ])
             ])
+
+
+[<Xunit.Trait("Kind", "Unit")>]
+module FileImport =
+
+    open System
+    open System.IO
+
+    let isMono = System.Type.GetType "Mono.Runtime" |> isNull |> not
+
+    /// gets the path for a test file based on the relative path from the executing assembly
+    let testDir =
+        let solutionPath =
+            if isMono then
+                "../../../"
+            else
+                let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
+                let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
+                (assemblyPath.Parent.Parent.Parent.Parent).FullName
+        Path.Combine(solutionPath, "test")
+
+    [<Fact>]
+    let ``Resolve File Import`` () =
+        let dirs =
+            [
+                testDir
+            ]
+
+        let ast =
+            dirs |> Parse.loadFromFile "riak_kv.proto"
+
+        // riak_kv.proto includes riak.proto
+        ast
+        |> List.length
+        |> should equal 2
+
+        // riak.proto contains a message definition for RpbGetServerInfoResp
+        let _, riakAst = ast.[1]
+        riakAst
+        |> List.exists(function
+            | TMessage( "RpbGetServerInfoResp", _ ) -> true
+            | _ -> false
+            )
+        |> should equal true
+
+
+
