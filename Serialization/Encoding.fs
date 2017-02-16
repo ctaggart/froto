@@ -149,29 +149,81 @@ module Encode =
     /// If value = default, then elide the field (don't serialize)
     let inline elideDefault defV v f =
         if v = defV
-        then id
-        else f
+        then
+            id
+        else
+            f
 
     /// Generic Encode for all varint types, excepted for signed & bool:
     ///   int32, int64, uint32, uint64, enum
+
+    // For proto2 "required" values
+    let inline fromRequiredVarint fldNum v = Pack.toFieldVarint fldNum (uint64 v)
+    let fromRequiredSInt32   fldNum v = Pack.toFieldVarint fldNum (zigZag32 v |> uint64)
+    let fromRequiredSInt64   fldNum v = Pack.toFieldVarint fldNum (zigZag64 v |> uint64)
+    let fromRequiredBool     fldNum v = fromRequiredVarint fldNum (boolToInt64 v)
+    let fromRequiredFixed32  fldNum v = Pack.toFieldFixed32 fldNum (uint32 v)
+    let fromRequiredFixed64  fldNum v = Pack.toFieldFixed64 fldNum (uint64 v)
+    let fromRequiredSFixed32 fldNum (v:int32) = Pack.toFieldFixed32 fldNum (uint32 v)
+    let fromRequiredSFixed64 fldNum v = Pack.toFieldFixed64 fldNum (uint64 v)
+    let fromRequiredSingle   fldNum v = Pack.toFieldSingle fldNum v
+    let fromRequiredDouble   fldNum v = Pack.toFieldDouble fldNum v
+    let fromRequiredString   fldNum v = Pack.toFieldString fldNum v
+    let fromRequiredBytes    fldNum v = Pack.toFieldBytes fldNum v
+
+    [<Obsolete("fromNondefaultedVarint is deprecated; please use fromRequiredVarint instead")>]
+    let inline fromNondefaultedVarint fldNum v = fromRequiredVarint fldNum v
+
+    // For proto2 "defaulted" values
     let inline fromDefaultedVarint defV fldNum v = elideDefault defV v <| Pack.toFieldVarint fldNum (uint64 v)
-    let inline fromNondefaultedVarint fldNum v = Pack.toFieldVarint fldNum (uint64 v)
 
-    let fromDefaultedSInt32 defV fldNum v = elideDefault defV v <| Pack.toFieldVarint fldNum (zigZag32 v |> uint64)
-    let fromDefaultedSInt64 defV fldNum v = elideDefault defV v <| Pack.toFieldVarint fldNum (zigZag64 v |> uint64)
-    let fromDefaultedBool   defV fldNum v = elideDefault defV v <| fromNondefaultedVarint fldNum (boolToInt64 v)
+    let fromDefaultedSInt32 defV fldNum v = elideDefault defV v <| fromRequiredSInt32 fldNum v
+    let fromDefaultedSInt64 defV fldNum v = elideDefault defV v <| fromRequiredSInt64 fldNum v
+    let fromDefaultedBool   defV fldNum v = elideDefault defV v <| fromRequiredBool fldNum v
 
-    let fromDefaultedFixed32  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed32 fldNum (uint32 v)
-    let fromDefaultedFixed64  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed64 fldNum (uint64 v)
-    let fromDefaultedSFixed32  defV fldNum (v:int32) = elideDefault defV v <| Pack.toFieldFixed32 fldNum (uint32 v)
-    let fromDefaultedSFixed64  defV fldNum v = elideDefault defV v <| Pack.toFieldFixed64 fldNum (uint64 v)
+    let fromDefaultedFixed32  defV fldNum v = elideDefault defV v <| fromRequiredFixed32 fldNum v
+    let fromDefaultedFixed64  defV fldNum v = elideDefault defV v <| fromRequiredFixed64 fldNum v
+    let fromDefaultedSFixed32  defV fldNum v = elideDefault defV v <| fromRequiredSFixed32 fldNum v
+    let fromDefaultedSFixed64  defV fldNum v = elideDefault defV v <| fromRequiredSFixed64 fldNum v
 
-    let fromDefaultedSingle defV fldNum v = elideDefault defV v <| Pack.toFieldSingle fldNum v
-    let fromDefaultedDouble defV fldNum v = elideDefault defV v <| Pack.toFieldDouble fldNum v
+    let fromDefaultedSingle defV fldNum v = elideDefault defV v <| fromRequiredSingle fldNum v
+    let fromDefaultedDouble defV fldNum v = elideDefault defV v <| fromRequiredDouble fldNum v
 
-    let fromDefaultedString defV fldNum v = elideDefault defV v <| Pack.toFieldString fldNum v
-    let fromDefaultedBytes  defV fldNum v = elideDefault defV v <| Pack.toFieldBytes fldNum v
+    let fromDefaultedString defV fldNum v = elideDefault defV v <| fromRequiredString fldNum v
+    let fromDefaultedBytes  defV fldNum (v:ArraySegment<byte>) =
+        let mutable bDefault = true
 
+        // Default if the ArraySegments are equal (same array, same offset, same count)
+        if v = defV then
+            begin end
+        // Default if both are empty (even if the empty arrays are different)
+        else if v.Count = 0 && defV.Count = 0 then
+            begin end
+        // NOT default if counts are different
+        else if v.Count <> defV.Count then
+            bDefault <- false
+        // Otherwise same size: do a byte-for-byte compare
+        else
+            let mutable i = v.Offset
+            let mutable j = defV.Offset
+            let mutable k = defV.Count
+            let a = v.Array
+            let b = defV.Array
+            while k > 0 do
+                if a.[i] <> b.[j] then
+                    bDefault <- false
+                    k <- 0
+                else
+                    i <- i + 1
+                    j <- j + 1
+                    k <- k - 1
+        
+        if bDefault
+        then id
+        else fromRequiredBytes fldNum v
+
+
+    // For proto3, which uses "0" as the default
     let inline fromVarint fldNum (v:'a) = fromDefaultedVarint (Unchecked.defaultof<'a>) fldNum v
 
     let fromSInt32 fldNum v = fromDefaultedSInt32 0 fldNum v
@@ -188,7 +240,10 @@ module Encode =
     let fromDouble fldNum v = fromDefaultedDouble 0.0 fldNum v
 
     let fromString fldNum v = fromDefaultedString "" fldNum v
-    let fromBytes  fldNum v = fromDefaultedBytes (ArraySegment ([||]:byte array)) fldNum v
+    let fromBytes  fldNum (v:ArraySegment<byte>) =
+        if v.Count <> 0
+        then fromRequiredBytes fldNum v
+        else id
 
 
     (* Encode Repeated Packed Numeric Values *)
@@ -302,6 +357,9 @@ module Encode =
     let fromMessage (fn:'m -> ZeroCopyBuffer -> ZeroCopyBuffer) fieldNum m =
         Pack.toTag fieldNum WireType.LengthDelimited
         >> fn m
+
+    /// Same as fromMessage
+    let fromRequiredMessage = fromMessage
 
     /// Helper to encode an optional message, or nothing if None
     let fromOptionalMessage (fn:'m -> ZeroCopyBuffer -> ZeroCopyBuffer) fieldNum (m:'m option) =
