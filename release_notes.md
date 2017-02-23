@@ -2,6 +2,7 @@
 ### 0.4.0 _ under construction
   * [#3](https://github.com/ctaggart/froto/issues/3) F# type provider
   * [#15](https://github.com/ctaggart/froto/issues/15) froto.exe code generator for proto3
+  * [#68](https://github.com/ctaggart/froto/issues/68) Add Encoders for proto2 *required* fields
 
 
 ### 0.3.1 _ 2016-06

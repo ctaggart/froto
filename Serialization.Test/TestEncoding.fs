@@ -262,6 +262,11 @@ module Encode =
         |> should equal Array.empty
 
         ZCB(2)
+        |> Encode.fromRequiredVarint fid 0UL
+        |> toArray
+        |> should equal [| 0x08uy; 0uy |]
+
+        ZCB(2)
         |> Encode.fromVarint fid 2UL
         |> toArray
         |> should equal [| 0x08uy; 2uy |]
@@ -272,6 +277,11 @@ module Encode =
         |> Encode.fromSInt32 fid 0
         |> toArray
         |> should equal Array.empty
+
+        ZCB(2)
+        |> Encode.fromRequiredSInt32 fid 0
+        |> toArray
+        |> should equal [| 0x08uy; 0uy|]
 
         ZCB(2)
         |> Encode.fromSInt32 fid -1
@@ -291,6 +301,11 @@ module Encode =
         |> should equal Array.empty
 
         ZCB(2)
+        |> Encode.fromRequiredSInt64 fid 0L
+        |> toArray
+        |> should equal [| 0x08uy; 0uy |]
+
+        ZCB(2)
         |> Encode.fromSInt64 fid -1L
         |> toArray
         |> should equal [| 0x08uy; 1uy |]
@@ -308,6 +323,11 @@ module Encode =
         |> should equal Array.empty
 
         ZCB(2)
+        |> Encode.fromRequiredBool fid false
+        |> toArray
+        |> should equal [| 0x08uy; 0uy |]
+
+        ZCB(2)
         |> Encode.fromBool fid true
         |> toArray
         |> should equal [| 0x08uy; 1uy |]
@@ -315,12 +335,33 @@ module Encode =
     [<Fact>]
     let ``Encode Fixed32`` () =
         ZCB(5)
+        |> Encode.fromFixed32 fid 0u
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(5)
+        |> Encode.fromRequiredFixed32 fid 0u
+        |> toArray
+        |> should equal [| 0x08uy ||| 5uy; 0uy;0uy;0uy;0uy |]
+
+        ZCB(5)
         |> Encode.fromFixed32 fid 5u
         |> toArray
         |> should equal [| 0x08uy ||| 5uy; 5uy;0uy;0uy;0uy |]
 
+
     [<Fact>]
     let ``Encode Fixed64`` () =
+        ZCB(9)
+        |> Encode.fromFixed64 fid 0UL
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(9)
+        |> Encode.fromRequiredFixed64 fid 0UL
+        |> toArray
+        |> should equal [| 0x08uy ||| 1uy; 0uy;0uy;0uy;0uy; 0uy;0uy;0uy;0uy |]
+
         ZCB(9)
         |> Encode.fromFixed64 fid 5UL
         |> toArray
@@ -329,12 +370,32 @@ module Encode =
     [<Fact>]
     let ``Encode SFixed32`` () =
         ZCB(5)
+        |> Encode.fromSFixed32 fid 0
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(5)
+        |> Encode.fromRequiredSFixed32 fid 0
+        |> toArray
+        |> should equal [| 0x08uy ||| 5uy; 0uy;0uy;0uy;0uy |]
+
+        ZCB(5)
         |> Encode.fromSFixed32 fid 5
         |> toArray
         |> should equal [| 0x08uy ||| 5uy; 5uy;0uy;0uy;0uy |]
 
     [<Fact>]
     let ``Encode SFixed64`` () =
+        ZCB(9)
+        |> Encode.fromSFixed64 fid 0L
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(9)
+        |> Encode.fromRequiredSFixed64 fid 0L
+        |> toArray
+        |> should equal [| 0x08uy ||| 1uy; 0uy;0uy;0uy;0uy; 0uy;0uy;0uy;0uy |]
+
         ZCB(9)
         |> Encode.fromSFixed64 fid 5L
         |> toArray
@@ -343,12 +404,32 @@ module Encode =
     [<Fact>]
     let ``Encode Single`` () =
         ZCB(5)
+        |> Encode.fromSingle fid 0.0f
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(5)
+        |> Encode.fromRequiredSingle fid 0.0f
+        |> toArray
+        |> should equal [| 0x08uy ||| 5uy; 0uy; 0uy; 0b00000000uy; 0b00000000uy |]
+
+        ZCB(5)
         |> Encode.fromSingle fid 2.0f
         |> toArray
         |> should equal [| 0x08uy ||| 5uy; 0uy; 0uy; 0b00000000uy; 0b01000000uy |]
 
     [<Fact>]
     let ``Encode Double`` () =
+        ZCB(9)
+        |> Encode.fromDouble fid 0.0
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(9)
+        |> Encode.fromRequiredDouble fid 0.0
+        |> toArray
+        |> should equal [| 0x08uy ||| 1uy; 0x00uy; 0x00uy; 0x00uy; 0x00uy; 0x00uy; 0x00uy; 0x00uy; 0x00uy |]
+
         ZCB(9)
         |> Encode.fromDouble fid 0.10
         |> toArray
@@ -357,6 +438,16 @@ module Encode =
     [<Fact>]
     let ``Encode String`` () =
         ZCB(6)
+        |> Encode.fromString fid ""
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(6)
+        |> Encode.fromRequiredString fid ""
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 0uy |]
+
+        ZCB(6)
         |> Encode.fromString fid "0ABC"
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 4uy; 0x30uy; 0x41uy; 0x42uy; 0x43uy |]
@@ -364,17 +455,38 @@ module Encode =
     [<Fact>]
     let ``Encode Bytes`` () =
         ZCB(6)
+        |> Encode.fromBytes fid (ArraySegment(Array.empty))
+        |> toArray
+        |> should equal Array.empty
+
+        ZCB(6)
+        |> Encode.fromRequiredBytes fid (ArraySegment(Array.empty))
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 0uy |]
+
+        ZCB(6)
         |> Encode.fromBytes fid (ArraySegment([| 3uy; 4uy; 5uy; 6uy; |]))
         |> toArray
         |> should equal [| 0x08uy ||| 2uy; 4uy; 3uy; 4uy; 5uy; 6uy |]
 
 
+    [<Fact>]
     let ``Encode with default value`` () =
         // Verify non-default value results in an actual value
         ZCB(2)
         |> Encode.fromDefaultedVarint 0UL fid 2UL
         |> toArray
         |> should equal [| 0x08uy; 2uy |]
+
+        ZCB(6)
+        |> Encode.fromDefaultedBytes (ArraySegment[| 3uy; 4uy |]) fid (ArraySegment([| 3uy; 4uy; 5uy; 6uy; |]))
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 4uy; 3uy; 4uy; 5uy; 6uy |]
+
+        ZCB(6)
+        |> Encode.fromDefaultedBytes (ArraySegment[| 3uy; 4uy; 5uy; 7uy |]) fid (ArraySegment([| 3uy; 4uy; 5uy; 6uy; |]))
+        |> toArray
+        |> should equal [| 0x08uy ||| 2uy; 4uy; 3uy; 4uy; 5uy; 6uy |]
 
         // Now, check that default value result in an empty array (value is elided)
         let checkGetsElided f =
@@ -383,7 +495,7 @@ module Encode =
             |> toArray
             |> should equal Array.empty
         
-        checkGetsElided <| Encode.fromDefaultedVarint 1UL fid 1UL
+        checkGetsElided <| Encode.fromDefaultedVarint 5UL fid 5UL
         checkGetsElided <| Encode.fromDefaultedSInt32 2 fid 2
         checkGetsElided <| Encode.fromDefaultedSInt64 3L fid 3L
         checkGetsElided <| Encode.fromDefaultedBool true fid true
@@ -395,6 +507,7 @@ module Encode =
         checkGetsElided <| Encode.fromDefaultedDouble 0.70 fid 0.70
         checkGetsElided <| Encode.fromDefaultedString "Hello" fid "Hello"
         checkGetsElided <| Encode.fromDefaultedBytes (ArraySegment([|8uy;9uy|])) fid (ArraySegment([|8uy;9uy|]))
+        checkGetsElided <| Encode.fromDefaultedBytes (ArraySegment([||])) fid (ArraySegment([||]))
 
     [<Fact>]
     let ``Encode Packed Varint`` () =
