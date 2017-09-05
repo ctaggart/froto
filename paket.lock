@@ -1,4 +1,4 @@
-FRAMEWORK: >= NET45
+RESTRICTION: >= net45
 NUGET
   remote: http://api.nuget.org/v3/index.json
     Argu (2.1)
@@ -44,7 +44,7 @@ NUGET
     xunit.runner.visualstudio (2.1.0) - version_in_path: true
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.StarterPack
-    src/ProvidedTypes.fs (dfbca9b83fb70067e85abddcb8b89332aae4c28d)
-    src/ProvidedTypes.fsi (dfbca9b83fb70067e85abddcb8b89332aae4c28d)
+    src/ProvidedTypes.fs (1341256f7cc11f09feb74edde028aa0513c53afd)
+    src/ProvidedTypes.fsi (1341256f7cc11f09feb74edde028aa0513c53afd)
   remote: fsprojects/FSharp.Configuration
-    src/FSharp.Configuration/TypeProviders.Helper.fs (0b53246539b38a86d815529bb047b3752d951546)
+    src/FSharp.Configuration/TypeProviders.Helper.fs (2bd57b3043efc44d1f9b74f9942159a3853291d1)
