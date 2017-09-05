@@ -32,7 +32,9 @@ let generateOneOf scope (typesLookup: TypesLookup) (name: string) (members: POne
         |> List.map (fun (i, TOneOfField(name, ptype, position, _)) -> 
             let kind, propertyType =
                 TypeResolver.resolvePType scope ptype typesLookup
-                |> Option.map (fun (kind, ty) -> kind, Expr.makeGenericType [ty] typedefof<option<_>>)
+                |> Option.map (fun (kind, ty) -> 
+                    let actualType = if kind = TypeKind.Enum then typeof<int32> else ty
+                    kind, Expr.makeGenericType [actualType] typedefof<option<_>>)
                 |> Option.require (sprintf "Unable to find type %A" ptype) 
                 
             let property = ProvidedProperty(Naming.snakeToPascal name, propertyType)
