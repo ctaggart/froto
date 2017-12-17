@@ -55,9 +55,10 @@ message OneOfContainer {
     oneof value {
         string text = 1;
         int32 identifier = 2;
+        State state = 3;
     }
     
-    required string another_text = 3;
+    required string another_text = 4;
 }
 
 message MapContainer {

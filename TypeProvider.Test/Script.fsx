@@ -3,6 +3,6 @@
 open Froto.TypeProvider
 
 [<Literal>]
-let ProtoFilePath = __SOURCE_DIRECTORY__ + @"\..\test\person.proto"
+let ProtoFilePath = __SOURCE_DIRECTORY__ + @"\..\test\type_provider_test.proto"
 
 type Test = ProtocolBuffersTypeProvider<ProtoFilePath>
