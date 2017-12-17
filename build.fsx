@@ -1,6 +1,5 @@
 #I "packages/FAKE/tools"
 #r "FakeLib.dll"
-#load "packages/SourceLink.Fake/tools/SourceLink.fsx"
 
 open System
 open System.IO
@@ -8,7 +7,9 @@ open Fake
 open Fake.AppVeyor
 open Fake.AssemblyInfoFile
 open Fake.Testing
-open SourceLink
+
+type System.Text.StringBuilder with
+    member x.Appendf format = Printf.ksprintf (fun s -> x.Append s |> ignore) format
 
 let release = ReleaseNotesHelper.LoadReleaseNotes "release_notes.md"
 let isAppVeyorBuild = buildServer = BuildServer.AppVeyor
@@ -39,7 +40,7 @@ Target "AssemblyInfo" <| fun _ ->
     iv.Appendf "}"
     let common = [
         Attribute.Version assemblyVersion
-        Attribute.InformationalVersion iv.String ]
+        Attribute.InformationalVersion (iv.ToString()) ]
     common |> CreateFSharpAssemblyInfo "Parser/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Serialization/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
@@ -75,18 +76,6 @@ Target "UnitTest" <| fun _ ->
             TimeOut = TimeSpan.FromMinutes 10.0
         })
         dlls
-
-Target "SourceLink" <| fun _ ->
-    let sourceIndex proj pdb =
-        let p = VsProj.LoadRelease proj
-        let pdbToIndex = if Option.isSome pdb then pdb.Value else p.OutputFilePdb
-        let url = "https://raw.githubusercontent.com/ctaggart/froto/{0}/%var2%"
-        let sourceFiles = p.Compiles |> Seq.filter (fun file -> not <| file.Contains "paket-files")
-        SourceLink.Index sourceFiles pdbToIndex __SOURCE_DIRECTORY__ url
-    sourceIndex "Parser/Froto.Parser.fsproj" None
-    sourceIndex "Serialization/Froto.Serialization.fsproj" None
-    sourceIndex "Compiler/Froto.Compiler.fsproj" None
-    sourceIndex "TypeProvider/Froto.TypeProvider.fsproj" None
 
 Target "NuGet" <| fun _ ->
     CreateDir "bin"
@@ -155,7 +144,6 @@ Target "Debug" DoNothing
 =?> ("AssemblyInfo", isAppVeyorBuild)
 ==> "Build"
 ==> "UnitTest"
-=?> ("SourceLink", isAppVeyorBuild)
 =?> ("NuGet", not isMono)
 ==> "Default"
 
