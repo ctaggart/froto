@@ -2,7 +2,6 @@
 #r "FakeLib.dll"
 
 open System
-open System.IO
 open Fake
 open Fake.AppVeyor
 open Fake.AssemblyInfoFile
@@ -51,23 +50,16 @@ Target "SwitchToDebug" <| fun _ ->
 
 Target "Build" <| fun _ ->
     ["Froto.sln"; "Froto.TypeProvider.TestAndDocs.sln"] 
-    |> MSBuild "" "Rebuild" ["Configuration", configuration] 
+    |> MSBuild "" "restore;build" ["Configuration", configuration] 
     |> ignore
 
 Target "UnitTest" <| fun _ ->
     CreateDir "bin"
     let dlls =
-        // Mono can't load .NET 4.5.2 yet
-        if isMono then
-            [   sprintf @"Parser.Test/bin/%s/Froto.Parser.Test.dll" configuration
-                sprintf @"Serialization.Test/bin/%s/Froto.Serialization.Test.dll" configuration
-                sprintf @"TypeProvider.Test/bin/%s/Froto.TypeProvider.Test.dll" configuration
-            ]
-        else
-            [   sprintf @"Parser.Test/bin/%s/Froto.Parser.Test.dll" configuration
-                sprintf @"Serialization.Test/bin/%s/Froto.Serialization.Test.dll" configuration
-                sprintf @"TypeProvider.Test/bin/%s/Froto.TypeProvider.Test.dll" configuration
-            ]
+        [   sprintf @"Parser.Test/bin/%s/net46/Froto.Parser.Test.dll" configuration
+            sprintf @"Serialization.Test/bin/%s/net46/Froto.Serialization.Test.dll" configuration
+            sprintf @"TypeProvider.Test/bin/%s/net46/Froto.TypeProvider.Test.dll" configuration
+        ]
     xUnit2 (fun p ->
         { p with
             IncludeTraits = ["Kind", "Unit"]
@@ -144,7 +136,7 @@ Target "Debug" DoNothing
 =?> ("AssemblyInfo", isAppVeyorBuild)
 ==> "Build"
 ==> "UnitTest"
-=?> ("NuGet", not isMono)
+// =?> ("NuGet", not isMono)
 ==> "Default"
 
 "UnitTest" ==> "Debug"
