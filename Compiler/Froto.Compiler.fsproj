@@ -57,11 +57,6 @@
       <Project>{1c31da31-bec5-4e73-9d83-e36d18847439}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Roslyn\Froto.Roslyn.fsproj">
-      <Name>Froto.Roslyn</Name>
-      <Project>{49d025ed-f804-4d97-9027-461671b333b6}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
