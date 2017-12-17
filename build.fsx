@@ -42,7 +42,6 @@ Target "AssemblyInfo" <| fun _ ->
         Attribute.InformationalVersion iv.String ]
     common |> CreateFSharpAssemblyInfo "Parser/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Serialization/AssemblyInfo.fs"
-    common |> CreateFSharpAssemblyInfo "Roslyn/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
     common |> CreateFSharpAssemblyInfo "TypeProvider/AssemblyInfo.fs"
 
@@ -61,13 +60,11 @@ Target "UnitTest" <| fun _ ->
         if isMono then
             [   sprintf @"Parser.Test/bin/%s/Froto.Parser.Test.dll" configuration
                 sprintf @"Serialization.Test/bin/%s/Froto.Serialization.Test.dll" configuration
-                //sprintf @"Roslyn.Test/bin/%s/Froto.Roslyn.Test.dll" configuration
                 sprintf @"TypeProvider.Test/bin/%s/Froto.TypeProvider.Test.dll" configuration
             ]
         else
             [   sprintf @"Parser.Test/bin/%s/Froto.Parser.Test.dll" configuration
                 sprintf @"Serialization.Test/bin/%s/Froto.Serialization.Test.dll" configuration
-                sprintf @"Roslyn.Test/bin/%s/Froto.Roslyn.Test.dll" configuration
                 sprintf @"TypeProvider.Test/bin/%s/Froto.TypeProvider.Test.dll" configuration
             ]
     xUnit2 (fun p ->
@@ -88,7 +85,6 @@ Target "SourceLink" <| fun _ ->
         SourceLink.Index sourceFiles pdbToIndex __SOURCE_DIRECTORY__ url
     sourceIndex "Parser/Froto.Parser.fsproj" None
     sourceIndex "Serialization/Froto.Serialization.fsproj" None
-    sourceIndex "Roslyn/Froto.Roslyn.fsproj" None
     sourceIndex "Compiler/Froto.Compiler.fsproj" None
     sourceIndex "TypeProvider/Froto.TypeProvider.fsproj" None
 
@@ -122,22 +118,6 @@ Target "NuGet" <| fun _ ->
                 ]
         }]
     }) "Serialization/Froto.Serialization.nuspec"
-
-    NuGet (fun p ->
-    { p with
-        Version = buildVersion
-        WorkingDir = "Roslyn/bin/Release"
-        OutputPath = "bin"
-        DependenciesByFramework =
-        [{
-            FrameworkVersion = "net45"
-            Dependencies =
-                [
-                "Froto.Parser", sprintf "[%s]" buildVersion // exact version
-                "Microsoft.CodeAnalysis.CSharp.Workspaces", GetPackageVersion "./packages/" "Microsoft.CodeAnalysis.CSharp.Workspaces"
-                ]
-        }]
-    }) "Roslyn/Froto.Roslyn.nuspec"
 
     NuGet (fun p ->
     { p with

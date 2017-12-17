@@ -1,6 +1,0 @@
-FSharp.Core
-FsUnit.xUnit
-Microsoft.CodeAnalysis.CSharp.Workspaces
-protobuf-net
-xunit
-xunit.runner.visualstudio
