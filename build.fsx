@@ -49,7 +49,7 @@ Target "SwitchToDebug" <| fun _ ->
     configuration <- "Debug"
 
 Target "Build" <| fun _ ->
-    ["Froto.sln"; "Froto.TypeProvider.TestAndDocs.sln"] 
+    ["Froto.sln"] //; "Froto.TypeProvider.TestAndDocs.sln"] TODO 
     |> MSBuild "" "restore;build" ["Configuration", configuration] 
     |> ignore
 
