@@ -14,20 +14,20 @@
     <When Condition="$(Configuration) == 'Debug'">
       <ItemGroup>
         <Reference Include="Froto.TypeProvider">
-          <HintPath>..\TypeProvider\bin\Debug\net452\Froto.TypeProvider.dll</HintPath>
+          <HintPath>..\TypeProvider\bin\Debug\net45\Froto.TypeProvider.dll</HintPath>
         </Reference>
         <Reference Include="Froto.Serialization">
-          <HintPath>..\Serialization\bin\Debug\net452\Froto.Serialization.dll</HintPath>
+          <HintPath>..\Serialization\bin\Debug\net45\Froto.Serialization.dll</HintPath>
         </Reference>
       </ItemGroup>
     </When>
     <When Condition="$(Configuration) == 'Release'">
       <ItemGroup>
         <Reference Include="Froto.TypeProvider">
-          <HintPath>..\TypeProvider\bin\Release\net452\Froto.TypeProvider.dll</HintPath>
+          <HintPath>..\TypeProvider\bin\Release\net45\Froto.TypeProvider.dll</HintPath>
         </Reference>
         <Reference Include="Froto.Serialization">
-          <HintPath>..\Serialization\bin\Release\net452\Froto.Serialization.dll</HintPath>
+          <HintPath>..\Serialization\bin\Release\net45\Froto.Serialization.dll</HintPath>
         </Reference>
       </ItemGroup>
     </When>
