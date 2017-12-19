@@ -1,6 +1,10 @@
 source https://api.nuget.org/v3/index.json
 framework: >= net45
 
-nuget FAKE
-nuget NuGet.CommandLine
+nuget FAKE prerelease
+#nuget Fake.Core preelease
+#nuget Fake.Core.BuildServer prerelease
+#nuget Fake.Dotnet prerelease
+#nuget Fake.DotNet.NuGet prerelease
+
 nuget xunit.runner.console

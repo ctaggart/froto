@@ -1,6 +1,5 @@
 RESTRICTION: >= net45
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    FAKE (4.64.2)
-    NuGet.CommandLine (4.4.1)
+    FAKE (5.0.0-beta010)
     xunit.runner.console (2.3.1)

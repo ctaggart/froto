@@ -4,14 +4,21 @@
 open System
 open Fake
 open Fake.AppVeyor
-open Fake.AssemblyInfoFile
-open Fake.Testing
+open Fake.Core
+open Fake.Core.BuildServer
+open Fake.Core.Globbing.Operators
+open Fake.Core.Process
+open Fake.Core.TargetOperators
+open Fake.DotNet
+open Fake.DotNet.NuGet.NuGet
+open Fake.DotNet.Testing.XUnit2
 
-type System.Text.StringBuilder with
+type Text.StringBuilder with
     member x.Appendf format = Printf.ksprintf (fun s -> x.Append s |> ignore) format
 
 let release = ReleaseNotesHelper.LoadReleaseNotes "release_notes.md"
-let isAppVeyorBuild = buildServer = BuildServer.AppVeyor
+let isAppVeyorBuild = match buildServer with AppVeyor -> true | _ -> false
+
 let isVersionTag tag = Version.TryParse tag |> fst
 let hasRepoVersionTag = isAppVeyorBuild && AppVeyorEnvironment.RepoTag && isVersionTag AppVeyorEnvironment.RepoTagName
 let assemblyVersion = if hasRepoVersionTag then AppVeyorEnvironment.RepoTagName else release.NugetVersion
@@ -24,12 +31,12 @@ let mutable configuration = "Release"
 
 MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Minimal }
 
-Target "BuildVersion" <| fun _ ->
+Target.Create "BuildVersion" <| fun _ ->
     Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" buildVersion) |> ignore
 
-Target "Clean" <| fun _ -> !! "**/bin/" ++ "**/obj/" |> DeleteDirs
+Target.Create "Clean" <| fun _ -> !! "**/bin/" ++ "**/obj/" |> DeleteDirs
 
-Target "AssemblyInfo" <| fun _ ->
+Target.Create "AssemblyInfo" <| fun _ ->
     let iv = Text.StringBuilder() // json
     iv.Appendf "{\\\"buildVersion\\\":\\\"%s\\\"" buildVersion
     iv.Appendf ",\\\"buildDate\\\":\\\"%s\\\"" (buildDate.ToString "yyyy'-'MM'-'dd'T'HH':'mm':'sszzz")
@@ -38,23 +45,23 @@ Target "AssemblyInfo" <| fun _ ->
         iv.Appendf ",\\\"gitBranch\\\":\\\"%s\\\"" AppVeyor.AppVeyorEnvironment.RepoBranch
     iv.Appendf "}"
     let common = [
-        Attribute.Version assemblyVersion
-        Attribute.InformationalVersion (iv.ToString()) ]
-    common |> CreateFSharpAssemblyInfo "Parser/AssemblyInfo.fs"
-    common |> CreateFSharpAssemblyInfo "Serialization/AssemblyInfo.fs"
-    common |> CreateFSharpAssemblyInfo "Compiler/AssemblyInfo.fs"
-    common |> CreateFSharpAssemblyInfo "TypeProvider/AssemblyInfo.fs"
+        DotNet.AssemblyInfo.Version assemblyVersion
+        DotNet.AssemblyInfo.InformationalVersion (iv.ToString()) ]
+    common |> AssemblyInfoFile.CreateFSharp "Parser/AssemblyInfo.fs"
+    common |> AssemblyInfoFile.CreateFSharp "Serialization/AssemblyInfo.fs"
+    common |> AssemblyInfoFile.CreateFSharp "Compiler/AssemblyInfo.fs"
+    common |> AssemblyInfoFile.CreateFSharp "TypeProvider/AssemblyInfo.fs"
 
-Target "SwitchToDebug" <| fun _ ->
+Target.Create "SwitchToDebug" <| fun _ ->
     configuration <- "Debug"
 
-Target "Build" <| fun _ ->
-    ["Froto.sln"] //; "Froto.TypeProvider.TestAndDocs.sln"] TODO 
+Target.Create "Build" <| fun _ ->
+    ["Froto.sln"; "Froto.TypeProvider.TestAndDocs.sln"] 
     |> MSBuild "" "restore;build" ["Configuration", configuration] 
     |> ignore
 
-Target "UnitTest" <| fun _ ->
-    CreateDir "bin"
+Target.Create "UnitTest" <| fun _ ->
+    IO.Directory.create "bin"
     let dlls =
         [   sprintf @"Parser.Test/bin/%s/net46/Froto.Parser.Test.dll" configuration
             sprintf @"Serialization.Test/bin/%s/net46/Froto.Serialization.Test.dll" configuration
@@ -69,21 +76,19 @@ Target "UnitTest" <| fun _ ->
         })
         dlls
 
-Target "NuGet" <| fun _ ->
-    CreateDir "bin"
+// https://github.com/fsharp/FAKE/blob/master/help/markdown/dotnet-nuget.md
+Target.Create "NuGet" <| fun _ ->
+    IO.Directory.create "bin"
     NuGet (fun p ->
     { p with
         Version = buildVersion
         WorkingDir = "Parser/bin/Release"
         OutputPath = "bin"
-        DependenciesByFramework =
-        [{
-            FrameworkVersion = "net45"
-            Dependencies =
-                [
-                "FParsec", GetPackageVersion "./packages/" "FParsec"
-                ]
-        }]
+        Dependencies =
+            [
+            // "FParsec", GetPackageVersion "./packages/" "FParsec"
+            "FParsec", "1.0.3" // TODO can we get it from Froto.Parser.fsproj PackageReference?
+            ]
     }) "Parser/Froto.Parser.nuspec"
 
     NuGet (fun p ->
@@ -91,57 +96,45 @@ Target "NuGet" <| fun _ ->
         Version = buildVersion
         WorkingDir = "Serialization/bin/Release"
         OutputPath = "bin"
-        DependenciesByFramework =
-        [{
-            FrameworkVersion = "net45"
-            Dependencies =
-                [
-                ]
-        }]
     }) "Serialization/Froto.Serialization.nuspec"
 
-    NuGet (fun p ->
-    { p with
-        Version = buildVersion
-        WorkingDir = "Compiler/bin/Release"
-        OutputPath = "bin"
-    }) "Compiler/Froto.Compiler.nuspec"
+    // NuGet (fun p ->
+    // { p with
+    //     Version = buildVersion
+    //     WorkingDir = "Compiler/bin/Release"
+    //     OutputPath = "bin"
+    // }) "Compiler/Froto.Compiler.nuspec"
 
     NuGet (fun p ->
     { p with
         Version = buildVersion
         WorkingDir = "TypeProvider/bin/Release"
         OutputPath = "bin"
-        DependenciesByFramework =
-        [{
-            FrameworkVersion = "net45"
-            Dependencies =
-            [
-                "FParsec", GetPackageVersion "./packages/" "FParsec"
-                "Froto.Parser", sprintf "[%s]" buildVersion 
-                "Froto.Serialization", sprintf "[%s]" buildVersion 
-            ]
-        }]
+        Dependencies =
+        [
+            "FParsec", "1.0.3"
+            "Froto.Parser", sprintf "[%s]" buildVersion 
+            "Froto.Serialization", sprintf "[%s]" buildVersion 
+        ]
     }) "TypeProvider/Froto.TypeProvider.nuspec"
 
-Target "Default" DoNothing
-
-Target "Debug" DoNothing
+Target.Create "Start" Target.DoNothing
+Target.Create "Default" Target.DoNothing
+Target.Create "Debug" Target.DoNothing
 
 // chain targets together only on AppVeyor
 //let (==>) a b = a =?> (b, isAppVeyorBuild)
 
-"Clean"
+"Start"
 =?> ("BuildVersion", isAppVeyorBuild)
 =?> ("AssemblyInfo", isAppVeyorBuild)
 ==> "Build"
 ==> "UnitTest"
-// =?> ("NuGet", not isMono)
+=?> ("NuGet", not isMono)
 ==> "Default"
 
 "UnitTest" ==> "Debug"
 "SwitchToDebug" ==> "Debug"
 "SwitchToDebug" ?=> "Build"
 
-
-RunTargetOrDefault "Default"
+Target.RunOrDefault "Default"

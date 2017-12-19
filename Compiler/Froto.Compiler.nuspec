@@ -11,9 +11,9 @@
     <tags>froto protobuf binary protocol buffers serialization deserialization</tags>
   </metadata>
   <files>
-    <file src="froto.exe" target="tools" />
-    <file src="froto.exe.config" target="tools" />
-    <file src="*.dll" target="tools" />
-    <file src="*.pdb" target="tools" />
+    <file src="net46/froto.exe" target="tools" />
+    <file src="net46/froto.exe.config" target="tools" />
+    <file src="net46/*.dll" target="tools" />
+    <file src="net46/*.pdb" target="tools" />
   </files>
 </package>
