@@ -56,17 +56,30 @@ Target.Create "SwitchToDebug" <| fun _ ->
     configuration <- "Debug"
 
 Target.Create "Build" <| fun _ ->
-    ["Froto.sln"; "Froto.TypeProvider.TestAndDocs.sln"] 
+    ["Froto.sln"] 
     |> MSBuild "" "restore;build" ["Configuration", configuration] 
     |> ignore
+
+    if not isMono then
+        ["Froto.TypeProvider.TestAndDocs.sln"] 
+        |> MSBuild "" "restore;build" ["Configuration", configuration] 
+        |> ignore
 
 Target.Create "UnitTest" <| fun _ ->
     IO.Directory.create "bin"
     let dlls =
         [   sprintf @"Parser.Test/bin/%s/net46/Froto.Parser.Test.dll" configuration
             sprintf @"Serialization.Test/bin/%s/net46/Froto.Serialization.Test.dll" configuration
-            sprintf @"TypeProvider.Test/bin/%s/net46/Froto.TypeProvider.Test.dll" configuration
         ]
+
+    let dlls =
+        List.append dlls (
+            if isMono then
+                []
+            else
+                [ sprintf @"TypeProvider.Test/bin/%s/net46/Froto.TypeProvider.Test.dll" configuration ]
+        )
+    
     xUnit2 (fun p ->
         { p with
             IncludeTraits = ["Kind", "Unit"]
