@@ -12,7 +12,7 @@
     <tags>froto protobuf parser binary protocol buffers serialization deserialization</tags>
   </metadata>
   <files>
-    <file src="Froto.Parser.dll" target="lib\net45" />
-    <file src="Froto.Parser.pdb" target="lib\net45" />
+    <file src="net45/Froto.Parser.dll" target="lib/net45" />
+    <file src="net45/Froto.Parser.pdb" target="lib/net45" />
   </files>
 </package>
