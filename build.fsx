@@ -11,7 +11,7 @@ open Fake.Core.Process
 open Fake.Core.TargetOperators
 open Fake.DotNet
 open Fake.DotNet.NuGet.NuGet
-open Fake.DotNet.Testing.XUnit2
+// open Fake.DotNet.Testing.XUnit2
 
 type Text.StringBuilder with
     member x.Appendf format = Printf.ksprintf (fun s -> x.Append s |> ignore) format
@@ -28,8 +28,6 @@ let buildVersion =
     else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion (Int32.Parse(AppVeyorEnvironment.BuildNumber).ToString("000"))
     else sprintf "%s-a%s" assemblyVersion (buildDate.ToString "yyMMddHHmm")
 let mutable configuration = "Release"
-
-MSBuildDefaults <- { MSBuildDefaults with Verbosity = Some MSBuildVerbosity.Minimal }
 
 Target.Create "BuildVersion" <| fun _ ->
     Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" buildVersion) |> ignore
@@ -56,9 +54,13 @@ Target.Create "SwitchToDebug" <| fun _ ->
     configuration <- "Debug"
 
 Target.Create "Build" <| fun _ ->
-    ["Froto.sln"] 
-    |> MSBuild "" "restore;build" ["Configuration", configuration] 
-    |> ignore
+
+    DotNetCli.Build (fun p -> 
+       { p with
+            Project = "Froto.sln"
+            Configuration = configuration
+        }
+    )
 
     // if not isMono then
     //     ["Froto.TypeProvider.TestAndDocs.sln"] 
@@ -66,11 +68,11 @@ Target.Create "Build" <| fun _ ->
     //     |> ignore
 
 Target.Create "UnitTest" <| fun _ ->
-    IO.Directory.create "bin"
-    let dlls =
-        [   sprintf @"Parser.Test/bin/%s/netstandard2.0/Froto.Parser.Test.dll" configuration
-            sprintf @"Serialization.Test/bin/%s/netstandard2.0/Froto.Serialization.Test.dll" configuration
-        ]
+    // IO.Directory.create "bin"
+    // let dlls =
+    //     [   sprintf @"Parser.Test/bin/%s/netstandard2.0/Froto.Parser.Test.dll" configuration
+    //         sprintf @"Serialization.Test/bin/%s/netstandard2.0/Froto.Serialization.Test.dll" configuration
+    //     ]
 
     // let dlls =
     //     List.append dlls (
@@ -79,15 +81,27 @@ Target.Create "UnitTest" <| fun _ ->
     //         else
     //             [ sprintf @"TypeProvider.Test/bin/%s/net46/Froto.TypeProvider.Test.dll" configuration ]
     //     )
-    
-    xUnit2 (fun p ->
+
+    // xUnit2 (fun p ->
+    //     { p with
+    //         IncludeTraits = ["Kind", "Unit"]
+    //         XmlOutputPath = Some @"bin/UnitTest.xml"
+    //         Parallel = ParallelMode.Assemblies
+    //         TimeOut = TimeSpan.FromMinutes 10.0
+    //     })
+    //     dlls
+
+    DotNetCli.Test (fun p ->
         { p with
-            IncludeTraits = ["Kind", "Unit"]
-            XmlOutputPath = Some @"bin/UnitTest.xml"
-            Parallel = ParallelMode.Assemblies
-            TimeOut = TimeSpan.FromMinutes 10.0
-        })
-        dlls
+            Project = "Parser.Test/Froto.Parser.Test.fsproj"
+        }
+    )
+
+    DotNetCli.Test (fun p ->
+        { p with
+            Project = "Serialization.Test/Froto.Serialization.Test.fsproj"
+        }
+    )
 
 // https://github.com/fsharp/FAKE/blob/master/help/markdown/dotnet-nuget.md
 Target.Create "NuGet" <| fun _ ->
@@ -143,7 +157,7 @@ Target.Create "Debug" Target.DoNothing
 =?> ("AssemblyInfo", isAppVeyorBuild)
 ==> "Build"
 ==> "UnitTest"
-=?> ("NuGet", not isMono)
+=?> ("NuGet", isAppVeyorBuild)
 ==> "Default"
 
 "UnitTest" ==> "Debug"
