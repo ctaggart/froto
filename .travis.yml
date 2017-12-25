@@ -1,19 +1,7 @@
 language: csharp
-
+mono: none
 dotnet: 2.1.3
-
-# dependencies (netcore)
-# addons:
-#   apt:
-#     packages:
-#        - libunwind8
-#        - msbuild
-
-before_install:
-  # - msbuild /version
+script:
   - dotnet --version
   - dotnet --info
-  # - chmod +x build.sh
-
-# script:
-#   - ./build.sh unittest
+  - msbuild /version
