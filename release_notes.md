@@ -1,9 +1,10 @@
+### 0.5.0 _ 2017-12
+  * [#78](https://github.com/ctaggart/froto/pull/78) Froto.Parser & Froto.Serialization target netstandard2.0
 
-### 0.4.0 _ under construction
+### 0.4.0 _ 2016-10
   * [#3](https://github.com/ctaggart/froto/issues/3) F# type provider
   * [#15](https://github.com/ctaggart/froto/issues/15) froto.exe code generator for proto3
   * [#68](https://github.com/ctaggart/froto/issues/68) Add Encoders for proto2 *required* fields
-
 
 ### 0.3.1 _ 2016-06
   * [#41](https://github.com/ctaggart/froto/issues/41) Make Parser functions more discoverable and easier to use.
@@ -17,8 +18,8 @@
     * At the WireFormat level, rename encodeXXX/decodeXXX functions to Pack.toXXX/Unpack.fromXXX
     * At the RawField level, and rename dehydrateXXX/hydrateXXX functions to Encode.fromXXX and Decode.toXXX
     * At the Serialization level, created functions for serializing to/from ZeroCopyBuffer and ArraySegment
-    * Rename “Exe” solution to “Froto.Compiler”
-    * Rename several folders; e.g., “ProtoParser” to “Parser” and “Exe” to “Compiler”
+    * Rename ï¿½Exeï¿½ solution to ï¿½Froto.Compilerï¿½
+    * Rename several folders; e.g., ï¿½ProtoParserï¿½ to ï¿½Parserï¿½ and ï¿½Exeï¿½ to ï¿½Compilerï¿½
 
 ### 0.2.1 _ 2016-04
   * [#19](https://github.com/ctaggart/froto/issues/19) Improve support for serialization/deserialization
