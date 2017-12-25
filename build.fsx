@@ -68,8 +68,8 @@ Target.Create "Build" <| fun _ ->
 Target.Create "UnitTest" <| fun _ ->
     IO.Directory.create "bin"
     let dlls =
-        [   sprintf @"Parser.Test/bin/%s/net46/Froto.Parser.Test.dll" configuration
-            sprintf @"Serialization.Test/bin/%s/net46/Froto.Serialization.Test.dll" configuration
+        [   sprintf @"Parser.Test/bin/%s/netstandard2.0/Froto.Parser.Test.dll" configuration
+            sprintf @"Serialization.Test/bin/%s/netstandard2.0/Froto.Serialization.Test.dll" configuration
         ]
 
     // let dlls =
