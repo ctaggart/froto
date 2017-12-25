@@ -34,5 +34,6 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Runtime.Caching" />
+    <PackageReference Include="SourceLink.Create.CommandLine" Version="2.6.0" PrivateAssets="All" />
   </ItemGroup>
 </Project>

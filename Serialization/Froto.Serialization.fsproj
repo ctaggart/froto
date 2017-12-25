@@ -12,4 +12,7 @@
     <Compile Include="Serialization.fs" />
     <None Include="Froto.Serialization.nuspec" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SourceLink.Create.CommandLine" Version="2.6.0" PrivateAssets="All" />
+  </ItemGroup>
 </Project>

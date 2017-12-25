@@ -11,7 +11,6 @@ open Fake.Core.Process
 open Fake.Core.TargetOperators
 open Fake.DotNet
 open Fake.DotNet.NuGet.NuGet
-// open Fake.DotNet.Testing.XUnit2
 
 type Text.StringBuilder with
     member x.Appendf format = Printf.ksprintf (fun s -> x.Append s |> ignore) format
@@ -63,7 +62,6 @@ Target.Create "UnitTest" <| fun _ ->
     test "Parser.Test/Froto.Parser.Test.fsproj"
     test "Serialization.Test/Froto.Serialization.Test.fsproj"
 
-// https://github.com/fsharp/FAKE/blob/master/help/markdown/dotnet-nuget.md
 Target.Create "NuGet" <| fun _ ->
     IO.Directory.create "bin"
     NuGet (fun p ->
