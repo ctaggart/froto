@@ -14,7 +14,7 @@
     <When Condition="$(Configuration) == 'Debug'">
       <ItemGroup>
         <Reference Include="Froto.TypeProvider">
-          <HintPath>..\TypeProvider\bin\Debug\netstandard2.0\Froto.TypeProvider.dll</HintPath>
+          <HintPath>..\TypeProvider\bin\Debug\net461\Froto.TypeProvider.dll</HintPath>
         </Reference>
         <Reference Include="Froto.Serialization">
           <HintPath>..\Serialization\bin\Debug\netstandard2.0\Froto.Serialization.dll</HintPath>
@@ -24,7 +24,7 @@
     <When Condition="$(Configuration) == 'Release'">
       <ItemGroup>
         <Reference Include="Froto.TypeProvider">
-          <HintPath>..\TypeProvider\bin\Release\netstandard2.0\Froto.TypeProvider.dll</HintPath>
+          <HintPath>..\TypeProvider\bin\Release\net461\Froto.TypeProvider.dll</HintPath>
         </Reference>
         <Reference Include="Froto.Serialization">
           <HintPath>..\Serialization\bin\Release\netstandard2.0\Froto.Serialization.dll</HintPath>
@@ -33,6 +33,7 @@
     </When>
   </Choose>
   <ItemGroup>
+    <PackageReference Include="FParsec" Version="1.0.3" />
     <PackageReference Include="FsUnit.xUnit" Version="3.1.0-beta2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0" />
     <PackageReference Include="xunit" Version="2.3.1" />

@@ -60,10 +60,10 @@ Target.Create "Build" <| fun _ ->
     |> MSBuild "" "restore;build" ["Configuration", configuration] 
     |> ignore
 
-    if not isMono then
-        ["Froto.TypeProvider.TestAndDocs.sln"] 
-        |> MSBuild "" "restore;build" ["Configuration", configuration] 
-        |> ignore
+    // if not isMono then
+    //     ["Froto.TypeProvider.TestAndDocs.sln"] 
+    //     |> MSBuild "" "restore;build" ["Configuration", configuration] 
+    //     |> ignore
 
 Target.Create "UnitTest" <| fun _ ->
     IO.Directory.create "bin"
@@ -72,13 +72,13 @@ Target.Create "UnitTest" <| fun _ ->
             sprintf @"Serialization.Test/bin/%s/net46/Froto.Serialization.Test.dll" configuration
         ]
 
-    let dlls =
-        List.append dlls (
-            if isMono then
-                []
-            else
-                [ sprintf @"TypeProvider.Test/bin/%s/net46/Froto.TypeProvider.Test.dll" configuration ]
-        )
+    // let dlls =
+    //     List.append dlls (
+    //         if isMono then
+    //             []
+    //         else
+    //             [ sprintf @"TypeProvider.Test/bin/%s/net46/Froto.TypeProvider.Test.dll" configuration ]
+    //     )
     
     xUnit2 (fun p ->
         { p with
