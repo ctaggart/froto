@@ -54,54 +54,14 @@ Target.Create "SwitchToDebug" <| fun _ ->
     configuration <- "Debug"
 
 Target.Create "Build" <| fun _ ->
-
-    DotNetCli.Build (fun p -> 
-       { p with
-            Project = "Froto.sln"
-            Configuration = configuration
-        }
-    )
-
-    // if not isMono then
-    //     ["Froto.TypeProvider.TestAndDocs.sln"] 
-    //     |> MSBuild "" "restore;build" ["Configuration", configuration] 
-    //     |> ignore
+    let build project = DotNetCli.Build (fun p -> { p with Project = project })
+    build "Froto.sln"
+    // build "Froto.TypeProvider.TestAndDocs.sln"
 
 Target.Create "UnitTest" <| fun _ ->
-    // IO.Directory.create "bin"
-    // let dlls =
-    //     [   sprintf @"Parser.Test/bin/%s/netstandard2.0/Froto.Parser.Test.dll" configuration
-    //         sprintf @"Serialization.Test/bin/%s/netstandard2.0/Froto.Serialization.Test.dll" configuration
-    //     ]
-
-    // let dlls =
-    //     List.append dlls (
-    //         if isMono then
-    //             []
-    //         else
-    //             [ sprintf @"TypeProvider.Test/bin/%s/net46/Froto.TypeProvider.Test.dll" configuration ]
-    //     )
-
-    // xUnit2 (fun p ->
-    //     { p with
-    //         IncludeTraits = ["Kind", "Unit"]
-    //         XmlOutputPath = Some @"bin/UnitTest.xml"
-    //         Parallel = ParallelMode.Assemblies
-    //         TimeOut = TimeSpan.FromMinutes 10.0
-    //     })
-    //     dlls
-
-    DotNetCli.Test (fun p ->
-        { p with
-            Project = "Parser.Test/Froto.Parser.Test.fsproj"
-        }
-    )
-
-    DotNetCli.Test (fun p ->
-        { p with
-            Project = "Serialization.Test/Froto.Serialization.Test.fsproj"
-        }
-    )
+    let test project = DotNetCli.Test (fun p -> { p with Project = project })
+    test "Parser.Test/Froto.Parser.Test.fsproj"
+    test "Serialization.Test/Froto.Serialization.Test.fsproj"
 
 // https://github.com/fsharp/FAKE/blob/master/help/markdown/dotnet-nuget.md
 Target.Create "NuGet" <| fun _ ->

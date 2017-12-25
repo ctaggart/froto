@@ -12,7 +12,7 @@
     <tags>froto protobuf binary protocol buffers serialization deserialization type provider</tags>
   </metadata>
   <files>
-    <file src="net45/Froto.TypeProvider.dll" target="lib/net45" />
-    <file src="net45/Froto.TypeProvider.pdb" target="lib/net45" />
+    <file src="net461/Froto.TypeProvider.dll" target="lib/net461" />
+    <file src="net461/Froto.TypeProvider.pdb" target="lib/net461" />
   </files>
 </package>

@@ -12,7 +12,7 @@
     <tags>froto protobuf binary protocol buffers serialization deserialization</tags>
   </metadata>
   <files>
-    <file src="net45/Froto.Serialization.dll" target="lib/net45" />
-    <file src="net45/Froto.Serialization.pdb" target="lib/net45" />
+    <file src="netstandard2.0/Froto.Serialization.dll" target="lib/netstandard2.0" />
+    <file src="netstandard2.0/Froto.Serialization.pdb" target="lib/netstandard2.0" />
   </files>
 </package>
