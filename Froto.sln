@@ -38,17 +38,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "protobuf", "protobuf", "{82
 		test\google\protobuf\descriptor.proto = test\google\protobuf\descriptor.proto
 	EndProjectSection
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Parser", "Parser\Froto.Parser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Parser", "Parser/Froto.Parser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Parser.Test", "Parser.Test\Froto.Parser.Test.fsproj", "{18104831-6F33-4F15-AB45-3E8527CC5181}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Parser.Test", "Parser.Test/Froto.Parser.Test.fsproj", "{18104831-6F33-4F15-AB45-3E8527CC5181}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Serialization", "Serialization\Froto.Serialization.fsproj", "{C37745D0-275D-4DCE-9DDC-C4663A462EDD}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Serialization", "Serialization/Froto.Serialization.fsproj", "{C37745D0-275D-4DCE-9DDC-C4663A462EDD}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Serialization.Test", "Serialization.Test\Froto.Serialization.Test.fsproj", "{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Serialization.Test", "Serialization.Test/Froto.Serialization.Test.fsproj", "{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Compiler", "Compiler\Froto.Compiler.fsproj", "{F5D8D709-919D-4539-8908-91C540C970B3}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.Compiler", "Compiler/Froto.Compiler.fsproj", "{F5D8D709-919D-4539-8908-91C540C970B3}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.TypeProvider", "TypeProvider\Froto.TypeProvider.fsproj", "{837AA4FC-E2DD-48A1-A793-50DC4404EE57}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.TypeProvider", "TypeProvider/Froto.TypeProvider.fsproj", "{837AA4FC-E2DD-48A1-A793-50DC4404EE57}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
