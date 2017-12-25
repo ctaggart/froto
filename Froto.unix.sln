@@ -1,0 +1,89 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2010
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2291EB39-A4CC-471C-BA12-1E58F298B395}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		appveyor.yml = appveyor.yml
+		build.fsx = build.fsx
+		readme.md = readme.md
+		release_notes.md = release_notes.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{992FDC44-075B-4B9D-BFF4-0C34093627E6}"
+	ProjectSection(SolutionItems) = preProject
+		test\addressbook.proto = test\addressbook.proto
+		test\addressbook1.proto = test\addressbook1.proto
+		test\FooOptions.proto = test\FooOptions.proto
+		test\grpc.proto = test\grpc.proto
+		test\javatutorial.proto = test\javatutorial.proto
+		test\nwind.proto = test\nwind.proto
+		test\person.proto = test\person.proto
+		test\protoenum.proto = test\protoenum.proto
+		test\protooptions.proto = test\protooptions.proto
+		test\riak.proto = test\riak.proto
+		test\riak_kv.proto = test\riak_kv.proto
+		test\riak_search.proto = test\riak_search.proto
+		test\rpc.proto = test\rpc.proto
+		test\SearchRequest.proto = test\SearchRequest.proto
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "google", "google", "{E1A81C99-B921-4EAF-9912-2B2306779E22}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "protobuf", "protobuf", "{828E3BC0-8DF8-48B5-BA98-BDB8C108C25A}"
+	ProjectSection(SolutionItems) = preProject
+		test\google\protobuf\descriptor.proto = test\google\protobuf\descriptor.proto
+	EndProjectSection
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Parser", "Parser\Froto.Parser.fsproj", "{1C31DA31-BEC5-4E73-9D83-E36D18847439}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Parser.Test", "Parser.Test\Froto.Parser.Test.fsproj", "{18104831-6F33-4F15-AB45-3E8527CC5181}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Serialization", "Serialization\Froto.Serialization.fsproj", "{C37745D0-275D-4DCE-9DDC-C4663A462EDD}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Serialization.Test", "Serialization.Test\Froto.Serialization.Test.fsproj", "{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Compiler", "Compiler\Froto.Compiler.fsproj", "{F5D8D709-919D-4539-8908-91C540C970B3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C31DA31-BEC5-4E73-9D83-E36D18847439}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C31DA31-BEC5-4E73-9D83-E36D18847439}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C31DA31-BEC5-4E73-9D83-E36D18847439}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C31DA31-BEC5-4E73-9D83-E36D18847439}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18104831-6F33-4F15-AB45-3E8527CC5181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18104831-6F33-4F15-AB45-3E8527CC5181}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18104831-6F33-4F15-AB45-3E8527CC5181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18104831-6F33-4F15-AB45-3E8527CC5181}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C37745D0-275D-4DCE-9DDC-C4663A462EDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C37745D0-275D-4DCE-9DDC-C4663A462EDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C37745D0-275D-4DCE-9DDC-C4663A462EDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C37745D0-275D-4DCE-9DDC-C4663A462EDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF2D437D-55A1-4F31-86BD-9B9D7E05CAEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5D8D709-919D-4539-8908-91C540C970B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5D8D709-919D-4539-8908-91C540C970B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5D8D709-919D-4539-8908-91C540C970B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5D8D709-919D-4539-8908-91C540C970B3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{992FDC44-075B-4B9D-BFF4-0C34093627E6} = {2291EB39-A4CC-471C-BA12-1E58F298B395}
+		{E1A81C99-B921-4EAF-9912-2B2306779E22} = {992FDC44-075B-4B9D-BFF4-0C34093627E6}
+		{828E3BC0-8DF8-48B5-BA98-BDB8C108C25A} = {E1A81C99-B921-4EAF-9912-2B2306779E22}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8FAB0177-725B-49AC-A02D-F7B95EB975C2}
+	EndGlobalSection
+EndGlobal
