@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net461</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
@@ -14,25 +14,26 @@
     <When Condition="$(Configuration) == 'Debug'">
       <ItemGroup>
         <Reference Include="Froto.TypeProvider">
-          <HintPath>..\TypeProvider\bin\Debug\net45\Froto.TypeProvider.dll</HintPath>
+          <HintPath>..\TypeProvider\bin\Debug\net461\Froto.TypeProvider.dll</HintPath>
         </Reference>
         <Reference Include="Froto.Serialization">
-          <HintPath>..\Serialization\bin\Debug\net45\Froto.Serialization.dll</HintPath>
+          <HintPath>..\Serialization\bin\Debug\netstandard2.0\Froto.Serialization.dll</HintPath>
         </Reference>
       </ItemGroup>
     </When>
     <When Condition="$(Configuration) == 'Release'">
       <ItemGroup>
         <Reference Include="Froto.TypeProvider">
-          <HintPath>..\TypeProvider\bin\Release\net45\Froto.TypeProvider.dll</HintPath>
+          <HintPath>..\TypeProvider\bin\Release\net461\Froto.TypeProvider.dll</HintPath>
         </Reference>
         <Reference Include="Froto.Serialization">
-          <HintPath>..\Serialization\bin\Release\net45\Froto.Serialization.dll</HintPath>
+          <HintPath>..\Serialization\bin\Release\netstandard2.0\Froto.Serialization.dll</HintPath>
         </Reference>
       </ItemGroup>
     </When>
   </Choose>
   <ItemGroup>
+    <PackageReference Include="FParsec" Version="1.0.3" />
     <PackageReference Include="FsUnit.xUnit" Version="3.1.0-beta2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0" />
     <PackageReference Include="xunit" Version="2.3.1" />

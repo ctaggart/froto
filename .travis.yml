@@ -1,9 +1,8 @@
 language: csharp
-
-sudo: false  # use the new container-based Travis infrastructure
-
-before_install:
-  - chmod +x build.sh
-
+mono: none
+dotnet: 2.1.3
 script:
-  - ./build.sh unittest
+  - dotnet restore Froto.unix.sln
+  - dotnet build Froto.unix.sln -c Release
+  - dotnet test Parser.Test/Froto.Parser.Test.fsproj
+  - dotnet test Serialization.Test/Froto.Serialization.Test.fsproj
