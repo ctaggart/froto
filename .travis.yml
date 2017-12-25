@@ -2,6 +2,9 @@ language: csharp
 mono: none
 dotnet: 2.1.3
 script:
-  # - dotnet restore Froto.unix.sln
+  - echo "travis_fold:start:restore folding starts"
+  - dotnet restore Froto.unix.sln
+  - echo "travis_fold:start:restore folding ends"
   - dotnet build Froto.unix.sln -c Release
-  # - dotnet build Froto.TypeProvider.TestAndDocs.sln -c Release
+  - dotnet test Parser.Test/Froto.Parser.Test.fsproj
+  - dotnet test Serialization.Test/Froto.Serialization.Test.fsproj
