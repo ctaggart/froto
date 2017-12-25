@@ -1,19 +1,19 @@
 language: csharp
 
-sudo: false  # use the new container-based Travis infrastructure
+dotnet: 2.0.4
 
 # dependencies (netcore)
-addons:
-  apt:
-    packages:
-       - libunwind8
-       - msbuild
+# addons:
+#   apt:
+#     packages:
+#        - libunwind8
+#        - msbuild
 
 before_install:
-  - msbuild /version
+  # - msbuild /version
   - dotnet --version
   - dotnet --info
-  - chmod +x build.sh
+  # - chmod +x build.sh
 
-script:
-  - ./build.sh unittest
+# script:
+#   - ./build.sh unittest
