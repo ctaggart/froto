@@ -18,19 +18,29 @@
 ///
 ///    <c>Serializer : (m:^T, ZeroCopyBuffer) -> ZeroCopyBuffer</c>
 ///
-/// Deserializable types must provide, at minimum, the following static
+/// For proto2 Deserializable types must provide, at minimum, the following static
 /// methods.
 ///
 ///     * DecoderRing   - maps FieldId to a deserialization function
 ///     * RememberFound - adds a FieldId to list of found fields
 ///     * DecodeFixup   - called after decoding the message
-///     * RequiredFields- list of (proto2) required fields; can be empty
+///     * RequiredFields- list of required fields; can be empty
 ///     * FoundFields   - returns list of fields found
 ///     * UnknownFields - returns list of unknown fields
 ///
-/// These can be associated with any valid F# type, including Records and
-/// Classes, because the serialization functions use Static Type Constraints
-/// to locate these static methods.
+/// If you are using proto3 Deserializable types then you must provide, 
+/// at minimum, the following static methods.
+///
+///     * DecoderRing   - maps FieldId to a deserialization function
+///     * DecodeFixup   - called after decoding the message
+///
+/// The Proto3 module should be used to deserialize rather than functions inside
+/// the Deserialize module e.g. 
+///    <c>Deserialise.Proto3.fromArray message.Default bytes</c>
+///
+/// The static methods mentioned above can be associated with any valid F# type, 
+/// including Records and Classes, because the serialization functions use
+/// Static Type Constraints to locate these static methods.
 ///
 /// <c>DecoderRing : Map &lt; int, 'T -> RawField -> 'T &gt;</c>
 ///
@@ -212,6 +222,32 @@ module Deserialize =
                 m
             else
                 raise <| SerializerException(sprintf "Missing required fields %A" missingFields)
+                
+        module Proto3 =
+    
+            let inline deserializeFields m fields =
+    
+                let inline decoderRing (m:^msg) =
+                    (^msg : (static member DecoderRing: Map<int,^msg -> RawField -> ^msg>) () )
+    
+                let inline fetchDecoder decoderRing (field:RawField) =
+                    let decode decoder m (rawField:RawField) =
+                        decoder m rawField
+    
+                    let n = field.FieldNum
+                    match decoderRing |> Map.tryFind n with
+                    | Some(decoder) -> (decode decoder, field)
+                    | None -> ( (fun m _ -> m), field) //No action for unknown fields in proto3
+                    
+                /// decode a sequence of fields, given a decoder ring and a default or mutable message.
+                /// Note that a List would perform slightly better, but demand more memory during operation.
+                let inline decode decoderRing m fields =
+                    fields
+                    |> Seq.map (fetchDecoder decoderRing)
+                    |> Seq.fold (fun acc (fn, fld) -> fn acc fld) m
+    
+                let m = decode (decoderRing m) m fields
+                m
 
     /// Deserialize a message from a ZeroCopyBuffer, given a default message.
     let inline fromZeroCopyBuffer m zcb =
@@ -284,6 +320,77 @@ module Deserialize =
     /// Deserialize a length-delimited message from a byte array, given a default message.
     /// Shorthand for Deserialize.fromArrayLengthDelimited.
     let inline fromArrayLD m buf = fromArrayLengthDelimited m buf
-
-
-
+    
+    module Proto3 =
+ 
+        /// Deserialize a message from a ZeroCopyBuffer, given a default message.
+        let inline fromZeroCopyBuffer m zcb =
+            zcb
+            |> Utility.decodeBuffer
+            |> Helpers.Proto3.deserializeFields m
+            |> Helpers.decodeFixup
+    
+        /// Deserialize a message from a ZeroCopyBuffer, given a default message.
+        /// Shorthand for Deserialize.fromZeroCopyBuffer.
+        let inline fromZcb m zcb = fromZeroCopyBuffer m zcb
+    
+        /// Deserialize a length-delimited message from a ZeroCopyBuffer, given a default message.
+        let inline fromZeroCopyBufferLengthDelimited m zcb =
+            zcb
+            |> Utility.unpackLengthDelimited
+            |> Helpers.Proto3.deserializeFields m
+            |> Helpers.decodeFixup
+    
+        /// Deserialize a length-delimited message from a ZeroCopyBuffer, given a default message.
+        /// Shorthand for Deserialize.fromZeroCopyBufferLengthDelimited.
+        let inline fromZcbLD m zcb = fromZeroCopyBufferLengthDelimited m zcb
+    
+        /// Deserialize a message from a length-delimited RawField, given a default message.
+        let inline fromRawField m (rawField:RawField) =
+            let buf = 
+                match rawField with
+                | LengthDelimited (fieldId, buf) ->
+                    buf
+                | _ ->
+                    raise <| SerializerException(sprintf "Expected LengthDelimited field, found %s" (rawField.GetType().Name) )
+            buf
+            |> ZeroCopyBuffer
+            |> fromZeroCopyBuffer m
+    
+        /// Deserialize a message from a length-delimited RawField, given a default message,
+        /// and return Some(message).  Used to simplify the call-site when deserializing
+        /// inner messages.
+        let inline optionalMessage m rawField =
+            Some (fromRawField m rawField)
+    
+        /// Deserialize a message from an ArraySegment, given a default message.
+        let inline fromArraySegment m (buf:ArraySegment<byte>) =
+            buf
+            |> ZeroCopyBuffer
+            |> fromZcb m
+    
+        /// Deserialize a length-delimited message from an ArraySegment, given a default message.
+        let inline fromArraySegmentLengthDelimited m (buf:ArraySegment<byte>) =
+            buf
+            |> ZeroCopyBuffer
+            |> fromZcbLD m
+    
+        /// Deserialize a length-delimited message from an ArraySegment, given a default message.
+        /// Shorthand for Deserialize.fromArraySegmentLengthDelimited.
+        let inline fromArraySegmentLD m buf = fromArraySegmentLengthDelimited m buf
+    
+        /// Deserialize a message from a byte array, given a default message.
+        let inline fromArray m buf =
+            buf
+            |> ArraySegment
+            |> fromArraySegment m
+    
+        /// Deserialize a length-delimited message from a byte array, given a default message.
+        let inline fromArrayLengthDelimited m buf =
+            buf
+            |> ArraySegment
+            |> fromArraySegmentLD m
+    
+        /// Deserialize a length-delimited message from a byte array, given a default message.
+        /// Shorthand for Deserialize.fromArrayLengthDelimited.
+        let inline fromArrayLD m buf = fromArrayLengthDelimited m buf
