@@ -64,7 +64,7 @@ module RecordSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |]
-        let msg = buf |> Deserialize.fromArray InnerMessage.Default
+        let msg = buf |> Deserialize.Proto2.fromArray InnerMessage.Default
         msg.id |> should equal 99
         msg.name |> should equal "Test message"
 
@@ -79,7 +79,7 @@ module RecordSerialization =
                 0x54uy; 0x65uy; 0x73uy; 0x74uy; 0x20uy; 0x6duy; 0x65uy; 0x73uy; 0x73uy; 0x61uy; 0x67uy; 0x65uy
                                     // value "Test message"
             |]
-        fun () -> buf |> Deserialize.fromArray InnerMessage.Default |> ignore
+        fun () -> buf |> Deserialize.Proto2.fromArray InnerMessage.Default |> ignore
         |> should throw typeof<Froto.Serialization.SerializerException>
 
     [<Fact>]
@@ -119,7 +119,7 @@ module RecordSerialization =
 
             static member DecoderRing =
                 [ 1 , fun m rawField -> { m with id      = Decode.toInt32 rawField } : OuterMessage
-                  42, fun m rawField -> { m with inner   = Deserialize.optionalMessage InnerMessage.Default rawField} : OuterMessage
+                  42, fun m rawField -> { m with inner   = Deserialize.Proto2.optionalMessage InnerMessage.Default rawField} : OuterMessage
                   43, fun m rawField -> { m with hasMore = Decode.toBool rawField } : OuterMessage
                 ]
                 |> Map.ofList
@@ -146,7 +146,7 @@ module RecordSerialization =
                 0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
                 0x01uy;                 // value true
             |]
-        let msg = buf |> Deserialize.fromArray OuterMessage.Default
+        let msg = buf |> Deserialize.Proto2.fromArray OuterMessage.Default
         msg.id |> should equal 21
         msg.inner.IsSome |> should equal true
         msg.inner.Value.id |> should equal 99
