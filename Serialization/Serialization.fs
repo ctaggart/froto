@@ -26,7 +26,6 @@
 ///     * DecodeFixup   - called after decoding the message
 ///     * RequiredFields- list of required fields; can be empty
 ///     * FoundFields   - returns list of fields found
-///     * UnknownFields - returns list of unknown fields
 ///
 /// If you are using proto3 Deserializable types then you must provide, 
 /// at minimum, the following static methods.
