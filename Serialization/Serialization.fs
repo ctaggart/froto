@@ -232,7 +232,11 @@ module Deserialize =
                     let n = field.FieldNum
                     match decoderRing |> Map.tryFind n with
                     | Some(decoder) -> (decode decoder, field)
-                    | None -> ( (fun m _ -> m), field) //No action for unknown fields in proto3
+                    | None ->
+                        match decoderRing |> Map.tryFind 0 with
+                        | Some(decoder) -> (decode decoder, field)
+                        //No action for unknown fields in proto3 if there is no supplied field mapping
+                        | None -> (fun m _ -> m), field 
                     
                 /// decode a sequence of fields, given a decoder ring and a default or mutable message.
                 /// Note that a List would perform slightly better, but demand more memory during operation.
