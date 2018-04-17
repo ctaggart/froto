@@ -175,4 +175,87 @@ module RecordSerialization =
                 0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
                 0x01uy;                 // value true
             |]
+            
+    type Proto3Message  = {
+        id : int32
+        name : string
+        _unknownFields : RawField list
+        }
+        with
+            static member Default = {
+                id = 0
+                name = ""
+                _unknownFields = List.empty
+                }
+
+            static member Serializer (m, zcb) =
+                (m.id            |> Encode.fromVarint 1) >>
+                (m.name          |> Encode.fromString 2)
+                <| zcb
+
+            static member DecoderRing =
+                [
+                    0, fun m rawField -> { m with _unknownFields = rawField :: m._unknownFields } : Proto3Message
+                    1, fun m rawField -> { m with id = rawField |> Decode.toInt32 } : _
+                    2, fun m rawField -> { m with name = rawField |> Decode.toString } : _
+                ]
+                |> Map.ofList
+    
+            static member DecodeFixup m =
+                { m with _unknownFields = List.rev m._unknownFields }
+
+            static member RequiredFields =
+                [ 1; 2 ] |> Set.ofList
+
+            static member UnknownFields m =
+                m._unknownFields
+                
+    [<Fact>]
+    let ``Serialize proto3 message`` () =
+        let msg = { Proto3Message.Default with
+                        id = 5
+                        name = "TEST" }
+        let serialised = msg |> Serialize.toArray
+        printfn "%A" serialised
+        serialised
+        |> should equal
+            [|  
+                1uy <<< 3 ||| 0uy; 5uy // field 1, type 0; value 5
+                2uy <<< 3 ||| 2uy;     // field 2, type 2
+                4uy;                   // length
+                84uy; 69uy; 83uy; 84uy // TEST
+            |]
+            
+    [<Fact>]
+    let ``Deserialize proto3 message`` () =
+        let buf =
+            [|
+                1uy <<< 3 ||| 0uy; 5uy // field 1, type 0; value 5
+                2uy <<< 3 ||| 2uy;     // field 2, type 2
+                4uy;                   // length
+                84uy; 69uy; 83uy; 84uy // TEST
+            |]
+        let msg = buf |> Deserialize.Proto3.fromArray Proto3Message.Default
+        msg.id |> should equal 5
+        msg.name |> should equal "TEST"
+        
+    [<Fact>]
+    let ``Deserialize proto3 message with extra field`` () =
+        let buf =
+            [|
+                1uy <<< 3 ||| 0uy; 5uy // field 1, type 0; value 5
+                2uy <<< 3 ||| 2uy;     // field 2, type 2
+                4uy;                   // length
+                84uy; 69uy; 83uy; 84uy // TEST
+                3uy <<< 3 ||| 0uy; 42uy
+            |]
+        let msg = buf |> Deserialize.Proto3.fromArray Proto3Message.Default
+        msg.id |> should equal 5
+        msg.name |> should equal "TEST"
+        let unknown =
+            msg._unknownFields
+            |> List.tryHead
+            |> Option.toList
+            |> List.map (fun v -> v.FieldNum, v.WireType)
+        unknown |> should equal [3, WireType.Varint]
 
