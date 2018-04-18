@@ -53,13 +53,13 @@ module ClassSerialization =
         member m.Serialize zcb                  = Serialize.toZeroCopyBuffer m zcb
         member m.SerializeLengthDelimited ()    = Serialize.toArrayLD m
 
-        static member Deserialize buf                   = buf |> Deserialize.fromArray (InnerMessage())
-        static member Deserialize buf                   = buf |> Deserialize.fromArraySegment (InnerMessage())
-        static member Deserialize zcb                   = zcb |> Deserialize.fromZeroCopyBuffer (InnerMessage())
-        static member Deserialize raw                   = raw |> Deserialize.fromRawField (InnerMessage())
-        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArrayLD (InnerMessage())
-        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArraySegmentLD (InnerMessage())
-        static member DeserializeLengthDelimited zcb    = zcb |> Deserialize.fromZcbLD (InnerMessage())
+        static member Deserialize buf                   = buf |> Deserialize.Proto2.fromArray (InnerMessage())
+        static member Deserialize buf                   = buf |> Deserialize.Proto2.fromArraySegment (InnerMessage())
+        static member Deserialize zcb                   = zcb |> Deserialize.Proto2.fromZeroCopyBuffer (InnerMessage())
+        static member Deserialize raw                   = raw |> Deserialize.Proto2.fromRawField (InnerMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.Proto2.fromArrayLD (InnerMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.Proto2.fromArraySegmentLD (InnerMessage())
+        static member DeserializeLengthDelimited zcb    = zcb |> Deserialize.Proto2.fromZcbLD (InnerMessage())
 
 
     [<Fact>]
@@ -155,13 +155,13 @@ module ClassSerialization =
         member m.Serialize zcb                  = Serialize.toZeroCopyBuffer m zcb
         member m.SerializeLengthDelimited ()    = Serialize.toArrayLD m
 
-        static member Deserialize buf                   = buf |> Deserialize.fromArray (OuterMessage())
-        static member Deserialize buf                   = buf |> Deserialize.fromArraySegment (OuterMessage())
-        static member Deserialize zcb                   = zcb |> Deserialize.fromZeroCopyBuffer (OuterMessage())
-        static member Deserialize raw                   = raw |> Deserialize.fromRawField (OuterMessage())
-        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArrayLD (OuterMessage())
-        static member DeserializeLengthDelimited buf    = buf |> Deserialize.fromArraySegmentLD (OuterMessage())
-        static member DeserializeLengthDelimited zcb    = zcb |> Deserialize.fromZcbLD (OuterMessage())
+        static member Deserialize buf                   = buf |> Deserialize.Proto2.fromArray (OuterMessage())
+        static member Deserialize buf                   = buf |> Deserialize.Proto2.fromArraySegment (OuterMessage())
+        static member Deserialize zcb                   = zcb |> Deserialize.Proto2.fromZeroCopyBuffer (OuterMessage())
+        static member Deserialize raw                   = raw |> Deserialize.Proto2.fromRawField (OuterMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.Proto2.fromArrayLD (OuterMessage())
+        static member DeserializeLengthDelimited buf    = buf |> Deserialize.Proto2.fromArraySegmentLD (OuterMessage())
+        static member DeserializeLengthDelimited zcb    = zcb |> Deserialize.Proto2.fromZcbLD (OuterMessage())
 
 
     [<Fact>]
