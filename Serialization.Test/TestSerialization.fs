@@ -176,7 +176,8 @@ module RecordSerialization =
                 0x01uy;                 // value true
             |]
      
-    ///If you require the collection of Unknown Fields in your record type definitions then you can the following.  
+    ///If you require the collection of unknown fields in your record type definitions then you can 
+    ///use the following definition as a guide.  
     ///Note the _unknownFields definition as part of the record definition, zero entry in the DecoderRing, 
     ///the UnknownFields method and DecodeFixup has to reverse the order of the _unknownFields list.        
     type Proto3Message = {
