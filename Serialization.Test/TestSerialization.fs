@@ -204,9 +204,6 @@ module RecordSerialization =
             static member DecodeFixup m =
                 { m with _unknownFields = List.rev m._unknownFields }
 
-            static member RequiredFields =
-                [ 1; 2 ] |> Set.ofList
-
             static member UnknownFields m =
                 m._unknownFields
                 
