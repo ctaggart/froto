@@ -194,7 +194,8 @@ module RecordSerialization =
 
             static member Serializer (m, zcb) =
                 (m.id            |> Encode.fromVarint 1) >>
-                (m.name          |> Encode.fromString 2)
+                (m.name          |> Encode.fromString 2) >>
+                (m._unknownFields|> Encode.fromRawFields)
                 <| zcb
 
             static member DecoderRing =
