@@ -175,8 +175,11 @@ module RecordSerialization =
                 0xD8uy ||| 0uy; 0x02uy; // tag: fldnum=43, varint
                 0x01uy;                 // value true
             |]
-            
-    type Proto3Message  = {
+     
+    ///If you require the collection of Unknown Fields in your record type definitions then you can the following.  
+    ///Note the _unknownFields definition as part of the record definition, zero entry in the DecoderRing, 
+    ///the UnknownFields method and DecodeFixup has to reverse the order of the _unknownFields list.        
+    type Proto3Message = {
         id : int32
         name : string
         _unknownFields : RawField list
@@ -240,11 +243,11 @@ module RecordSerialization =
     let ``Deserialize proto3 message with extra field`` () =
         let buf =
             [|
-                1uy <<< 3 ||| 0uy; 5uy // field 1, type 0; value 5
-                2uy <<< 3 ||| 2uy;     // field 2, type 2
-                4uy;                   // length
-                84uy; 69uy; 83uy; 84uy // TEST
-                3uy <<< 3 ||| 0uy; 42uy
+                1uy <<< 3 ||| 0uy; 5uy  // field 1, type 0; value 5
+                2uy <<< 3 ||| 2uy;      // field 2, type 2
+                4uy;                    // length
+                84uy; 69uy; 83uy; 84uy  // TEST
+                3uy <<< 3 ||| 0uy; 42uy //extra field number 3, type varint, value 42
             |]
         let msg = buf |> Deserialize.Proto3.fromArray Proto3Message.Default
         msg.id |> should equal 5
@@ -255,4 +258,44 @@ module RecordSerialization =
             |> Option.toList
             |> List.map (fun v -> v.FieldNum, v.WireType)
         unknown |> should equal [3, WireType.Varint]
+     
+    ///If you dont require the optional collection of Unknown Fields then your record type definitions
+    ///can be described like the following.  
+    ///Note the absence of a zero entry in the DecoderRing, no UnknownFields and DecodeFixup has no work to do.
+    type Proto3MessageNoUnknown = {
+        id : int32
+        name : string
+        }
+        with
+            static member Default = {
+                id = 0
+                name = ""
+                }
 
+            static member Serializer (m, zcb) =
+                (m.id            |> Encode.fromVarint 1) >>
+                (m.name          |> Encode.fromString 2)
+                <| zcb
+
+            static member DecoderRing =
+                [
+                    1, fun m rawField -> { m with id = rawField |> Decode.toInt32 } : Proto3MessageNoUnknown
+                    2, fun m rawField -> { m with name = rawField |> Decode.toString } : _
+                ]
+                |> Map.ofList
+    
+            static member DecodeFixup m = m
+
+    [<Fact>]
+    let ``Deserialize proto3 message discarding extra field`` () =
+        let buf =
+            [|
+                1uy <<< 3 ||| 0uy; 5uy  // field 1, type 0; value 5
+                2uy <<< 3 ||| 2uy;      // field 2, type 2
+                4uy;                    // length
+                84uy; 69uy; 83uy; 84uy  // TEST
+                3uy <<< 3 ||| 0uy; 42uy //extra field number 3, type varint, value 42
+            |]
+        let msg = buf |> Deserialize.Proto3.fromArray Proto3MessageNoUnknown.Default
+        msg.id |> should equal 5
+        msg.name |> should equal "TEST"
