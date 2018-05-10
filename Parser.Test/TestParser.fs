@@ -481,6 +481,17 @@ module Message =
         <| TOneOf("MyOneof", [ TOneOfField("name",TString,1u,[("foo",TStrLit("bar"))]) ])
 
     [<Fact>]
+    let ``Parse oneof with multiple cases`` () =
+        Parse.fromStringWithParser (ws >>. pOneOf) """
+            oneof test_oneof {
+                string name = 4;
+                int32 age = 9;
+            }
+            """
+        |> should equal
+        <| TOneOf("test_oneof", [ TOneOfField("name",TString,4u,[]); TOneOfField("age",TInt32,9u,[]) ])
+
+    [<Fact>]
     let ``Parse map`` () =
         Parse.fromStringWithParser (ws >>. pMap) """
             map<string,Project> projects = 3;"""
@@ -1043,3 +1054,33 @@ module Proto2 =
 		        }
             """ |> ignore
         |> should not' (throw typeof<System.FormatException>)
+
+[<Xunit.Trait("Kind", "Unit")>]
+module RegressionTests =
+
+    [<Fact>]
+    let ``proto3 oneof type doesn't parse (#88)`` () =
+        System.Diagnostics.Debugger.Break()
+        Parse.fromStringWithParser pProto """
+            syntax = "proto3";
+
+            message SampleMessage {
+                oneof test_oneof {
+                  string name = 4;
+                  int32 age = 9;
+                  }
+            }
+        """
+        |> should equal (
+            [
+                TSyntax TProto3
+                TMessage ("SampleMessage",
+                    [
+                        TOneOf("test_oneof",
+                            [
+                                TOneOfField("name",TString,4u,[])
+                                TOneOfField("age",TInt32,9u,[])
+                            ])
+
+                    ])
+            ])
