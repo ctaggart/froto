@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Runtime.fs" />
+  </ItemGroup>
+  <Target Name="BeforeBuild">
+    <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Restore" />
+    <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=netcoreapp2.0" />
+    <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=netstandard2.0" />
+  </Target>
+
+</Project>

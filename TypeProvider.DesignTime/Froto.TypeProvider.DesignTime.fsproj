@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netcoreapp2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="External/ProvidedTypes.fsi" />
+    <Compile Include="External/ProvidedTypes.fs" />
+    <Compile Include="..\TypeProvider.Runtime\Runtime.fs" />
+    <Compile Include="Library.fs" />
+  </ItemGroup>
+
+</Project>
