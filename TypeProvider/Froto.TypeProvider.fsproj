@@ -44,6 +44,7 @@
     <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <Reference Include="System.Runtime.Caching" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All" />
   </ItemGroup>

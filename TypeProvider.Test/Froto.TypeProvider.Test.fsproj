@@ -33,8 +33,9 @@
     </When>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="FParsec" Version="1.0.3" />
     <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj" />
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
+    <PackageReference Include="FParsec" Version="1.0.3" />
     <PackageReference Include="Unquote" Version="4.0.0" />
     <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0">

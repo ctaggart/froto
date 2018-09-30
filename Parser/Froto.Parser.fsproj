@@ -2,9 +2,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
-    <authors>Cameron Taggart, James Hugard</authors>
+    <Authors>Cameron Taggart, James Hugard</Authors>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <description>A parser for .proto files for Protocol Buffers.</description>
+    <Description>A parser for .proto files for Protocol Buffers.</Description>
     <PackageTags>froto protobuf parser binary protocol buffers serialization deserialization</PackageTags>
 
     <!-- SourceLink related properties https://github.com/dotnet/SourceLink#using-sourcelink -->
@@ -18,7 +18,8 @@
     <Compile Include="ClassModel.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <PackageReference Include="FParsec" Version="1.0.3" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All" />>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All" />
   </ItemGroup>
 </Project>

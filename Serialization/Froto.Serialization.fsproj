@@ -2,10 +2,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
-    <authors>Cameron Taggart, James Hugard</Authors>
+    <Authors>Cameron Taggart, James Hugard</Authors>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A serialization library for Protocol Buffers.</description>
+    <Description>A serialization library for Protocol Buffers.</Description>
     <PackageTags>froto protobuf binary protocol buffers serialization deserialization</PackageTags>
 
     <!-- SourceLink related properties https://github.com/dotnet/SourceLink#using-sourcelink -->
@@ -23,6 +22,7 @@
     <Compile Include="Serialization.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All" />
   </ItemGroup>
 </Project>
