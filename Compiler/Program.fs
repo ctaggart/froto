@@ -31,8 +31,8 @@ let main argv =
         printfn "outProtobufNet: %A" outProtobufNet
 
         // TODO need to hook up the arguments
-        if outProtobufNet.IsSome then
-            Froto.Roslyn.ProtoGen.generate @"test\riak.proto" "Riak" "RiakProto" "riak.cs"
+        //if outProtobufNet.IsSome then
+        //    Froto.Roslyn.ProtoGen.generate @"test\riak.proto" "Riak" "RiakProto" "riak.cs"
 
         0
     with

@@ -16,7 +16,7 @@ let parseString s = ProtoFile.fromString(s)
 let getTestFile file =
      let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
      let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
-     let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent).FullName
+     let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent.Parent).FullName
      Path.Combine(solutionPath, Path.Combine("test",file))
 
 [<Fact>]

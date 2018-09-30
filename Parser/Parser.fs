@@ -359,7 +359,7 @@ module Parse =
             //let todoMsg = "Explicit 'optional' fields are prohibited in proto3 syntax.  Since all fields are optional by default, the 'optional' label should simply be removed."
             (opt (str_ws1 "repeated" >>% TRepeated)) |>> defArg TOptional
 
-        /// Parser for proto2 lable + ws
+        /// Parser for proto2 label + ws
         let pLabel_ws1 = pLabel .>> ws1
 
         /// Parser for types: double | int32 | etc...
@@ -481,13 +481,13 @@ module Parse =
 
             choice [
                 (isProto2 >>. pGroup) // must be parsed first to avoid confusion
+                pOneOf                // must be parsed before pField, so 'oneof' isn't considered a type in Proto3
                 pField
                 pMessageEnum
                 pMessageMessage
                 (isProto2 >>. pMessageExtend)
                 (isProto2 >>. pExtensions)
                 pMessageOption
-                pOneOf
                 pMap
                 pReserved
                 ]

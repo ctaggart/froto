@@ -1,4 +1,4 @@
-﻿#r "../TypeProvider/bin/Debug/Froto.TypeProvider.dll"
+﻿#r "../TypeProvider/bin/Debug/net45/Froto.TypeProvider.dll"
 
 open Froto.TypeProvider
 

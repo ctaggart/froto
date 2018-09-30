@@ -115,7 +115,7 @@ module PerformanceTest =
             let zcr = Froto.Serialization.ZeroCopyBuffer(zcw.Array)
             seq {
                 while not zcr.IsEof do
-                    yield zcr |> Deserialize.fromZcbLD InnerSample.Default
+                    yield zcr |> Deserialize.Proto2.fromZcbLD InnerSample.Default
             }
 
         ys |> Seq.iter ignore
