@@ -1,6 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
+
+    <Authors>Cameron Taggart, James Hugard, Uladzimir Makarau</Authors>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <projectUrl>https://github.com/ctaggart/froto</projectUrl>
+    <Description>A type provider for Protocol Buffers.</Description>
+    <PackageTags>froto protobuf binary protocol buffers serialization deserialization type provider</PackageTags>
+
+    <!-- SourceLink related properties https://github.com/dotnet/SourceLink#using-sourcelink -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="lib/ProvidedTypes.fsi" />
@@ -33,7 +44,8 @@
     <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <Reference Include="System.Runtime.Caching" />
-    <PackageReference Include="SourceLink.Create.CommandLine" Version="2.6.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All" />
   </ItemGroup>
 </Project>
