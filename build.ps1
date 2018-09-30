@@ -1,6 +1,6 @@
 $version = '0.7.0' # the version under development, update after a release
 $versionSuffix = '-build.0' # manually incremented for local builds
-
+ 
 function isVersionTag($tag){
     $v = New-Object Version
     [Version]::TryParse($tag, [ref]$v)
