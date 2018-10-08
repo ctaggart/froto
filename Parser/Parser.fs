@@ -482,7 +482,6 @@ module Parse =
             choice [
                 (isProto2 >>. pGroup) // must be parsed first to avoid confusion
                 pOneOf                // must be parsed before pField, so 'oneof' isn't considered a type in Proto3
-                pField
                 pMessageEnum
                 pMessageMessage
                 (isProto2 >>. pMessageExtend)
@@ -490,6 +489,7 @@ module Parse =
                 pMessageOption
                 pMap
                 pReserved
+                pField
                 ]
 
         /// Parse message option: "option" (ident | "(" fullIdent ")" { "." ident }
