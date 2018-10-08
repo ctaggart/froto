@@ -1084,3 +1084,47 @@ module RegressionTests =
 
                     ])
             ])
+
+    [<Fact>]
+    let ``proto3 message with enum type doesn't parse (#93)`` () =
+        System.Diagnostics.Debugger.Break()
+        Parse.fromStringWithParser pProto """
+            syntax = "proto3";
+
+            message SearchRequest {
+              string query = 1;
+              int32 page_number = 2;
+              int32 result_per_page = 3;
+              enum Corpus {
+                UNIVERSAL = 0;
+                WEB = 1;
+                IMAGES = 2;
+                LOCAL = 3;
+                NEWS = 4;
+                PRODUCTS = 5;
+                VIDEO = 6;
+              }
+              Corpus corpus = 4;
+            }
+        """
+        |> should equal (
+            [
+                TSyntax TProto3
+                TMessage ("SearchRequest",
+                     [
+                          TField ("query",TOptional,TString,1u,[])
+                          TField ("page_number",TOptional,TInt32,2u,[])
+                          TField ("result_per_page",TOptional,TInt32,3u,[])
+                          TMessageEnum("Corpus",
+                                [
+                                     TEnumField ("UNIVERSAL",0,[])
+                                     TEnumField ("WEB",1,[])
+                                     TEnumField ("IMAGES",2,[])
+                                     TEnumField ("LOCAL",3,[])
+                                     TEnumField ("NEWS",4,[])
+                                     TEnumField ("PRODUCTS",5,[])
+                                     TEnumField ("VIDEO",6,[])
+                                ])
+                          TField ("corpus", TOptional,TIdent "Corpus",4u,[])
+                     ])
+            ])
