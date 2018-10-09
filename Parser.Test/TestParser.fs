@@ -1060,7 +1060,6 @@ module RegressionTests =
 
     [<Fact>]
     let ``proto3 oneof type doesn't parse (#88)`` () =
-        System.Diagnostics.Debugger.Break()
         Parse.fromStringWithParser pProto """
             syntax = "proto3";
 
@@ -1087,7 +1086,6 @@ module RegressionTests =
 
     [<Fact>]
     let ``proto3 message with enum type doesn't parse (#93)`` () =
-        System.Diagnostics.Debugger.Break()
         Parse.fromStringWithParser pProto """
             syntax = "proto3";
 
