@@ -27,6 +27,6 @@
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <PackageReference Include="Argu" Version="4.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
-    <!-- <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.136" PrivateAssets="All" /> -->
+    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.138" PrivateAssets="All" />
   </ItemGroup>
 </Project>
