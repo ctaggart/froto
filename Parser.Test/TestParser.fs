@@ -1359,7 +1359,6 @@ module RegressionTests =
 
     [<Fact>]
     let ``proto3 oneof type doesn't parse (#88)`` () =
-        System.Diagnostics.Debugger.Break()
         Parse.fromStringWithParser pProto """
             syntax = "proto3";
 
