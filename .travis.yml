@@ -1,6 +1,6 @@
 language: csharp
 mono: none
-dotnet: 2.1.3
+dotnet: 2.2.3
 script:
   - dotnet restore Froto.sln
   - dotnet build Froto.sln -c Release
