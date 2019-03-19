@@ -206,7 +206,7 @@ module RecordSerialization =
                 ]
                 |> Map.ofList
     
-            static member DecodeFixup m =
+            static member DecodeFixup m: Proto3Message =
                 { m with _unknownFields = List.rev m._unknownFields }
 
             static member UnknownFields m =

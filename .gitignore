@@ -12,3 +12,5 @@ TestResults/
 /.fake
 AssemblyInfo.fs
 docs/type-provider/paket.lock
+.idea/
+.vs/
