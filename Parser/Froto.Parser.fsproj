@@ -21,5 +21,6 @@
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <PackageReference Include="FParsec" Version="1.0.3" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.136" />
   </ItemGroup>
 </Project>
