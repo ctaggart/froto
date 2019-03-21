@@ -1,5 +1,11 @@
 pool:
   vmImage: Ubuntu-16.04
 steps:
-- script: ./build.sh
-- script: sha256sum bin/*.nupkg
+- script: |
+  ./build.sh
+  sha256sum bin/*.nupkg
+- task: CopyFiles@2
+  inputs:
+    contents: bin/*.nupkg
+    flattenFolders: true
+  displayName: copy nupkg files
