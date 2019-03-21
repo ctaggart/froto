@@ -2,8 +2,8 @@ pool:
   vmImage: Ubuntu-16.04
 steps:
 - script: |
-  ./build.sh
-  sha256sum bin/*.nupkg
+    ./build.sh
+    sha256sum bin/*.nupkg
 - task: CopyFiles@2
   inputs:
     contents: bin/*.nupkg
