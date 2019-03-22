@@ -10,3 +10,7 @@ steps:
     flattenFolders: true
     targetFolder: $(Build.ArtifactStagingDirectory)
   displayName: copy nupkg files
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: $(Build.ArtifactStagingDirectory)
+    artifactName: artifacts
