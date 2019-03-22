@@ -3,7 +3,7 @@ pool:
 steps:
 - script: |
     ./build.sh
-    ./build-checksum.sh
+    && ./build-checksum.sh
 - task: CopyFiles@2
   inputs:
     contents: bin/*.nupkg
