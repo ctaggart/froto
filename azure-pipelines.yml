@@ -8,4 +8,5 @@ steps:
   inputs:
     contents: bin/*.nupkg
     flattenFolders: true
+    targetFolder: $(Build.ArtifactStagingDirectory)
   displayName: copy nupkg files
