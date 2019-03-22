@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "dependencies": {
+    ".NETStandard,Version=v2.0": {
+      "FParsec": {
+        "type": "Direct",
+        "requested": "[1.0.3, )",
+        "resolved": "1.0.3",
+        "contentHash": "0VoZapcSUHsNCixYawx8RFZHJMRVykaKsks5OOUXRP0bZCpr7UCP6kIjbVFGHIqqBGPtICUMy7j521sH0ZcmrQ==",
+        "dependencies": {
+          "FSharp.Core": "4.2.3",
+          "NETStandard.Library": "1.6.1"
+        }
+      },
+      "FSharp.Core": {
+        "type": "Direct",
+        "requested": "[4.5.2, )",
+        "resolved": "4.5.2",
+        "contentHash": "apbdQOjzsjQ637kTWQuW29jqwY18jsHMyNC5A+TPJZKFEIE2cIfQWf3V7+mXrxlbX69BueYkv293/g70wuXuRw=="
+      },
+      "Microsoft.SourceLink.GitHub": {
+        "type": "Direct",
+        "requested": "[1.0.0-beta-63127-02, )",
+        "resolved": "1.0.0-beta-63127-02",
+        "contentHash": "KLR4K9dCNjyKyrzuj+gM5L/TDkQe3Eu0Amp118j6he5Mzjeb84tUBtNjLGrJtyOjqgGiShTrk/XT4g4luWzkCQ==",
+        "dependencies": {
+          "Microsoft.Build.Tasks.Git": "1.0.0-beta-63127-02",
+          "Microsoft.SourceLink.Common": "1.0.0-beta-63127-02"
+        }
+      },
+      "Nerdbank.GitVersioning": {
+        "type": "Direct",
+        "requested": "[2.3.138, )",
+        "resolved": "2.3.138",
+        "contentHash": "scp2Kv39RdoSBfrfiIP/XmthqVeO9cK/5AAgJsbtkgMZGLafhDQe0yj8Y4FDsz3YdvC0hJxU/sCsqBEv2znO0Q=="
+      },
+      "NETStandard.Library": {
+        "type": "Direct",
+        "requested": "[2.0.3, )",
+        "resolved": "2.0.3",
+        "contentHash": "elmwdh3nKEwD8f75E37sv67kjmJ36vmHNEm/FqUQfo6DQQ1yH/LwhTClS3+eqXrfDD1MbWoBXLVJvn0nBo7bvw==",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "1.1.0"
+        }
+      },
+      "Microsoft.Build.Tasks.Git": {
+        "type": "Transitive",
+        "resolved": "1.0.0-beta-63127-02",
+        "contentHash": "SDC7lMeyUEBTWDrhvAwb1wK5ujIhI5cc2s9ugTwWyDfXC7H07/7lkc9DP1Q6kjv4qTL3eoWrd3HQuZmA7J4DJQ=="
+      },
+      "Microsoft.NETCore.Platforms": {
+        "type": "Transitive",
+        "resolved": "1.1.0",
+        "contentHash": "7MX2nBb+ebMS+wFfPtL1/sbcLW3ebS/7N0OE7tMr5BfCr3GCZrGnI5LP5EHHD3rloG1JcPZhuC8DXkOxD8E6aA=="
+      },
+      "Microsoft.SourceLink.Common": {
+        "type": "Transitive",
+        "resolved": "1.0.0-beta-63127-02",
+        "contentHash": "zLqiAhXjJSKPmFTvE9W0NtOpdy3E72VETj7qUkzK85nTgQiqlNWmMHr36SBcJfpo8sizJ72kFzi2alnI2/kqog=="
+      }
+    }
+  }
+}
