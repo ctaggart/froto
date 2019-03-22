@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <!-- nuget lock files https://github.com/NuGet/Announcements/issues/28 -->
+    <!-- <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode>true</RestoreLockedMode> -->
+    <!-- F# compiler flag https://github.com/Microsoft/visualfsharp/pull/6363 -->
+    <OtherFlags>--deterministic+</OtherFlags>
+  </PropertyGroup>
+</Project>

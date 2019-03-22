@@ -1,0 +1,16 @@
+pool:
+  vmImage: Ubuntu-16.04
+steps:
+- script: |
+    set -e
+    ./build.sh
+    ./build-checksum.sh
+- task: CopyFiles@2
+  inputs:
+    contents: bin/*.nupkg
+    flattenFolders: true
+    targetFolder: $(Build.ArtifactStagingDirectory)
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: $(Build.ArtifactStagingDirectory)
+    artifactName: nuget
