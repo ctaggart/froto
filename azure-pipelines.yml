@@ -2,7 +2,8 @@ pool:
   vmImage: Ubuntu-16.04
 steps:
 - script: |
-    ./build.sh && \
+    set -e
+    ./build.sh
     ./build-checksum.sh
 - task: CopyFiles@2
   inputs:
