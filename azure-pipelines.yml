@@ -2,8 +2,7 @@ pool:
   vmImage: Ubuntu-16.04
 steps:
 - script: |
-    ./build.sh
-    && ./build-checksum.sh
+    ./build.sh && ./build-checksum.sh
 - task: CopyFiles@2
   inputs:
     contents: bin/*.nupkg
