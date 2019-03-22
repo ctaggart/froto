@@ -3,7 +3,6 @@ build_script:
   - ps: |
       .\build.ps1
       if ($lastexitcode -ne 0){ exit $lastexitcode }
-      sha256sum bin/*.nupkg
 test: off
 artifacts:
   - path: bin\*.nupkg
