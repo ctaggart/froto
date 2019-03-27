@@ -3,6 +3,7 @@ pool:
 steps:
 - script: |
     set -e
+    dotnet --info
     ./build.sh
     ./build-checksum.sh
 - task: CopyFiles@2
