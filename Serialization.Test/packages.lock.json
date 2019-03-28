@@ -627,7 +627,7 @@
       "System.Reflection.Emit": {
         "type": "Transitive",
         "resolved": "4.0.1",
-        "contentHash": "/3dmiGuUUUjqZaSeTdxkgzY0De8sLpS4J3tYRETskSbZaRjwvL62IBalMGI6iczZ6udJ1iBlsBBYOHtdCfx90Q==",
+        "contentHash": "P2wqAj72fFjpP6wb9nSfDqNBMab+2ovzSDzUZK7MVIm54tBJEPr9jWfSjjoTpPwj1LeKcmX3vr0ttyjSSFM47g==",
         "dependencies": {
           "System.IO": "4.1.0",
           "System.Reflection": "4.1.0",
