@@ -1,9 +1,8 @@
 <Project>
   <PropertyGroup>
-    <!-- nuget lock files https://github.com/NuGet/Announcements/issues/28 -->
-    <!-- <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <RestoreLockedMode>true</RestoreLockedMode> -->
-    <!-- F# compiler flag https://github.com/Microsoft/visualfsharp/pull/6363 -->
-    <OtherFlags>--deterministic+</OtherFlags>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode>true</RestoreLockedMode>
+    <NoWarn>NU1603</NoWarn>
+    <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
   </PropertyGroup>
 </Project>
