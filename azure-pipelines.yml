@@ -6,7 +6,9 @@ jobs:
   # container: 'mcr.microsoft.com/dotnet/core/sdk:2.2.105-nanoserver-1803'
   steps:
   - script: |
-      dotnet --info
+      dotnet --version
+      .\build.ps1
+      if ($lastexitcode -ne 0){ exit $lastexitcode }
 
 - job: Linux
   pool:
@@ -15,7 +17,6 @@ jobs:
   steps:
   - script: |
       set -e
-      dotnet --info
       ./build.sh
       ./build-checksum.sh
   - task: CopyFiles@2
