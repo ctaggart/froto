@@ -5,7 +5,7 @@ jobs:
     vmImage: win1803
   # container: 'mcr.microsoft.com/dotnet/core/sdk:2.2.105-nanoserver-1803'
   steps:
-  - script: |
+  - powershell: |
       dotnet --version
       .\build.ps1
       if ($lastexitcode -ne 0){ exit $lastexitcode }
