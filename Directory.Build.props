@@ -1,6 +1,5 @@
 <Project>
   <PropertyGroup>
-    <!-- nuget lock files https://docs.microsoft.com/en-us/nuget/release-notes/nuget-4.9-rtm -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode>true</RestoreLockedMode>
     <NoWarn>NU1603</NoWarn>
