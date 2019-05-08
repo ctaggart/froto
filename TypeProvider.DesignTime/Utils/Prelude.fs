@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Froto.TypeProvider.Core.Prelude
 
-open System
 open System.IO
 
 open Printf

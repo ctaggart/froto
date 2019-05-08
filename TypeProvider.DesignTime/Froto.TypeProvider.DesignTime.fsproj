@@ -1,16 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Utils\Prelude.fs" />
+    <Compile Include="Utils\Logger.fs" />
+
     <Compile Include="External/ProvidedTypes.fsi" />
     <Compile Include="External/ProvidedTypes.fs" />
     <Compile Include="External/TypeProviders.Helper.fs" />
-
-    <Compile Include="Core/Prelude.fs" />
-    <Compile Include="Core/Logger.fs" />
     <Compile Include="Core/Exceptions.fs" />
     <Compile Include="Core/Option.fs" />
     <Compile Include="Core/Types.fs" />

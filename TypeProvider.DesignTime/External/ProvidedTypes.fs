@@ -312,6 +312,7 @@ namespace ProviderImplementation.ProvidedTypes
 
         let qTy = typeof<Var>.Assembly.GetType("Microsoft.FSharp.Quotations.ExprConstInfo")
         assert (not (isNull qTy))
+
         let pTy = typeof<Var>.Assembly.GetType("Microsoft.FSharp.Quotations.PatternsModule")
         assert (not (isNull pTy))
 
@@ -319,12 +320,16 @@ namespace ProviderImplementation.ProvidedTypes
         // these function names have been stable since F# 2.0.
         let mkFE0 = pTy.GetMethod("mkFE0", bindAll)
         assert (not (isNull mkFE0))
+
         let mkFE1 = pTy.GetMethod("mkFE1", bindAll)
         assert (not (isNull mkFE1))
+
         let mkFE2 = pTy.GetMethod("mkFE2", bindAll)
         assert (mkFE2 |> isNull |> not)
+
         let mkFE3 = pTy.GetMethod("mkFE3", bindAll)
         assert (mkFE3 |> isNull |> not)
+
         let mkFEN = pTy.GetMethod("mkFEN", bindAll)
         assert (mkFEN |> isNull |> not)
 
@@ -332,44 +337,66 @@ namespace ProviderImplementation.ProvidedTypes
         // these function names have been stable since F# 2.0.
         let newDelegateOp = qTy.GetMethod("NewNewDelegateOp", bindAll)
         assert (newDelegateOp |> isNull |> not)
+
         let instanceCallOp = qTy.GetMethod("NewInstanceMethodCallOp", bindAll)
         assert (instanceCallOp |> isNull |> not)
+
         let staticCallOp = qTy.GetMethod("NewStaticMethodCallOp", bindAll)
         assert (staticCallOp |> isNull |> not)
+
         let newObjectOp = qTy.GetMethod("NewNewObjectOp", bindAll)
         assert (newObjectOp |> isNull |> not)
+
         let newArrayOp = qTy.GetMethod("NewNewArrayOp", bindAll)
         assert (newArrayOp |> isNull |> not)
+
         let appOp = qTy.GetMethod("get_AppOp", bindAll)
         assert (appOp |> isNull |> not)
+
         let instancePropGetOp = qTy.GetMethod("NewInstancePropGetOp", bindAll)
         assert (instancePropGetOp |> isNull |> not)
+
         let staticPropGetOp = qTy.GetMethod("NewStaticPropGetOp", bindAll)
         assert (staticPropGetOp |> isNull |> not)
+
         let instancePropSetOp = qTy.GetMethod("NewInstancePropSetOp", bindAll)
         assert (instancePropSetOp |> isNull |> not)
+
         let staticPropSetOp = qTy.GetMethod("NewStaticPropSetOp", bindAll)
         assert (staticPropSetOp |> isNull |> not)
+
         let instanceFieldGetOp = qTy.GetMethod("NewInstanceFieldGetOp", bindAll)
         assert (instanceFieldGetOp |> isNull |> not)
+
         let staticFieldGetOp = qTy.GetMethod("NewStaticFieldGetOp", bindAll)
         assert (staticFieldGetOp |> isNull |> not)
+
         let instanceFieldSetOp = qTy.GetMethod("NewInstanceFieldSetOp", bindAll)
         assert (instanceFieldSetOp |> isNull |> not)
+
         let staticFieldSetOp = qTy.GetMethod("NewStaticFieldSetOp", bindAll)
         assert (staticFieldSetOp |> isNull |> not)
+
         let tupleGetOp = qTy.GetMethod("NewTupleGetOp", bindAll)
         assert (tupleGetOp |> isNull |> not)
+
         let letOp = qTy.GetMethod("get_LetOp", bindAll)
         assert (letOp |> isNull |> not)
+
         let forIntegerRangeLoopOp = qTy.GetMethod("get_ForIntegerRangeLoopOp", bindAll)
         assert (forIntegerRangeLoopOp |> isNull |> not)
+
         let whileLoopOp = qTy.GetMethod("get_WhileLoopOp", bindAll)
         assert (whileLoopOp |> isNull |> not)
+
         let ifThenElseOp = qTy.GetMethod("get_IfThenElseOp", bindAll)
         assert (ifThenElseOp |> isNull |> not)
+
         let newUnionCaseOp = qTy.GetMethod("NewNewUnionCaseOp", bindAll)
         assert (newUnionCaseOp |> isNull |> not)
+
+        let newRecordOp = qTy.GetMethod("NewNewRecordOp", bindAll)
+        assert (newRecordOp |> isNull |> not)
 
         type Microsoft.FSharp.Quotations.Expr with
 
@@ -457,6 +484,10 @@ namespace ProviderImplementation.ProvidedTypes
 
             static member NewUnionCaseUnchecked (uci:Reflection.UnionCaseInfo, args:Expr list) =
                 let op = newUnionCaseOp.Invoke(null, [| box uci |])
+                mkFEN.Invoke(null, [| box op; box args |]) :?> Expr
+
+            static member NewRecordUnchecked (ty:Type, args:Expr list) =
+                let op = newRecordOp.Invoke(null, [| box ty |])
                 mkFEN.Invoke(null, [| box op; box args |]) :?> Expr
 
         type Shape = Shape of (Expr list -> Expr)
@@ -1848,6 +1879,7 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
     open System
     open System.Collections.Generic
     open System.Collections.Concurrent
+    open System.Collections.ObjectModel
     open System.IO
     open System.Reflection
     open System.Text
@@ -4185,9 +4217,10 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
 
     type ByteFile(bytes:byte[]) =
 
-        member __.Bytes = bytes
         member __.ReadByte addr = bytes.[addr]
+
         member __.ReadBytes addr len = Array.sub bytes addr len
+
         member __.CountUtf8String addr =
             let mutable p = addr
             while bytes.[p] <> 0uy do
@@ -4590,7 +4623,7 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
                 typ_UIntPtr = ILType.Value (mkILTyspec "System" "UIntPtr")
                 systemRuntimeScopeRef = systemRuntimeScopeRef }
 
-        type ILModuleReader(infile: string, is: ByteFile, ilg: ILGlobals, lowMem: bool) =
+        type PEReader(infile: string, is: ByteFile) =
 
             //-----------------------------------------------------------------------
             // Crack the binary headers, build a reader context and return the lazy
@@ -4663,6 +4696,7 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
             let cliHeaderPhysLoc = anyV2P ("cli header",cliHeaderAddr)
 
             let metadataAddr = seekReadInt32 is (cliHeaderPhysLoc + 8)
+            let metadataSize = seekReadInt32 is (cliHeaderPhysLoc + 12)
             let cliFlags = seekReadInt32 is (cliHeaderPhysLoc + 16)
             let ilOnly = (cliFlags &&& 0x01) <> 0x00
             let only32 = (cliFlags &&& 0x02) <> 0x00
@@ -4672,6 +4706,13 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
             let resourcesAddr = seekReadInt32 is (cliHeaderPhysLoc + 24)
 
             let metadataPhysLoc = anyV2P ("metadata",metadataAddr)
+
+            member __.MetadataPhysLoc = metadataPhysLoc
+            member __.MetadataSize = metadataSize
+
+        type ILModuleReader(infile: string, is: ByteFile, ilg: ILGlobals, lowMem: bool) =
+
+            let metadataPhysLoc = 0
             let magic = seekReadUInt16AsInt32 is metadataPhysLoc
             do if magic <> 0x5342 then failwith (infile + ": bad metadata magic number: " + string magic);
             let magic2 = seekReadUInt16AsInt32 is (metadataPhysLoc + 2)
@@ -5207,15 +5248,6 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
                 let implIdx = seekReadImplementationIdx &addr
                 (flags,tok,nameIdx,namespaceIdx,implIdx)
 
-            /// Read Table ManifestResource
-            let seekReadManifestResourceRow idx =
-                let mutable addr = rowAddr ILTableNames.ManifestResource idx
-                let offset = seekReadInt32Adv &addr
-                let flags = seekReadInt32Adv &addr
-                let nameIdx = seekReadStringIdx &addr
-                let implIdx = seekReadImplementationIdx &addr
-                (offset,flags,nameIdx,implIdx)
-
             /// Read Table Nested
             let seekReadNestedRow idx =
                 let mutable addr = rowAddr ILTableNames.Nested idx
@@ -5279,7 +5311,7 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
             //let subsysversion = (subsysMajor, subsysMinor)
             let ilMetadataVersion = Encoding.UTF8.GetString (ilMetadataVersion, 0, ilMetadataVersion.Length)
 
-            let rec seekReadModule (subsys, subsysversion, useHighEntropyVA, ilOnly, only32, is32bitpreferred, only64, platform, isDll, alignVirt, alignPhys, imageBaseReal, ilMetadataVersion) idx =
+            let rec seekReadModule (ilMetadataVersion) idx =
                 let (_generation, nameIdx, _mvidIdx, _encidIdx, _encbaseidIdx) = seekReadModuleRow idx
                 let ilModuleName = readStringHeap nameIdx
                 //let nativeResources = readNativeResources tgt
@@ -5291,21 +5323,21 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
                   Name = ilModuleName;
                   //NativeResources=nativeResources;
                   TypeDefs = ILTypeDefs (lazy (seekReadTopTypeDefs ()));
-                  SubSystemFlags = int32 subsys;
-                  IsILOnly = ilOnly;
-                  SubsystemVersion = subsysversion
-                  UseHighEntropyVA = useHighEntropyVA
-                  Platform = platform;
-                  StackReserveSize = None;
-                  Is32Bit = only32;
-                  Is32BitPreferred = is32bitpreferred;
-                  Is64Bit = only64;
-                  IsDLL=isDll;
-                  VirtualAlignment = alignVirt;
-                  PhysicalAlignment = alignPhys;
-                  ImageBase = imageBaseReal;
-                  MetadataVersion = ilMetadataVersion;
-                  Resources = seekReadManifestResources ();
+                  SubsystemVersion = (4, 0)
+                  UseHighEntropyVA = false
+                  SubSystemFlags=3
+                  IsDLL=true
+                  IsILOnly=true
+                  Platform=None
+                  StackReserveSize=None
+                  Is32Bit=false
+                  Is32BitPreferred=false
+                  Is64Bit=false
+                  PhysicalAlignment=512
+                  VirtualAlignment=0x2000
+                  ImageBase=0x034f0000
+                  MetadataVersion=""
+                  Resources = ILResources (Lazy<_>.CreateFromValue [| |])
                   }
 
             and seekReadAssemblyManifest idx =
@@ -5314,13 +5346,12 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
                 let pubkey = readBlobHeapOption publicKeyIdx
                 { Name= name;
                   AuxModuleHashAlgorithm=hash
-                  //SecurityDecls= seekReadSecurityDecls (TaggedIndex(hds_Assembly,idx));
-                  PublicKey= pubkey;
-                  Version= USome (Version(int v1,int v2,int v3,int v4));
-                  Locale= readStringHeapOption localeIdx;
-                  CustomAttrs = seekReadCustomAttrs (TaggedIndex(HasCustomAttributeTag.Assembly,idx));
-                  ExportedTypes= seekReadTopExportedTypes ();
-                  EntrypointElsewhere=(if fst entryPointToken = ILTableNames.File then Some (seekReadFile (snd entryPointToken)) else None);
+                  PublicKey= pubkey
+                  Version= USome (Version(int v1,int v2,int v3,int v4))
+                  Locale= readStringHeapOption localeIdx
+                  CustomAttrs = seekReadCustomAttrs (TaggedIndex(HasCustomAttributeTag.Assembly,idx))
+                  ExportedTypes= seekReadTopExportedTypes ()
+                  EntrypointElsewhere=None
                   Retargetable = 0 <> (flags &&& 0x100);
                   DisableJitOptimizations = 0 <> (flags &&& 0x4000);
                   JitTracking = 0 <> (flags &&& 0x8000)
@@ -6054,28 +6085,6 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
               | x when x = uint16 et_CLASS || x = uint16 et_OBJECT ->  null
               | _ -> null
 
-            and seekReadManifestResources () =
-                ILResources
-                  (lazy
-                     [| for i = 1 to getNumRows ILTableNames.ManifestResource do
-                         let (offset,flags,nameIdx,implIdx) = seekReadManifestResourceRow i
-                         let scoref = seekReadImplAsScopeRef implIdx
-                         let datalab =
-                           match scoref with
-                           | ILScopeRef.Local ->
-                              let start = anyV2P ("resource",offset + resourcesAddr)
-                              let len = seekReadInt32 is start
-                              ILResourceLocation.Local (fun () -> seekReadBytes is (start + 4) len)
-                           | ILScopeRef.Module mref -> ILResourceLocation.File (mref,offset)
-                           | ILScopeRef.Assembly aref -> ILResourceLocation.Assembly aref
-
-                         let r =
-                           { Name= readStringHeap nameIdx;
-                             Location = datalab;
-                             Access = (if (flags &&& 0x01) <> 0x0 then ILResourceAccess.Public else ILResourceAccess.Private);
-                             CustomAttrs =  seekReadCustomAttrs (TaggedIndex(HasCustomAttributeTag.ManifestResource, i)) }
-                         yield r |])
-
             and seekReadNestedExportedTypes parentIdx =
                 ILNestedExportedTypesAndForwarders
                   (lazy
@@ -6118,10 +6127,9 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
                                yield entry |])
 
 
-            let ilModule = seekReadModule (subsys, (subsysMajor, subsysMinor), useHighEntropyVA, ilOnly, only32, is32bitpreferred, only64, platform, isDll, alignVirt, alignPhys, imageBaseReal, ilMetadataVersion) 1
+            let ilModule = seekReadModule (ilMetadataVersion) 1
             let ilAssemblyRefs = [ for i in 1 .. getNumRows ILTableNames.AssemblyRef do yield seekReadAssemblyRef i ]
 
-            member __.Bytes = is.Bytes
             member __.ILGlobals = ilg
             member __.ILModuleDef = ilModule
             member __.ILAssemblyRefs = ilAssemblyRefs
@@ -6645,25 +6653,91 @@ namespace ProviderImplementation.ProvidedTypes.AssemblyReader
             with err ->
               failwithf  "FAILED decodeILCustomAttribData, data.Length = %d, data = %A, meth = %A, argtypes = %A, fixedArgs=%A, nnamed = %A, sigptr before named = %A,  innerError = %A" bytes.Length bytes ca.Method.EnclosingType ca.Method.FormalArgTypes fixedArgs nnamed sigptr (err.ToString())
 
-        type CacheValue = ILModuleReader
-        let (|CacheValue|_|) (wr: WeakReference) = match wr.Target with null -> None | v -> Some (v :?> CacheValue)
-        let CacheValue (reader: CacheValue) = System.WeakReference reader
+        // Share DLLs within a provider by weak-caching them.
+        let readerWeakCache = ConcurrentDictionary<(string * string), DateTime * WeakReference<ILModuleReader>>(HashIdentity.Structural)
 
-        // Amortize readers weakly - this is enough that all the type providers in this DLL will at least share
-        // resources when all instantiated at the same time.
-        let readersWeakCache = ConcurrentDictionary<(string * string), WeakReference>()
+        // Share DLLs across providers by strong-caching them, but flushing regularly
+        let readerStrongCache = ConcurrentDictionary<(string * string), DateTime * int * ILModuleReader>(HashIdentity.Structural)
 
-        let ILModuleReaderAfterReadingAllBytes  (file:string, ilGlobals: ILGlobals) =
-            let bytes = File.ReadAllBytes file
+        type File with
+            static member ReadBinaryChunk (fileName: string, start, len) =
+                use stream = new FileStream(fileName,FileMode.Open,FileAccess.Read,FileShare.ReadWrite)
+                stream.Seek(int64 start, SeekOrigin.Begin) |> ignore
+                let buffer = Array.zeroCreate len
+                let mutable n = 0
+                while n < len do
+                    n <- n + stream.Read(buffer, n, len-n)
+                buffer
+
+        let createReader ilGlobals (fileName: string) =
+            let bytes = File.ReadAllBytes fileName
+            let is = ByteFile(bytes)
+            let pe = PEReader(fileName, is)
+            let mdchunk = File.ReadBinaryChunk (fileName, pe.MetadataPhysLoc, pe.MetadataSize)
+            let mdfile = ByteFile(mdchunk)
+            let reader = ILModuleReader(fileName, mdfile, ilGlobals, true)
+            reader
+
+        let GetWeakReaderCache () = readerWeakCache
+        let GetStrongReaderCache () = readerStrongCache
+
+        // Auto-clear the cache every 30.0 seconds.
+        // We would use System.Runtime.Caching but some version constraints make this difficult.
+        let enableAutoClear = try Environment.GetEnvironmentVariable("FSHARP_TPREADER_AUTOCLEAR_OFF") = null with _ -> true
+        let clearSpanDefault = 30000
+        let clearSpan = try (match Environment.GetEnvironmentVariable("FSHARP_TPREADER_AUTOCLEAR_SPAN") with null -> clearSpanDefault | s -> int32 s) with _ -> clearSpanDefault
+        let lastAccessLock = obj()
+        let mutable lastAccess = DateTime.Now
+
+        let StartClearReaderCache() =
+            if enableAutoClear then
+                async {
+                    while true do
+                        do! Async.Sleep clearSpan
+                        let timeSinceLastAccess = DateTime.Now - lock lastAccessLock (fun () -> lastAccess)
+                        if timeSinceLastAccess > TimeSpan.FromMilliseconds(float clearSpan) then
+                            readerStrongCache.Clear()
+                    }
+                |> Async.Start
+
+        do StartClearReaderCache()
+
+        let (|WeakReference|_|) (x: WeakReference<'T>) =
+            match x.TryGetTarget() with
+            | true, v -> Some v
+            | _ -> None
+
+        let ILModuleReaderAfterReadingAllBytes (file:string, ilGlobals: ILGlobals) =
             let key = (file, ilGlobals.systemRuntimeScopeRef.QualifiedName)
-            match readersWeakCache.TryGetValue (key) with
-            | true, CacheValue mr2  when bytes = mr2.Bytes ->
-                mr2 // throw away the bytes we just read and recycle the existing ILModuleReader
-            | _ ->
-                let mr = ILModuleReader(file, ByteFile(bytes), ilGlobals, true)
-                readersWeakCache.[key] <- CacheValue (mr)
-                mr
+            lock lastAccessLock (fun () -> lastAccess <- DateTime.Now)
 
+            // Check the weak cache, to enable sharing within a provider, even if the strong cache is flushed.
+            match readerWeakCache.TryGetValue(key) with
+            | true, (currentLastWriteTime, WeakReference(reader)) when
+                    let lastWriteTime = File.GetLastWriteTime(file)
+                    currentLastWriteTime = lastWriteTime ->
+
+                reader
+
+            | _ ->
+                let add _ =
+                    let lastWriteTime = File.GetLastWriteTime(file)
+                    let reader = createReader ilGlobals file
+                    // record in the weak cache, to enable sharing within a provider, even if the strong cache is flushed.
+                    readerWeakCache.[key] <-  (lastWriteTime, WeakReference<_>(reader))
+                    (lastWriteTime, 1, reader)
+
+                let update _ (currentLastWriteTime, count, reader) =
+                    let lastWriteTime = File.GetLastWriteTime(file)
+                    if currentLastWriteTime <> lastWriteTime then
+                        let reader = createReader ilGlobals file
+                        // record in the weak cache, to enable sharing within a provider, even if the strong cache is flushed.
+                        readerWeakCache.[key] <-  (lastWriteTime, WeakReference<_>(reader))
+                        (lastWriteTime, count + 1, reader)
+                    else
+                        (lastWriteTime, count, reader)
+                let _, _, reader = readerStrongCache.AddOrUpdate(key, add, update)
+                reader
 
         (* NOTE: ecma_ prefix refers to the standard "mscorlib" *)
         let EcmaPublicKey = PublicKeyToken ([|0xdeuy; 0xaduy; 0xbeuy; 0xefuy; 0xcauy; 0xfeuy; 0xfauy; 0xceuy |])
@@ -6921,8 +6995,8 @@ namespace ProviderImplementation.ProvidedTypes
         override this.ReflectedType = notRequired this "ReflectedType" this.Name
         override this.GetMethodImplementationFlags() = notRequired this "GetMethodImplementationFlags" this.Name
         override this.MethodHandle = notRequired this "MethodHandle" this.Name
-        override this.GetCustomAttributes(_inherited) = notRequired this "GetCustomAttributes" this.Name
-        override this.GetCustomAttributes(_attributeType, _inherited) = notRequired this "GetCustomAttributes" this.Name
+        override this.GetCustomAttributes(inherited) = inp.GetCustomAttributes(inherited)
+        override this.GetCustomAttributes(attributeType, inherited) = inp.GetCustomAttributes(attributeType, inherited)
 
         override __.ToString() = sprintf "tgt constructor(...) in type %s" declTy.FullName
         static member Make (declTy: Type) md = ConstructorSymbol (declTy, md) :> ConstructorInfo
@@ -6964,8 +7038,8 @@ namespace ProviderImplementation.ProvidedTypes
         override this.GetMethodImplementationFlags() = notRequired this "GetMethodImplementationFlags" this.Name
         override this.Invoke(_obj, _invokeAttr, _binder, _parameters, _culture) = notRequired this "Invoke" this.Name
         override this.ReflectedType = notRequired this "ReflectedType" this.Name
-        override this.GetCustomAttributes(_inherited) = notRequired this "GetCustomAttributes" this.Name
-        override this.GetCustomAttributes(_attributeType, _inherited) = notRequired this "GetCustomAttributes" this.Name
+        override this.GetCustomAttributes(inherited) = inp.GetCustomAttributes(inherited)
+        override this.GetCustomAttributes(attributeType, inherited) = inp.GetCustomAttributes(attributeType, inherited)
 
         override __.ToString() = sprintf "tgt method %s(...) in type %s" inp.Name declTy.FullName
 
@@ -7952,10 +8026,11 @@ namespace ProviderImplementation.ProvidedTypes
         override __.ReflectionOnly = true
 
         override x.GetManifestResourceStream(resourceName:string) =
-            let r = getReader().ILModuleDef.Resources.Entries |> Seq.find (fun r -> r.Name = resourceName)
-            match r.Location with
-            | ILResourceLocation.Local f -> new MemoryStream(f()) :> Stream
-            | _ -> notRequired x "reading manifest resource %s from non-embedded location" resourceName
+            //let r = getReader().ILModuleDef.Resources.Entries |> Seq.find (fun r -> r.Name = resourceName)
+            //match r.Location with
+            //| ILResourceLocation.Local f -> new MemoryStream(f()) :> Stream
+            //| _ ->
+            notRequired x "reading manifest resource %s" resourceName
 
         member __.TxILTypeDef declTyOpt inp = txILTypeDef declTyOpt inp
 
@@ -8727,17 +8802,20 @@ namespace ProviderImplementation.ProvidedTypes
 
                 // TODO: this linear search through all available source/target assemblies feels as if it must be too slow in some cases.
                 // However, we store type translations in various tables (typeTableFwd and typeTableBwd) so perhaps it is not a problem
-                match asms |> Seq.tryPick (tryGetTypeFromAssembly toTgt t.Assembly.FullName fullName) with
-                | Some (newT, canSave) ->
-                     if canSave then table.[t] <- newT
-                     newT
-                | _ ->
-                    let msg =
-                        if toTgt then sprintf "The design-time type '%O' utilized by a type provider was not found in the target reference assembly set '%A'. You may be referencing a profile which contains fewer types than those needed by the type provider you are using." t (getTargetAssemblies() |> Seq.toList)
-                        elif getSourceAssemblies() |> Seq.length = 0 then sprintf "A failure occured while determining compilation references"
-                        else sprintf "The target type '%O' utilized by a type provider was not found in the design-time assembly set '%A'. Please report this problem to the project site for the type provider." t (getSourceAssemblies() |> Seq.toList)
-                    failwith msg
-
+                let rec loop i =
+                    if i < 0 then
+                        let msg =
+                            if toTgt then sprintf "The design-time type '%O' utilized by a type provider was not found in the target reference assembly set '%A'. You may be referencing a profile which contains fewer types than those needed by the type provider you are using." t (getTargetAssemblies() |> Seq.toList)
+                            elif getSourceAssemblies() |> Seq.length = 0 then sprintf "A failure occured while determining compilation references"
+                            else sprintf "The target type '%O' utilized by a type provider was not found in the design-time assembly set '%A'. Please report this problem to the project site for the type provider." t (getSourceAssemblies() |> Seq.toList)
+                        failwith msg
+                    else
+                        match tryGetTypeFromAssembly toTgt t.Assembly.FullName fullName asms.[i] with
+                        | Some (newT, canSave) ->
+                            if canSave then table.[t] <- newT
+                            newT
+                        | None -> loop (i - 1)
+                loop (asms.Count - 1)
 
         and convType toTgt (t:Type) =
             let table = (if toTgt then typeTableFwd else typeTableBwd)
@@ -9159,6 +9237,12 @@ namespace ProviderImplementation.ProvidedTypes
                   member __.GetTypes() = Array.map convTypeDefToTgt (x.GetTypes())
                   member __.ResolveTypeName typeName = convTypeDefToTgt (x.ResolveTypeName typeName) }
 
+        /// Gets the equivalent target method
+        member __.ConvertSourceMethodRefToTarget t = convMethodRefToTgt t
+
+        /// Gets the equivalent target constructor
+        member __.ConvertSourceConstructorRefToTarget t = convConstructorRefToTgt t
+
         /// Gets the equivalent target type
         member __.ConvertSourceTypeToTarget t = convTypeToTgt t
 
@@ -9167,7 +9251,9 @@ namespace ProviderImplementation.ProvidedTypes
         member __.ConvertSourceExprToTarget e = convExprToTgt e
 
         member __.ConvertSourceNamespaceToTarget ns = convNamespaceToTgt ns
+
         member __.ConvertSourceProvidedTypeDefinitionToTarget ptd = convProvidedTypeDefToTgt ptd
+
         member __.TryBindILAssemblyRefToTgt(aref: ILAssemblyRef): Choice<Assembly, exn> = tryBindTargetAssemblySimple(aref.Name)
 
         member __.TryBindAssemblyNameToTarget(aref: AssemblyName): Choice<Assembly, exn> = tryBindTargetAssemblySimple(aref.Name)
@@ -9192,7 +9278,11 @@ namespace ProviderImplementation.ProvidedTypes
         member this.ReadRelatedAssembly(bytes:byte[]) =
             let fileName = "file.dll"
             let ilg = ilGlobals.Force()
-            let reader = ILModuleReader(fileName, ByteFile(bytes), ilg, true)
+            let is = ByteFile(bytes)
+            let pe = PEReader(fileName, is)
+            let mdchunk = bytes.[pe.MetadataPhysLoc .. pe.MetadataPhysLoc + pe.MetadataSize - 1]
+            let mdfile = ByteFile(mdchunk)
+            let reader = ILModuleReader(fileName, mdfile, ilg, true)
             TargetAssembly(ilg, this.TryBindILAssemblyRefToTgt, Some reader, fileName) :> Assembly
 
         member __.AddSourceAssembly(asm: Assembly) =
@@ -9207,66 +9297,7 @@ namespace ProviderImplementation.ProvidedTypes
 
             // Use the reflection hack to determine the set of referenced assemblies by reflecting over the SystemRuntimeContainsType
             // closure in the TypeProviderConfig object.
-            let referencedAssemblyPaths =
-              try
-
-                let hostConfigType = config.GetType()
-                let hostAssembly = hostConfigType.Assembly
-                let hostAssemblyLocation = hostAssembly.Location
-
-                let msg = sprintf "Host is assembly '%A' at location '%s'" (hostAssembly.GetName()) hostAssemblyLocation
-
-                if isNull (hostConfigType.GetField("systemRuntimeContainsType",bindAll)) then
-                    failwithf "Invalid host of cross-targeting type provider: a field called systemRuntimeContainsType must exist in the TypeProviderConfiguration object. Please check that the type provider being hosted by the F# compiler tools or a simulation of them. %s" msg
-
-                let systemRuntimeContainsTypeObj = config.GetField("systemRuntimeContainsType")
-
-                // Account for https://github.com/Microsoft/visualfsharp/pull/591
-                let systemRuntimeContainsTypeObj2 =
-                    if systemRuntimeContainsTypeObj.HasField("systemRuntimeContainsTypeRef") then
-                        systemRuntimeContainsTypeObj.GetField("systemRuntimeContainsTypeRef").GetProperty("Value")
-                    else
-                        systemRuntimeContainsTypeObj
-
-                if not (systemRuntimeContainsTypeObj2.HasField("tcImports")) then
-                    failwithf "Invalid host of cross-targeting type provider: a field called tcImports must exist in the systemRuntimeContainsType closure. Please check that the type provider being hosted by the F# compiler tools or a simulation of them. %s" msg
-
-                let tcImports = systemRuntimeContainsTypeObj2.GetField("tcImports")
-
-                if not (tcImports.HasField("dllInfos")) then
-                    failwithf "Invalid host of cross-targeting type provider: a field called dllInfos must exist in the tcImports object. Please check that the type provider being hosted by the F# compiler tools or a simulation of them. %s" msg
-
-                if not (tcImports.HasProperty("Base")) then
-                    failwithf "Invalid host of cross-targeting type provider: a field called Base must exist in the tcImports object. Please check that the type provider being hosted by the F# compiler tools or a simulation of them. %s" msg
-
-                let dllInfos = tcImports.GetField("dllInfos")
-                if isNull dllInfos then
-                    let ty = dllInfos.GetType()
-                    let fld = ty.GetField("dllInfos", bindAll)
-                    failwithf """Invalid host of cross-targeting type provider: unexpected 'null' value in dllInfos field of TcImports, ty = %A, fld = %A. %s""" ty fld msg
-
-                let baseObj = tcImports.GetProperty("Base")
-
-                [ for dllInfo in dllInfos.GetElements() -> (dllInfo.GetProperty("FileName") :?> string)
-                  if not (isNull baseObj) then
-                    let baseObjValue = baseObj.GetProperty("Value")
-                    if isNull baseObjValue then
-                        let ty = baseObjValue.GetType()
-                        let prop = ty.GetProperty("Value", bindAll)
-                        failwithf """Invalid host of cross-targeting type provider: unexpected 'null' value in Value property of baseObj, ty = %A, prop = %A. %s""" ty prop msg
-
-                    let baseDllInfos = baseObjValue.GetField("dllInfos")
-
-                    if isNull baseDllInfos then
-                        let ty = baseDllInfos.GetType()
-                        let fld = ty.GetField("dllInfos", bindAll)
-                        failwithf """Invalid host of cross-targeting type provider: unexpected 'null' value in dllInfos field of baseDllInfos, ty = %A, fld = %A. %s""" ty fld msg
-
-                    for baseDllInfo in baseDllInfos.GetElements() -> (baseDllInfo.GetProperty("FileName") :?> string) ]
-              with e ->
-                failwithf "Invalid host of cross-targeting type provider. Exception: %A" e
-
-
+            let referencedAssemblyPaths = config.ReferencedAssemblies |> Array.toList
             ProvidedTypesContext(referencedAssemblyPaths, assemblyReplacementMap, sourceAssemblies)
 
 
@@ -14340,12 +14371,17 @@ namespace ProviderImplementation.ProvidedTypes
 
                                 let pb = mb.DefineParameter(i+1, p.Attributes, p.Name)
                                 if p.HasDefaultParameterValue then
-                                    let ctor = typeof<System.Runtime.InteropServices.DefaultParameterValueAttribute>.GetConstructor([|typeof<obj>|])
-                                    let ca = mkILCustomAttribMethRef (transCtorSpec ctor, [p.RawDefaultValue], [], [])
+                                    let ctorTy = typeof<System.Runtime.InteropServices.DefaultParameterValueAttribute>
+                                    let ctor = ctorTy.GetConstructor([|typeof<obj>|])
+                                    let ctorTgt = context.ConvertSourceConstructorRefToTarget ctor
+
+                                    let ca = mkILCustomAttribMethRef (transCtorSpec ctorTgt, [p.RawDefaultValue], [], [])
                                     pb.SetCustomAttribute ca
 
-                                    let ctor = typeof<System.Runtime.InteropServices.OptionalAttribute>.GetConstructor([||])
-                                    let ca = mkILCustomAttribMethRef (transCtorSpec ctor, [], [], [])
+                                    let ctorTy = typeof<System.Runtime.InteropServices.OptionalAttribute>
+                                    let ctor = ctorTy.GetConstructor([||])
+                                    let ctorTgt = context.ConvertSourceConstructorRefToTarget ctor
+                                    let ca = mkILCustomAttribMethRef (transCtorSpec ctorTgt, [], [], [])
                                     pb.SetCustomAttribute ca
 
                                     pb.SetConstant p.RawDefaultValue
@@ -14506,12 +14542,12 @@ namespace ProviderImplementation.ProvidedTypes
             assemblyBuilder.Save ()
             //printfn "re-reading generated binary from '%s'" assemblyFileName
             let reader = ILModuleReaderAfterReadingAllBytes(assemblyFileName, ilg)
+            let bytes = File.ReadAllBytes(assemblyFileName)
 #if DEBUG
             printfn "generated binary is at '%s'" assemblyFileName
 #else
             File.Delete assemblyFileName
 #endif
-            let bytes = reader.Bytes
 
             // Use a real Reflection Load when running in F# Interactive
             if isHostedExecution then
@@ -14549,9 +14585,7 @@ namespace ProviderImplementation.ProvidedTypes
     open ProviderImplementation.ProvidedTypes.UncheckedQuotations
 
     type TypeProviderForNamespaces(config: TypeProviderConfig, namespacesAndTypes: list<(string * list<ProvidedTypeDefinition>)>, assemblyReplacementMap: (string*string) list, sourceAssemblies: Assembly list, addDefaultProbingLocation: bool) as this =
-
         let ctxt = ProvidedTypesContext.Create (config, assemblyReplacementMap, sourceAssemblies)
-
 
 #if !NO_GENERATIVE
         let theTable = ConcurrentDictionary<string, byte[]>()
@@ -14677,11 +14711,14 @@ namespace ProviderImplementation.ProvidedTypes
                 AppDomain.CurrentDomain.remove_AssemblyResolve handler
 #endif
 
-        member __.AddNamespace (namespaceName, types) = namespacesT.Add (makeProvidedNamespace namespaceName types)
+        member __.AddNamespace (namespaceName, types) =
+            namespacesT.Add (makeProvidedNamespace namespaceName types)
 
-        member __.Namespaces = namespacesT.ToArray()
+        member __.Namespaces =
+            namespacesT.ToArray()
 
-        member this.Invalidate() = invalidateE.Trigger(this,EventArgs())
+        member this.Invalidate() =
+            invalidateE.Trigger(this,EventArgs())
 
         member __.GetStaticParametersForMethod(mb: MethodBase) =
             match mb with
@@ -14794,4 +14831,3 @@ namespace ProviderImplementation.ProvidedTypes
 
 #endif
 #endif
-
