@@ -4,7 +4,4 @@ mono: none
 dotnet: 2.2.105
 script:
   - git fetch --unshallow
-  - dotnet restore Froto.sln
-  - dotnet build Froto.sln -c Release
-  - dotnet test Parser.Test/Froto.Parser.Test.fsproj
-  - dotnet test Serialization.Test/Froto.Serialization.Test.fsproj
+  - ./build.sh
