@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp2.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="TypeProviderTests.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Parser\Froto.Parser.fsproj" />
+      <ProjectReference Include="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" />
+      <ProjectReference Include="..\TypeProvider.Runtime\Froto.TypeProvider.Runtime.fsproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="Proto\books.proto" />
+      <None Include="Proto\type_provider_test.proto" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FsUnit.Xunit" Version="3.2.0" />
+      <PackageReference Include="xunit" Version="2.4.0" />
+    </ItemGroup>
+
+</Project>

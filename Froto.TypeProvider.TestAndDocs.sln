@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Test", "TypeProvider.Test\Froto.TypeProvider.Test.fsproj", "{710D3AFE-1EB9-4ABB-B9B3-D30991B862DB}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Test.Old", "TypeProvider.Test.Old\Froto.TypeProvider.Test.fsproj", "{710D3AFE-1EB9-4ABB-B9B3-D30991B862DB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{60E8A8C7-D42A-4C33-A2AD-32752CB33A46}"
 	ProjectSection(SolutionItems) = preProject

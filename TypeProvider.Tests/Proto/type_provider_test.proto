@@ -1,0 +1,85 @@
+package Froto.Sample;
+
+message Person {
+
+  message Passport {
+      required string series = 1;
+      required string number = 2;
+  }
+
+  enum Gender {
+      MALE = 0;
+      FEMALE = 1;
+  }
+  
+  message IntContainer {
+      required int32 value = 1;
+  }
+  
+  message Address {
+      required string address1 = 1;
+      required int32 house_number = 2;
+      repeated int32 whatever = 3;
+      repeated IntContainer some_ints = 4;
+  }
+
+  required string name = 1;
+  required int32 id = 2;
+  required bool has_criminal_convictions = 3;
+  required double weight = 4;
+  required Gender person_gender = 5;
+  optional string email = 6;
+  optional Address person_address = 7;
+  required Passport passport_details = 8;
+}
+
+message PrimitiveContainer {
+    required double double_field = 1;
+    required float float_field = 2;
+    required int32 int32_field = 3;
+    required int64 int64_field = 4;
+    required uint32 uint32_field = 5;
+    required uint64 uint64_field = 6;
+    required sint32 sint32_field = 7;
+    required sint64 sint64_field = 8;
+    required fixed32 fixed32_field = 9;
+    required fixed64 fixed64_field = 10;
+    required sfixed32 sfixed32_field = 11;
+    required sfixed64 sfixed64_field = 12;
+    required bool bool_field = 13;
+    required string string_field = 14;
+    required bytes bytes_field = 15;
+}
+
+message OneOfContainer {
+    oneof value {
+        string text = 1;
+        int32 identifier = 2;
+        State state = 3;
+    }
+    
+    required string another_text = 4;
+}
+
+message MapContainer {
+    enum Switch {
+        ON = 0;
+        OFF = 1;
+    }
+
+    required int32 id = 1;
+    map<int32, string> primitive_map = 2;
+    map<string, Person> people = 3;
+    map<int32, Switch> switches = 4;
+}
+
+enum State {
+    SUCCESSFUL = 0;
+    PENDING = 1;
+    FAILED = 2;
+}
+
+message Action {
+    required string action = 1;
+    required State state = 2;
+}

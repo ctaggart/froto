@@ -52,6 +52,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Runtime"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.DesignTime", "TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj", "{5D664CEF-B051-4B08-9C46-AA3D4C67D5B9}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Tests", "TypeProvider.Tests\Froto.TypeProvider.Tests.fsproj", "{575233BF-7A93-4187-A06D-BA89744CA7FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
