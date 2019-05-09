@@ -17,10 +17,47 @@
           "Microsoft.NETCore.Platforms": "1.1.0"
         }
       },
+      "FParsec": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "0VoZapcSUHsNCixYawx8RFZHJMRVykaKsks5OOUXRP0bZCpr7UCP6kIjbVFGHIqqBGPtICUMy7j521sH0ZcmrQ==",
+        "dependencies": {
+          "FSharp.Core": "4.2.3",
+          "NETStandard.Library": "1.6.1"
+        }
+      },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
         "resolved": "1.1.0",
         "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
+      },
+      "System.Runtime.Caching": {
+        "type": "Transitive",
+        "resolved": "4.5.0",
+        "contentHash": "95j9KShuaAENf2gLbQ/9YoJDHIWAnoaFYA71xo4QVQyLkOMginn34cD1+6RcYIrqJamLkMXgvgUnOzwzBk+U0w=="
+      },
+      "Froto.Parser": {
+        "type": "Project",
+        "dependencies": {
+          "FParsec": "1.0.3",
+          "FSharp.Core": "4.5.2"
+        }
+      },
+      "Froto.Serialization": {
+        "type": "Project",
+        "dependencies": {
+          "FSharp.Core": "4.5.2"
+        }
+      },
+      "Froto.TypeProvider.DesignTime": {
+        "type": "Project",
+        "dependencies": {
+          "FParsec": "1.0.3",
+          "FSharp.Core": "4.5.2",
+          "Froto.Parser": "1.0.0",
+          "Froto.Serialization": "1.0.0",
+          "System.Runtime.Caching": "4.5.0"
+        }
       }
     }
   }

@@ -2,6 +2,16 @@
   "version": 1,
   "dependencies": {
     ".NETStandard,Version=v2.0": {
+      "FParsec": {
+        "type": "Direct",
+        "requested": "[1.0.3, )",
+        "resolved": "1.0.3",
+        "contentHash": "0VoZapcSUHsNCixYawx8RFZHJMRVykaKsks5OOUXRP0bZCpr7UCP6kIjbVFGHIqqBGPtICUMy7j521sH0ZcmrQ==",
+        "dependencies": {
+          "FSharp.Core": "4.2.3",
+          "NETStandard.Library": "1.6.1"
+        }
+      },
       "FSharp.Core": {
         "type": "Direct",
         "requested": "[4.5.2, )",
@@ -22,15 +32,6 @@
         "requested": "[4.5.0, )",
         "resolved": "4.5.0",
         "contentHash": "95j9KShuaAENf2gLbQ/9YoJDHIWAnoaFYA71xo4QVQyLkOMginn34cD1+6RcYIrqJamLkMXgvgUnOzwzBk+U0w=="
-      },
-      "FParsec": {
-        "type": "Transitive",
-        "resolved": "1.0.3",
-        "contentHash": "0VoZapcSUHsNCixYawx8RFZHJMRVykaKsks5OOUXRP0bZCpr7UCP6kIjbVFGHIqqBGPtICUMy7j521sH0ZcmrQ==",
-        "dependencies": {
-          "FSharp.Core": "4.2.3",
-          "NETStandard.Library": "1.6.1"
-        }
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",

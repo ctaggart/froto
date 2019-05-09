@@ -16,7 +16,11 @@ open Froto.Parser.ClassModel
 
 [<TypeProvider>]
 type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
-    inherit TypeProviderForNamespaces(config, assemblyReplacementMap=[("ProtocolBuffersTypeProviderCreator.DesignTime", "LemonadeProvider")])
+
+    inherit TypeProviderForNamespaces(config, assemblyReplacementMap=[("Froto.TypeProvider.DesignTime", "Froto.TypeProvider.Runtime")])
+
+    do
+        Logger.log "foo"
 
     let ns = typeof<ProtocolBuffersTypeProviderCreator>.Namespace
     let asm = Assembly.LoadFrom config.RuntimeAssembly
@@ -27,10 +31,10 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
             asm, ns, "ProtocolBuffersTypeProvider", Some typeof<obj>,
             isErased = false,
             hideObjectMethods = true)
-
-    let cache = new MemoryCache("TypeProviderCache")
-    let disposables = ResizeArray<_>()
-
+//
+//    let cache = new MemoryCache("TypeProviderCache")
+//    let disposables = ResizeArray<_>()
+//
     let createProvidedTypes typeName protoPath =
 
         let provider =
@@ -71,38 +75,44 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
         provider
 
     do
+        Logger.log "ProtocolBuffersTypeProviderCreator instance initializing"
+
         protobufProvider.DefineStaticParameters(
             [ProvidedStaticParameter("pathToFile", typeof<string>)],
             fun typeName args ->
                 Logger.log "Generating enclosing type \"%s\" with args %A" typeName args
-                if cache.Contains(typeName) then
-                    Logger.log "Enclosing type found in cache, returning existing."
-                    cache.Get(typeName) :?> ProvidedTypeDefinition
-                else
-                    Logger.log "Enclosing type was not found. Generating a new one."
+//                if cache.Contains(typeName) then
+//                    Logger.log "Enclosing type found in cache, returning existing."
+//                    cache.Get(typeName) :?> ProvidedTypeDefinition
+//                else
+                Logger.log "Enclosing type was not found. Generating a new one."
 
-                    let protoPath = args.[0] :?> string
-                    let protoPath =
-                        if Path.IsPathRooted protoPath then protoPath
-                        else config.ResolutionFolder </> protoPath
+                let protoPath = args.[0] :?> string
+                let protoPath =
+                    if Path.IsPathRooted protoPath then protoPath
+                    else config.ResolutionFolder </> protoPath
 
-                    Logger.log "Watching file '%s' for changes" protoPath
+                Logger.log "Watching file '%s' for changes" protoPath
 
-                    File.watch false protoPath (fun _ ->
-                        Logger.log "File '%s' has been changed. Type provider %s will be invalidated" protoPath typeName
-                        cache.Remove(typeName) |> ignore
-                        this.Invalidate())
-                    |> disposables.Add
+//                File.watch false protoPath (fun _ ->
+//                    Logger.log "File '%s' has been changed. Type provider %s will be invalidated" protoPath typeName
+//                    cache.Remove(typeName) |> ignore
+//                    this.Invalidate())
+//                |> disposables.Add
 
-                    let provided = createProvidedTypes typeName protoPath
+                let provided = createProvidedTypes typeName protoPath
 
-                    cache.Add(CacheItem(typeName, provided), CacheItemPolicy(SlidingExpiration = TimeSpan.FromHours(24.0)))|> ignore
-                    provided)
+//                cache.Add(CacheItem(typeName, provided), CacheItemPolicy(SlidingExpiration = TimeSpan.FromHours(24.0)))|> ignore
+                provided)
 
         tempAssembly.AddTypes [protobufProvider]
         this.AddNamespace(ns, [protobufProvider])
 
     static do
+        Logger.log "Initializing type provider..."
+        AppDomain.CurrentDomain.UnhandledException
+        |> Event.add(fun args -> Logger.log "Unhandled error %O" args.ExceptionObject)
+
         AppDomain.CurrentDomain.add_AssemblyResolve(fun _ args -> AssemblyResolver.resolve args.Name)
 
 [<assembly:TypeProviderAssembly>]

@@ -7,6 +7,10 @@
   <ItemGroup>
     <Compile Include="Runtime.fs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" />
+  </ItemGroup>
   <Target Name="BeforeBuild">
     <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Restore" />
     <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=netcoreapp2.0" />
