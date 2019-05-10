@@ -3,7 +3,6 @@ namespace Froto.TypeProvider
 open System
 open System.IO
 open System.Reflection
-open System.Runtime.Caching
 
 open FSharp.Configuration.Helper
 
@@ -24,7 +23,6 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
 
     let ns = typeof<ProtocolBuffersTypeProviderCreator>.Namespace
     let asm = Assembly.LoadFrom config.RuntimeAssembly
-    let tempAssembly = ProvidedAssembly()
 
     let protobufProvider =
         ProvidedTypeDefinition(
@@ -69,44 +67,47 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
         |> Seq.map (TypeGen.createType rootScope lookup)
         |> Seq.iter container.AddMember
 
-
-
+        Logger.log "Adding container type %s to the assembly %s" provider.FullName tempAssembly.FullName
         tempAssembly.AddTypes [provider]
         provider
 
     do
-        Logger.log "ProtocolBuffersTypeProviderCreator instance initializing"
+        try
 
-        protobufProvider.DefineStaticParameters(
-            [ProvidedStaticParameter("pathToFile", typeof<string>)],
-            fun typeName args ->
-                Logger.log "Generating enclosing type \"%s\" with args %A" typeName args
-//                if cache.Contains(typeName) then
-//                    Logger.log "Enclosing type found in cache, returning existing."
-//                    cache.Get(typeName) :?> ProvidedTypeDefinition
-//                else
-                Logger.log "Enclosing type was not found. Generating a new one."
+            Logger.log "ProtocolBuffersTypeProviderCreator instance initializing"
 
-                let protoPath = args.[0] :?> string
-                let protoPath =
-                    if Path.IsPathRooted protoPath then protoPath
-                    else config.ResolutionFolder </> protoPath
+            protobufProvider.DefineStaticParameters(
+                [ProvidedStaticParameter("pathToFile", typeof<string>)],
+                fun typeName args ->
+                    Logger.log "Generating enclosing type \"%s\" with args %A" typeName args
+    //                if cache.Contains(typeName) then
+    //                    Logger.log "Enclosing type found in cache, returning existing."
+    //                    cache.Get(typeName) :?> ProvidedTypeDefinition
+    //                else
+                    Logger.log "Enclosing type was not found. Generating a new one."
 
-                Logger.log "Watching file '%s' for changes" protoPath
+                    let protoPath = args.[0] :?> string
+                    let protoPath =
+                        if Path.IsPathRooted protoPath then protoPath
+                        else config.ResolutionFolder </> protoPath
 
-//                File.watch false protoPath (fun _ ->
-//                    Logger.log "File '%s' has been changed. Type provider %s will be invalidated" protoPath typeName
-//                    cache.Remove(typeName) |> ignore
-//                    this.Invalidate())
-//                |> disposables.Add
+//                    Logger.log "Watching file '%s' for changes" protoPath
+    //                File.watch false protoPath (fun _ ->
+    //                    Logger.log "File '%s' has been changed. Type provider %s will be invalidated" protoPath typeName
+    //                    cache.Remove(typeName) |> ignore
+    //                    this.Invalidate())
+    //                |> disposables.Add
 
-                let provided = createProvidedTypes typeName protoPath
+                    let provided = createProvidedTypes typeName protoPath
 
-//                cache.Add(CacheItem(typeName, provided), CacheItemPolicy(SlidingExpiration = TimeSpan.FromHours(24.0)))|> ignore
-                provided)
+    //                cache.Add(CacheItem(typeName, provided), CacheItemPolicy(SlidingExpiration = TimeSpan.FromHours(24.0)))|> ignore
+                    provided)
 
-        tempAssembly.AddTypes [protobufProvider]
-        this.AddNamespace(ns, [protobufProvider])
+            this.AddNamespace(ns, [protobufProvider])
+        with
+        | e ->
+            Logger.log "Unhandled error ocurred while generating types: %O" e
+            reraise()
 
     static do
         Logger.log "Initializing type provider..."
