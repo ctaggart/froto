@@ -32,9 +32,9 @@
     <Compile Include="Generation/TypeGen.fs" />
 
     <Compile Include="AssemblyResolver.fs" />
-    <Compile Include="ProtocolBuffersTypeProviderCreator.fs" />
 
-    <Compile Include="..\TypeProvider.Runtime\Runtime.fs" />
+    <Compile Include="TypeProviderImpl.fs" />
+    <Compile Include="ProtocolBuffersTypeProviderCreator.fs" />
   </ItemGroup>
 
   <ItemGroup>
