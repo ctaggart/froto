@@ -7,6 +7,7 @@ open System.Reflection
 open Microsoft.FSharp.Quotations
 
 open Froto.TypeProvider.Core
+open Froto.TypeProvider.Runtime
 open ProviderImplementation.ProvidedTypes
 
 open Froto.Parser.ClassModel

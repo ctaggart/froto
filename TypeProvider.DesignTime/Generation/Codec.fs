@@ -5,6 +5,7 @@ module Froto.TypeProvider.Generation.Codec
 open Froto.Serialization
 open Froto.Serialization.Encoding
 open Froto.Serialization.Encoding.WireFormat
+open Froto.TypeProvider.Runtime
 
 open Froto.TypeProvider.Core
 

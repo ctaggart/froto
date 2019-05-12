@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\TypeProvider.Runtime\Runtime.fs">
+      <Link>Runtime.fs</Link>
+    </Compile>
     <Compile Include="Utils\Prelude.fs" />
     <Compile Include="Utils\Logger.fs" />
 

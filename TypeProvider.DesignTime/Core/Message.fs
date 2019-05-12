@@ -1,22 +1,11 @@
 namespace Froto.TypeProvider.Core
 
 open Froto.Serialization
+open Froto.TypeProvider.Runtime
 
 // Eventually, this class might be replaced by Froto.Core.Encoding.MessageBase, but so far
 // this interface looks simpler and satisfies all needs.
 
-/// Base class for types generated from proto messages.
-[<AbstractClass>]
-type Message() =
-
-    member this.SerializedLength =
-        let buffer = NullWriteBuffer()
-        this.Serialize buffer
-        buffer.Length
-
-    abstract Serialize: ZeroCopyBuffer -> unit
-    
-    abstract ReadFrom: ZeroCopyBuffer -> unit
 
 /// Simple implementation of Message class that does nothing useful
 /// Basically, this class is needed only for type inference within quotations, because it satisfies requirements

@@ -7,6 +7,7 @@ open System.Reflection
 open FSharp.Quotations
 
 open Froto.TypeProvider.Core
+open Froto.TypeProvider.Runtime
 open ProviderImplementation.ProvidedTypes
 
 let message name = ProvidedTypeDefinition(name, Some typeof<Message>, isErased = false)

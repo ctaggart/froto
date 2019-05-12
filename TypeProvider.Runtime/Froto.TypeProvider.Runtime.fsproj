@@ -1,20 +1,37 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
   <ItemGroup>
     <Compile Include="Runtime.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" />
+    <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj" />
   </ItemGroup>
+  
   <Target Name="BeforeBuild">
     <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Restore" />
-    <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=netcoreapp2.0" />
     <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=netstandard2.0" />
+  </Target>
+
+  <Target Name="AfterBuild">
+    <Message Text="Executing AfterBuild target" Importance="high" />
+    <!-- Note: BasicProvider.DesignTime.fsproj must have been built before this project -->
+
+    <!-- We place BOTH the net461 and netstandard2.0 design-time DLLs in well-known locations with resepct to the runtime DLL -->
+    <!-- This enables any runtime DLL to be used with any host tooling running in either netcoreapp2.0+ or net461+ -->
+<!--    <Copy SourceFiles="..\BasicProvider.DesignTime\bin\$(Configuration)\net461\BasicProvider.DesignTime.dll" DestinationFolder="$(OutputPath)\typeproviders\fsharp41\net461" />-->
+    <Copy SourceFiles="..\TypeProvider.DesignTime\bin\$(Configuration)\netstandard2.0\Froto.TypeProvider.DesignTime.dll" DestinationFolder="$(OutputPath)\typeproviders\fsharp41\netstandard2.0" />
+
+    <!-- We also place the net461 design-time DLLs alongside the runtime DLL for loading by legacy F# toolchains -->
+<!--    <Copy SourceFiles="..\BasicProvider.DesignTime\bin\$(Configuration)\net461\BasicProvider.DesignTime.dll" DestinationFolder="$(OutputPath)" Condition="'$(TargetFramework)' == 'net461'" />-->
   </Target>
 
 </Project>

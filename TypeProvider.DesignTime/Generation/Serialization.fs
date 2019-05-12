@@ -5,6 +5,7 @@ module internal Froto.TypeProvider.Generation.Serialization
 open Microsoft.FSharp.Quotations
 
 open Froto.TypeProvider.Core
+open Froto.TypeProvider.Runtime
 
 open Froto.Parser.ClassModel
 
