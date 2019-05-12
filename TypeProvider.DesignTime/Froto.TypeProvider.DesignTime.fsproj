@@ -6,9 +6,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\TypeProvider.Runtime\Runtime.fs">
-      <Link>Runtime.fs</Link>
+    <Compile Include="..\TypeProvider.Runtime\ZeroCopyBuffer.fs">
+      <Link>Runtime\ZeroCopyBuffer.fs</Link>
     </Compile>
+    <Compile Include="..\TypeProvider.Runtime\Ensure.fs">
+      <Link>Runtime\Ensure.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\Types.fs">
+      <Link>Runtime\Types.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\Codec.fs">
+      <Link>Runtime\Codec.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\TypeProviderAssembly.fs">
+      <Link>Runtime\TypeProviderAssembly.fs</Link>
+    </Compile>
+    
     <Compile Include="Utils\Prelude.fs" />
     <Compile Include="Utils\Logger.fs" />
 
@@ -17,15 +30,10 @@
     <Compile Include="External/TypeProviders.Helper.fs" />
     <Compile Include="Core/Exceptions.fs" />
     <Compile Include="Core/Option.fs" />
-    <Compile Include="Core/Types.fs" />
     <Compile Include="Core/Expr.fs" />
     <Compile Include="Core/Naming.fs" />
-    <Compile Include="Core/ZeroCopyBuffer.fs" />
     <Compile Include="Core/Message.fs" />
     <Compile Include="Core/ResizeArray.fs" />
-    <Compile Include="Core/Ensure.fs" />
-
-    <Compile Include="Generation/Codec.fs" />
     <Compile Include="Generation/Model.fs" />
     <Compile Include="Generation/Provided.fs" />
     <Compile Include="Generation/TypeResolver.fs" />
@@ -49,5 +57,4 @@
     <PackageReference Include="FParsec" Version="1.0.3" />
     <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
   </ItemGroup>
-
 </Project>

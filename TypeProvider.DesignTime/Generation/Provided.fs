@@ -2,12 +2,12 @@
 module internal Froto.TypeProvider.Generation.Provided
 
 open System
-open System.IO
 open System.Reflection
 open FSharp.Quotations
 
 open Froto.TypeProvider.Core
 open Froto.TypeProvider.Runtime
+open Froto.TypeProvider.Runtime.Types
 open ProviderImplementation.ProvidedTypes
 
 let message name = ProvidedTypeDefinition(name, Some typeof<Message>, isErased = false)

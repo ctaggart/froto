@@ -6,6 +6,7 @@ open Microsoft.FSharp.Quotations
 
 open Froto.TypeProvider.Core
 open Froto.TypeProvider.Runtime
+open Froto.TypeProvider.Runtime.Types
 
 open Froto.Parser.ClassModel
 

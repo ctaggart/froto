@@ -8,6 +8,7 @@ open Microsoft.FSharp.Quotations
 
 open Froto.TypeProvider.Core
 open Froto.TypeProvider.Runtime
+open Froto.TypeProvider.Runtime.Types
 open ProviderImplementation.ProvidedTypes
 
 open Froto.Parser.ClassModel
@@ -138,7 +139,6 @@ let private createConstructor (typeDescriptor: TypeDescriptor) =
     // and required string fiels - with ""
 
     ProvidedConstructor([], (fun args ->
-        let this = args.[0]
 
         let initializeRepeatedFields =
             typeDescriptor.Properties

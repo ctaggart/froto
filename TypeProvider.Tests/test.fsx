@@ -2,9 +2,7 @@
 #r @"..\TypeProvider.DesignTime\bin\Debug\netstandard2.0\FParsecCS.dll"
 #r @"..\TypeProvider.DesignTime\bin\Debug\netstandard2.0\Froto.Parser.dll"
 #r @"..\TypeProvider.DesignTime\bin\Debug\netstandard2.0\Froto.Serialization.dll"
-#r @"..\TypeProvider.Runtime\bin\Debug\netstandard2.0\typeproviders\fsharp41\netstandard2.0\Froto.TypeProvider.DesignTime.dll"
 #r @"..\TypeProvider.Runtime\bin\Debug\netstandard2.0\Froto.TypeProvider.Runtime.dll"
-
 
 open Froto.TypeProvider
 

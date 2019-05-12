@@ -2,12 +2,10 @@
 [<RequireQualifiedAccess>]
 module internal Froto.TypeProvider.Generation.Deserialization
 
-open System
-open System.Collections.Generic
 open FSharp.Quotations
 
 open Froto.TypeProvider.Core
-open ProviderImplementation.ProvidedTypes
+open Froto.TypeProvider.Runtime
 
 open Froto.Parser.ClassModel
 open Froto.Serialization.Encoding

@@ -1,13 +1,11 @@
 /// Contains helper functions to read/write values to/from ZeroCopyBuffer
 [<RequireQualifiedAccess>]
-module Froto.TypeProvider.Generation.Codec
+module Froto.TypeProvider.Runtime.Codec
 
 open Froto.Serialization
 open Froto.Serialization.Encoding
 open Froto.Serialization.Encoding.WireFormat
-open Froto.TypeProvider.Runtime
-
-open Froto.TypeProvider.Core
+open Froto.TypeProvider.Runtime.Types
 
 let private write f (fieldNumber: FieldNum) (buffer: ZeroCopyBuffer) value =
     f fieldNumber value buffer |> ignore
@@ -59,7 +57,7 @@ let writeRepeatedEmbedded<'T when 'T :> Message> : Writer<obj> =
 
 let private writeMap writeKey writeValue convertValue : Writer<proto_map<_, _>> =
     fun position buffer value ->
-        let item = new MapItem<_, _>(x, x, writeKey, writeValue)
+        let item = new MapItem<_, _>(Unchecked.defaultof<_>, Unchecked.defaultof<_>, writeKey, writeValue)
         for pair in value do
             item.Key <- pair.Key
             item.Value <- convertValue pair.Value
@@ -111,7 +109,7 @@ let readEmbedded<'T when 'T :> Message and 'T : (new: unit -> 'T)> field =
 let readMapElement<'Key, 'Value> (map: proto_map<_, _>) keyReader (valueReader: Reader<'Value>) field =
     match field with
     | LengthDelimited(_, segment) ->
-        let item = MapItem(keyReader, valueReader, x, x)
+        let item = MapItem(keyReader, valueReader, Unchecked.defaultof<_>, Unchecked.defaultof<_>)
         item.ReadFrom <| ZeroCopyBuffer segment
         (map :?> proto_map<'Key, 'Value>).Add(item.Key, item.Value)
     | _ -> failwithf "Invalid format of the field: %O" field

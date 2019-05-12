@@ -3,6 +3,7 @@ namespace Froto.TypeProvider.Generation
 open System
 
 open Froto.TypeProvider.Core
+open Froto.TypeProvider.Runtime.Types
 open ProviderImplementation.ProvidedTypes
 
 open Froto.Parser.ClassModel

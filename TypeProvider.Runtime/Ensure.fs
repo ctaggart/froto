@@ -1,5 +1,5 @@
 [<RequireQualifiedAccess>]
-module Froto.TypeProvider.Generation.Ensure
+module Froto.TypeProvider.Runtime.Ensure
 
 open System
 

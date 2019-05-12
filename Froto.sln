@@ -7,8 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
-		appveyor.yml = appveyor.yml
-		build.fsx = build.fsx
 		readme.md = readme.md
 		release_notes.md = release_notes.md
 	EndProjectSection
@@ -48,9 +46,9 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Serialization.Test", 
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Froto.Compiler", "Compiler\Froto.Compiler.fsproj", "{F5D8D709-919D-4539-8908-91C540C970B3}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Runtime", "TypeProvider.Runtime\Froto.TypeProvider.Runtime.fsproj", "{1B20B1D7-914D-4652-92AA-D78C79026A47}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.DesignTime", "TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj", "{5D664CEF-B051-4B08-9C46-AA3D4C67D5B9}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Froto.TypeProvider.Runtime", "TypeProvider.Runtime\Froto.TypeProvider.Runtime.fsproj", "{1B20B1D7-914D-4652-92AA-D78C79026A47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
