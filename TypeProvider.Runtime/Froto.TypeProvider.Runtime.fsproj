@@ -24,5 +24,9 @@
   <Target Name="CopyDesignTime" AfterTargets="Build">
     <Copy SourceFiles="..\TypeProvider.DesignTime\bin\$(Configuration)\netstandard2.0\Froto.TypeProvider.DesignTime.dll" DestinationFolder="$(OutputPath)\typeproviders\fsharp41\netstandard2.0" />
   </Target>
+  
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
+  </ItemGroup>
 
 </Project>
