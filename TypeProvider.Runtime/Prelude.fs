@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Froto.TypeProvider.Core.Prelude
+module Froto.TypeProvider.Runtime.Prelude
 
 open System.IO
 

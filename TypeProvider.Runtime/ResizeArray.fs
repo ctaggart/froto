@@ -1,5 +1,5 @@
 [<RequireQualifiedAccess>]
-module Froto.TypeProvider.Core.ResizeArray
+module Froto.TypeProvider.Runtime.ResizeArray
 
 /// Adds item to the instance of ResizeArray casted to object.
 /// Useful when argument of type ResizeArray<T> can't be passed directly (without casting)

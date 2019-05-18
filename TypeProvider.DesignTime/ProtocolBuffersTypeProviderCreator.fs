@@ -6,6 +6,7 @@ open System.Reflection
 
 
 open Froto.TypeProvider.Core
+open Froto.TypeProvider.Runtime
 open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
 

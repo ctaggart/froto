@@ -5,6 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Prelude.fs" />
+    <Compile Include="Option.fs" />
+    <Compile Include="ResizeArray.fs" />
     <Compile Include="ZeroCopyBuffer.fs" />
     <Compile Include="Ensure.fs" />
     <Compile Include="Types.fs" />

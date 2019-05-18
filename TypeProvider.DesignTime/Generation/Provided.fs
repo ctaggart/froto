@@ -9,6 +9,7 @@ open Froto.TypeProvider.Core
 open Froto.TypeProvider.Runtime
 open Froto.TypeProvider.Runtime.Types
 open ProviderImplementation.ProvidedTypes
+open ProviderImplementation.ProvidedTypes.UncheckedQuotations
 
 let message name = ProvidedTypeDefinition(name, Some typeof<Message>, isErased = false)
 
@@ -41,7 +42,7 @@ let readWriteProperty (ty: Type) propertyType name =
             propertyType,
             getterCode = (fun args -> Expr.FieldGet(args.[0], field)),
             setterCode = (fun args ->
-                let setter = Expr.FieldSet(args.[0], field, args.[1])
+                let setter = Expr.FieldSetUnchecked(args.[0], field, args.[1])
                 if propertyType.IsValueType ||
                     // None appears to be represented as null.
                     (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() = typedefof<option<_>>) then

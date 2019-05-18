@@ -11,9 +11,9 @@ let protoFile = __SOURCE_DIRECTORY__ + "/Proto/type_provider_test.proto"
 type Proto = ProtocolBuffersTypeProvider<protoFile>
 type Sample = Proto.Froto.Sample
 
-let address =
+let address =    
     Sample.Person.Address(
         Address1 = "Street",
         HouseNumber = 12)
 
-printfn "%A" address
+printfn "%A" address.HouseNumber

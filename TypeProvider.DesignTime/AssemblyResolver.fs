@@ -5,6 +5,7 @@ open System.IO
 open System.Reflection
 
 open Froto.TypeProvider.Core
+open Froto.TypeProvider.Runtime
 
 let currentLocation = Assembly.GetExecutingAssembly().Location |> Path.GetDirectoryName
 

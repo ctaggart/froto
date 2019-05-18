@@ -10,6 +10,8 @@ open FSharp.Quotations.Patterns
 
 open ProviderImplementation.ProvidedTypes
 
+open Froto.TypeProvider.Runtime
+
 let sequence expressions = 
     if expressions |> Seq.isEmpty then Expr.Value(()) 
     else expressions |> Seq.reduce (fun acc s -> Expr.Sequential(acc, s))

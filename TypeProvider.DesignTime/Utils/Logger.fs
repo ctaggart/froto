@@ -6,6 +6,8 @@ open System.Reflection
 open System.IO
 open Printf
 
+open Froto.TypeProvider.Runtime
+
 #if DEBUG
 
 let private filename =
