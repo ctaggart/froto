@@ -25,7 +25,11 @@
   </Target>
 
   <Target Name="CopyDesignTime" AfterTargets="Build">
-    <Copy SourceFiles="..\TypeProvider.DesignTime\bin\$(Configuration)\netstandard2.0\Froto.TypeProvider.DesignTime.dll" DestinationFolder="$(OutputPath)\typeproviders\fsharp41\netstandard2.0" />
+    <CreateItem Include="..\TypeProvider.DesignTime\bin\$(Configuration)\netstandard2.0\*.dll;..\TypeProvider.DesignTime\bin\$(Configuration)\netstandard2.0\*.pdb">
+      <Output TaskParameter="Include" ItemName="DesignTimeFiles" />
+    </CreateItem>
+    
+    <Copy SourceFiles="@(DesignTimeFiles)" DestinationFolder="$(OutputPath)\typeproviders\fsharp41\netstandard2.0" />
   </Target>
   
   <ItemGroup>
