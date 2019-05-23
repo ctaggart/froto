@@ -1,7 +1,0 @@
-message BookAuthor {
-  optional string name = 1;
-}
-
-message BookDetails {
-  optional BookAuthor author = 9; 
-}
