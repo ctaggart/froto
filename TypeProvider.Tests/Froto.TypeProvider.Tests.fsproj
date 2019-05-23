@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp2.1</TargetFramework>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
@@ -9,8 +10,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Parser\Froto.Parser.fsproj" />
-      <ProjectReference Include="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" />
       <ProjectReference Include="..\TypeProvider.Runtime\Froto.TypeProvider.Runtime.fsproj" />
     </ItemGroup>
 
@@ -22,6 +21,10 @@
     <ItemGroup>
       <PackageReference Include="FsUnit.Xunit" Version="3.2.0" />
       <PackageReference Include="xunit" Version="2.4.0" />
+      <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
 </Project>

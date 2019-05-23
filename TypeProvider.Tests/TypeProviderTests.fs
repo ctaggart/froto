@@ -8,7 +8,7 @@ open Xunit
 open FsUnit.Xunit
 
 open Froto.TypeProvider
-open Froto.TypeProvider.Core
+open Froto.TypeProvider.Runtime.Types
 open Froto.Serialization
 
 type Proto = ProtocolBuffersTypeProvider<"Proto/type_provider_test.proto">
