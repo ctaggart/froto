@@ -2,7 +2,21 @@
   
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <NuspecFile>TypeProvider.Runtime.nuspec</NuspecFile>
+
+    <!-- SourceLink related properties https://github.com/dotnet/SourceLink#using-sourcelink -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
+
+  <!-- GetBuildVersion is a task defined in Nerdbank.GitVersioning and is executed even if "no-build" arg is provided to "dotnet pack". Here this fact
+  is used to pass generated nuget package version to custom nuspec file -->
+  <Target Name="UpdateNuspecProperties" AfterTargets="GetBuildVersion">
+    <PropertyGroup>
+      <NuspecProperties>$(NuspecProperties);version=$(NuGetPackageVersion)</NuspecProperties>    
+    </PropertyGroup>
+  </Target>
 
   <ItemGroup>
     <Compile Include="Prelude.fs" />
@@ -34,6 +48,7 @@
   
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.138" PrivateAssets="All" />
   </ItemGroup>
-
 </Project>

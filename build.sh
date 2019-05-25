@@ -11,3 +11,4 @@ dotnet test --no-build -c Release TypeProvider.Test/Froto.TypeProvider.Test.fspr
 
 dotnet pack --no-build -c Release Parser/Froto.Parser.fsproj -o $SCRIPTROOT/bin
 dotnet pack --no-build -c Release Serialization/Froto.Serialization.fsproj -o $SCRIPTROOT/bin
+dotnet pack --no-build -c Release TypeProvider.Runtime/Froto.TypeProvider.Runtime.fsproj -o $SCRIPTROOT/bin

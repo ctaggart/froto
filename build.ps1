@@ -18,3 +18,6 @@ if ($lastexitcode -ne 0){ exit $lastexitcode }
 
 dotnet pack --no-build -c Release Serialization\Froto.Serialization.fsproj -o $psscriptroot/bin
 if ($lastexitcode -ne 0){ exit $lastexitcode }
+
+dotnet pack --no-build -c Release TypeProvider.Runtime\Froto.TypeProvider.Runtime.fsproj -o $psscriptroot/bin
+if ($lastexitcode -ne 0){ exit $lastexitcode }
