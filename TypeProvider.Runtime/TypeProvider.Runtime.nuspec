@@ -11,15 +11,13 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>F# Type Provider for Google Protocol Buffers</description>
     <copyright>Copyright 2019</copyright>
-    <!-- <dependencies>
-      <group targetFramework="net45">
-        <dependency id="FSharp.Core" version="4.0.0.1"/>
-      </group>
-      <group targetFramework="net40" />
+    <dependencies>
       <group targetFramework="netstandard2.0">
-        <dependency id="FSharp.Core" version="4.2.3" />
+        <dependency id="FSharp.Core" version="4.5.2" />
+        <dependency id="Froto.Serialization" version="$version$" />
+        <dependency id="Froto.Parser" version="$version$" />
       </group>
-    </dependencies> -->
+    </dependencies>
     <references>
       <reference file="Froto.TypeProvider.Runtime.dll" />
     </references>
