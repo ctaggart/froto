@@ -31,10 +31,10 @@
       <Link>Runtime\ResizeArray.fs</Link>
     </Compile>
     <Compile Include="Utils\Logger.fs" />
+    <Compile Include="Utils\FileWatcher.fs" />
 
     <Compile Include="External/ProvidedTypes.fsi" />
     <Compile Include="External/ProvidedTypes.fs" />
-    <Compile Include="External/TypeProviders.Helper.fs" />
     <Compile Include="Core/Exceptions.fs" />
     <Compile Include="Core/Option.fs" />
     <Compile Include="Core/Expr.fs" />
@@ -48,9 +48,9 @@
     <Compile Include="Generation/Deserialization.fs" />
     <Compile Include="Generation/TypeGen.fs" />
 
-    <Compile Include="AssemblyResolver.fs" />
-
     <Compile Include="TypeProviderImpl.fs" />
+
+    <Compile Include="Cache.fs" />
     <Compile Include="ProtocolBuffersTypeProviderCreator.fs" />
   </ItemGroup>
 

@@ -1,12 +1,12 @@
 namespace Froto.TypeProvider
 
-open System
 open System.IO
 open System.Reflection
 
-
+open Froto.TypeProvider
 open Froto.TypeProvider.Core
 open Froto.TypeProvider.Runtime
+open Froto.TypeProvider.Utils
 open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
 
@@ -21,7 +21,7 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
 
     let protobufProvider =
         let t = ProvidedTypeDefinition(runtimeAssembly, ns, "ProtocolBuffersTypeProvider", Some typeof<obj>, isErased = false)
-        
+
         t.DefineStaticParameters(
                 [ProvidedStaticParameter("pathToFile", typeof<string>)],
                 fun typeName args ->
@@ -31,17 +31,28 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
                     let protoPath =
                         if Path.IsPathRooted protoPath then protoPath
                         else config.ResolutionFolder </> protoPath
-                    TypeProviderImpl.createProvidedTypes typeName protoPath ns)
+
+                    let cacheKey = typeName + "-" + protoPath
+
+                    let createProvidedTypes () =
+
+                        Logger.log "Watching \"%s\" for changes" protoPath
+                        let watch =
+                            FileWatcher.watch true protoPath (fun () ->
+                                Cache.remove cacheKey
+                                this.Invalidate() )
+
+                        this.Disposing |> Event.add (fun _ ->
+                            Logger.log "Disposing \"%s\" watcher" protoPath
+                            watch.Dispose())
+
+                        TypeProviderImpl.createProvidedTypes typeName protoPath ns
+
+                    Cache.get cacheKey createProvidedTypes)
+
         t
     do
         this.AddNamespace(ns, [protobufProvider])
-
-    static do
-        Logger.log "Initializing type provider..."
-        AppDomain.CurrentDomain.UnhandledException
-        |> Event.add(fun args -> Logger.log "Unhandled error %O" args.ExceptionObject)
-
-        AppDomain.CurrentDomain.add_AssemblyResolve(fun _ args -> AssemblyResolver.resolve args.Name)
 
 [<assembly:TypeProviderAssembly>]
 do()

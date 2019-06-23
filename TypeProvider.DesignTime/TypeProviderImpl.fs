@@ -2,8 +2,6 @@ module Froto.TypeProvider.TypeProviderImpl
 
 open System
 
-open FSharp.Configuration.Helper
-
 open Froto.TypeProvider.Core
 open Froto.TypeProvider.Generation
 open ProviderImplementation.ProvidedTypes
@@ -19,7 +17,7 @@ let createProvidedTypes typeName protoPath ns =
                 hideObjectMethods = true,
                 isErased = false)
 
-        Logger.log "Generating no types from %s" protoPath
+        Logger.log "Generating types from %s" protoPath
 
         let protoFile = ProtoFile.fromFile protoPath
 
