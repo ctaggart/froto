@@ -1,6 +1,8 @@
 namespace Froto.TypeProvider
 
+open System
 open System.IO
+open System.Collections.Concurrent
 open System.Reflection
 
 open Froto.TypeProvider
@@ -12,17 +14,19 @@ open Microsoft.FSharp.Core.CompilerServices
 
 
 [<TypeProvider>]
-type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
-
+type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this =
     inherit TypeProviderForNamespaces(config, assemblyReplacementMap=[("Froto.TypeProvider.DesignTime", "Froto.TypeProvider.Runtime")], addDefaultProbingLocation=true)
+
+    static let typesCache = new ConcurrentDictionary<string, ProvidedTypeDefinition>()
+    static let watchersCache = new ConcurrentDictionary<string, IDisposable>()
 
     let ns = typeof<ProtocolBuffersTypeProviderCreator>.Namespace
     let runtimeAssembly = Assembly.LoadFrom config.RuntimeAssembly
 
     let protobufProvider =
-        let t = ProvidedTypeDefinition(runtimeAssembly, ns, "ProtocolBuffersTypeProvider", Some typeof<obj>, isErased = false)
+        let provider = ProvidedTypeDefinition(runtimeAssembly, ns, "ProtocolBuffersTypeProvider", Some typeof<obj>, isErased = false)
 
-        t.DefineStaticParameters(
+        provider.DefineStaticParameters(
                 [ProvidedStaticParameter("pathToFile", typeof<string>)],
                 fun typeName args ->
                     Logger.log "Generating enclosing type \"%s\" with args %A in namespace %s" typeName args ns
@@ -32,25 +36,27 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
                         if Path.IsPathRooted protoPath then protoPath
                         else config.ResolutionFolder </> protoPath
 
-                    let cacheKey = typeName + "-" + protoPath
-
-                    let createProvidedTypes () =
-
-                        Logger.log "Watching \"%s\" for changes" protoPath
-                        let watch =
-                            FileWatcher.watch true protoPath (fun () ->
-                                Cache.remove cacheKey
-                                this.Invalidate() )
-
-                        this.Disposing |> Event.add (fun _ ->
-                            Logger.log "Disposing \"%s\" watcher" protoPath
-                            watch.Dispose())
+                    let createProvidedTypes cacheKey =
+                        watchersCache.AddOrUpdate(
+                            cacheKey,
+                            (fun cacheKey ->
+                                Logger.log "Watching \"%s\" for changes" protoPath
+                                let watch =
+                                    FileWatcher.watch true protoPath (fun () ->
+                                        Logger.log "Detected change in \"%s\"" protoPath
+                                        
+                                        typesCache.TryRemove cacheKey |> ignore
+                                        this.Invalidate() )
+                                
+                                watch),
+                            fun _ existing -> existing) |> ignore
 
                         TypeProviderImpl.createProvidedTypes typeName protoPath ns
 
-                    Cache.get cacheKey createProvidedTypes)
+                    let cacheKey = typeName + "-" + protoPath
+                    typesCache.GetOrAdd(cacheKey, createProvidedTypes))
 
-        t
+        provider
     do
         this.AddNamespace(ns, [protobufProvider])
 

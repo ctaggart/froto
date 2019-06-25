@@ -49,8 +49,6 @@
     <Compile Include="Generation/TypeGen.fs" />
 
     <Compile Include="TypeProviderImpl.fs" />
-
-    <Compile Include="Cache.fs" />
     <Compile Include="ProtocolBuffersTypeProviderCreator.fs" />
   </ItemGroup>
 
