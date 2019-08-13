@@ -15,7 +15,10 @@ let parseString s = ProtoFile.fromString(s)
 /// gets the path for a test file based on the relative path from the executing assembly
 let getTestFile file =
      let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
-     let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
+     let codeBase' = Uri.EscapeUriString codeBase 
+     let codeBase'' = codeBase'.Replace("#", "%23") // handle paths like ../F#/..
+     let uri = Uri codeBase''
+     let assemblyPath = DirectoryInfo uri.LocalPath
      let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent.Parent).FullName
      Path.Combine(solutionPath, Path.Combine("test",file))
 
@@ -127,3 +130,13 @@ let ``can parse PubSub proto`` () =
     let proto = getTestFile "grpc.proto" |> parseFile
     10 |> should equal proto.Sections.Length
     "Subscriber" |> should equal proto.Services.[0].Name
+
+[<Fact>]
+// from https://github.com/apache/pulsar/blob/master/pulsar-common/src/main/proto/PulsarApi.proto
+let ``can parse PulsarApi proto`` () =
+    let proto = getTestFile "PulsarApi.proto" |> parseFile
+    "Schema" |> should equal proto.Messages.[0].Name
+    68 |> should equal proto.Sections.Length
+    59 |> should equal proto.Messages.Length
+    5 |> should equal proto.Enums.Length
+    2 |> should equal proto.Options.Length
