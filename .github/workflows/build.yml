@@ -16,3 +16,5 @@ jobs:
     # - uses: docker://mcr.microsoft.com/dotnet/core/sdk:2.2.105
     #   with:
     #     args: ./build.sh
+    - bash: vara=1234
+    - bash: echo $vara
