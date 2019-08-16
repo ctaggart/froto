@@ -384,8 +384,12 @@ module Message =
 
     [<Fact>]
     let ``Field parses`` () =
+        Parse.fromStringWithParser pField @"optional int32 test = 1 ;"
+        |> should equal <| TField ("test", TOptional, TInt32, 1u, [])
         Parse.fromStringWithParser pField @"required int32 test = 1 ;"
         |> should equal <| TField ("test", TRequired, TInt32, 1u, [])
+        Parse.fromStringWithParser pField @"repeated int32 test = 1 ;"
+        |> should equal <| TField ("test", TRepeated, TInt32, 1u, [])
 
     [<Fact>]
     let ``Field with options parses`` () =
@@ -855,7 +859,10 @@ module Proto =
     /// gets the path for a test file based on the relative path from the executing assembly
     let getTestFile file =
          let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
-         let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
+         let codeBase' = Uri.EscapeUriString codeBase 
+         let codeBase'' = codeBase'.Replace("#", "%23") // handle paths like ../F#/..
+         let uri = Uri codeBase''
+         let assemblyPath = DirectoryInfo uri.LocalPath
          let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent.Parent).FullName
          Path.Combine(solutionPath, Path.Combine("test",file))
 
@@ -1081,5 +1088,47 @@ module RegressionTests =
                                 TOneOfField("age",TInt32,9u,[])
                             ])
 
+                    ])
+            ])
+
+    [<Fact>]
+    let ``sample from proto3 users guide doesn't parse (#93)`` () =
+      Parse.fromStringWithParser pProto """
+        syntax = "proto3";
+
+        message SearchRequest {
+          string query = 1;
+          int32 page_number = 2;
+          int32 result_per_page = 3;
+          enum Corpus {
+            UNIVERSAL = 0;
+            WEB = 1;
+            IMAGES = 2;
+            LOCAL = 3;
+            NEWS = 4;
+            PRODUCTS = 5;
+            VIDEO = 6;
+          }
+          Corpus corpus = 4;
+        }
+        """
+        |> should equal (
+            [
+                TSyntax TProto3
+                TMessage ("SearchRequest",
+                    [
+                        TField("query", TOptional, TString, 1u, [])
+                        TField("page_number", TOptional, TInt32, 2u, [])
+                        TField("result_per_page", TOptional, TInt32, 3u, [])
+                        TMessageEnum( "Corpus", [
+                            TEnumField("UNIVERSAL", 0, [])
+                            TEnumField("WEB", 1, [])
+                            TEnumField("IMAGES", 2, [])
+                            TEnumField("LOCAL", 3, [])
+                            TEnumField("NEWS", 4, [])
+                            TEnumField("PRODUCTS", 5, [])
+                            TEnumField("VIDEO", 6, [])
+                            ])
+                        TField("corpus", TOptional, TIdent("Corpus"), 4u, [])
                     ])
             ])

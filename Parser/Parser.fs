@@ -480,16 +480,17 @@ module Parse =
                 pMessageDef |>> TMessageMessage
 
             choice [
-                (isProto2 >>. pGroup) // must be parsed first to avoid confusion
-                pOneOf                // must be parsed before pField, so 'oneof' isn't considered a type in Proto3
-                pField
-                pMessageEnum
-                pMessageMessage
-                (isProto2 >>. pMessageExtend)
-                (isProto2 >>. pExtensions)
-                pMessageOption
-                pMap
-                pReserved
+                (isProto2 >>. (attempt <| pGroup))
+                (isProto2 >>. (attempt <| pMessageExtend))
+                (isProto2 >>. (attempt <| pExtensions))
+                (attempt <| pMessageOption)
+                (attempt <| pMap)
+                (attempt <| pReserved)
+                (attempt <| pOneOf)
+                (attempt <| pMessageEnum)
+                (attempt <| pMessageMessage)
+                pField                 // must be parsed last for keywords to not be considered type names 
+
                 ]
 
         /// Parse message option: "option" (ident | "(" fullIdent ")" { "." ident }
@@ -507,7 +508,7 @@ module Parse =
 
         // Implementation for fwd decl of pGroupCommon
         and internal pGroupCommonImpl =
-            attempt <| pipe4
+            pipe4
                 pLabel_ws1
                 (str_ws1 "group" >>. pGroupName_ws)
                 pEq_FieldNum_ws
