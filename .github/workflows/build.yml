@@ -1,21 +1,18 @@
 name: CI
-
 on: [push, pull_request]
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.0.100-preview8-013656
-    - run: dotnet --info
+      # with:
+      #   dotnet-version: 3.0.100-preview8-013656
+    # - run: dotnet --info
     # - uses: docker://mcr.microsoft.com/dotnet/core/sdk:2.2.105
     #   with:
     #     args: ./build.sh
-    - run: echo hello
-    - run: export vara=1234
-    - run: echo $vara
+    - run: |
+      export VERSION=`nbgv get-version -v SemVer2`
+      ./build.sh
