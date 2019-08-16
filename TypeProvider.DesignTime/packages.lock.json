@@ -18,6 +18,12 @@
         "resolved": "4.5.2",
         "contentHash": "apbdQOjzsjQ637kTWQuW29jqwY18jsHMyNC5A+TPJZKFEIE2cIfQWf3V7+mXrxlbX69BueYkv293/g70wuXuRw=="
       },
+      "Nerdbank.GitVersioning": {
+        "type": "Direct",
+        "requested": "[3.0.25, )",
+        "resolved": "3.0.25",
+        "contentHash": "XHpul0zWJvaRL06fOJtGTim9sD9q1CbO8DnrSJGr6pjMcpVGRtDcLgcYycseGPKmOZeRmrzdR6gZihE3naHMwQ=="
+      },
       "NETStandard.Library": {
         "type": "Direct",
         "requested": "[2.0.3, )",
