@@ -480,16 +480,17 @@ module Parse =
                 pMessageDef |>> TMessageMessage
 
             choice [
-                (isProto2 >>. pGroup) // must be parsed first to avoid confusion
-                pOneOf                // must be parsed before pField, so 'oneof' isn't considered a type in Proto3
-                pField
-                pMessageEnum
-                pMessageMessage
-                (isProto2 >>. pMessageExtend)
-                (isProto2 >>. pExtensions)
-                pMessageOption
-                pMap
-                pReserved
+                (isProto2 >>. (attempt <| pGroup))
+                (isProto2 >>. (attempt <| pMessageExtend))
+                (isProto2 >>. (attempt <| pExtensions))
+                (attempt <| pMessageOption)
+                (attempt <| pMap)
+                (attempt <| pReserved)
+                (attempt <| pOneOf)
+                (attempt <| pMessageEnum)
+                (attempt <| pMessageMessage)
+                pField                 // must be parsed last for keywords to not be considered type names 
+
                 ]
 
         /// Parse message option: "option" (ident | "(" fullIdent ")" { "." ident }
@@ -507,7 +508,7 @@ module Parse =
 
         // Implementation for fwd decl of pGroupCommon
         and internal pGroupCommonImpl =
-            attempt <| pipe4
+            pipe4
                 pLabel_ws1
                 (str_ws1 "group" >>. pGroupName_ws)
                 pEq_FieldNum_ws
@@ -720,3 +721,103 @@ module Parse =
     /// Parse proto from a file.  Throws System.FormatException on failure.
     let fromFile fileName =
         fromFileWithParser Parsers.pProto fileName
+
+    /// Resolve imports using provided `fetch` function, each parsed with supplied `parse` function.
+    /// Returns list of (filename, ast) tuples.
+    /// Public imports are replaced in-line.
+    /// Weak imports ignore failure to fetch the import.
+    /// TODO: Should `import weak "filename"` ignore ALL errors?  Or just FileNotFound?
+    let rec resolveImports
+                (fetch: string -> string * 'a)
+                (parse: string * 'a -> string * Ast.PProto)
+                (name:string, source:Ast.PProto)
+                    : (string * Ast.PProto) list =
+
+        // Recursively inline public imports; imported file replaces import statement
+        // TODO: What should be done with the `syntax` line in an import public?
+        // TODO: Invalid? Override? Honor in a scope?
+        let rec inlineImports (name:string, xs:Ast.PProto) : (string * Ast.PProto) =
+            let processStatement x acc =
+                match x with
+                | Ast.TImport( name, Ast.TPublic ) ->
+                    let _, imp =
+                        name
+                        |> fetch
+                        |> parse
+                        |> inlineImports
+                    imp @ acc
+                | statement ->
+                    statement :: acc
+            (name, List.foldBack processStatement xs [])
+
+        // Wrap fetcher to ignore FNF exception on weak import
+        let selectFetcher = function
+        | Ast.TNormal -> fetch >> Some
+        | Ast.TPublic -> fun _ -> None
+        | Ast.TWeak   -> fun source -> try Some(fetch source) with :? System.IO.FileNotFoundException -> None
+
+        // Filter imports
+        let filterImports (name,ast) =
+            ast
+            |> List.choose (function
+                | Ast.TImport _ -> None
+                | s -> Some(s)
+                )
+            |> fun ast -> (name,ast)
+
+        // Load normal imports
+        // Returns list with original source, followed by of parsed imports
+        // Recursively calls resolveImports
+        let loadImports (name, xs:Ast.PProto) : (string*Ast.PProto) list =
+            xs
+            |> Seq.ofList
+            |> Seq.choose (function
+                | Ast.TImport (name, visibility) -> Some(selectFetcher visibility, name)
+                | _ -> None
+                )
+            |> Seq.choose (fun (fetcher, name) ->
+                name
+                |> fetcher
+                |> Option.map parse
+                |> Option.map (resolveImports fetch parse)
+                )
+            |> Seq.concat
+            |> List.ofSeq
+            |> fun imports -> filterImports (name,xs) :: imports
+
+        (name, source)
+        |> inlineImports
+        |> loadImports
+
+    let fetchFromMap filesMap =
+        fun filename ->
+            match filesMap |> Map.tryFind filename with
+            | Some(source) -> (filename, source)
+            | None -> raise <| System.IO.FileNotFoundException(filename)
+
+    let fetchFromFile dirsList =
+        fun filename ->
+            let optFullPath =
+                dirsList
+                |> Seq.map (fun dir -> System.IO.Path.Combine(dir,filename))
+                |> Seq.tryFind (fun fn -> System.IO.File.Exists(fn))
+            match optFullPath with
+            | Some(fullPath) -> (fullPath,System.IO.File.OpenRead(fullPath))
+            | None -> raise <| System.IO.FileNotFoundException(filename)
+
+    let parseFromString (filename,string) =
+        (filename, fromString string)
+
+    let parseFromStream (filename,stream) =
+        (filename, fromStream filename stream)
+
+    let loadFromString fileName filesMap =
+        fetchFromMap filesMap fileName
+        |> parseFromString
+        |> resolveImports (fetchFromMap filesMap) parseFromString
+
+    let loadFromFile fileName dirsList =
+        fetchFromFile dirsList fileName
+        |> parseFromStream
+        |> resolveImports (fetchFromFile dirsList) parseFromStream
+

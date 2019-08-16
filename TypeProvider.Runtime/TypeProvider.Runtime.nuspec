@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <id>Froto.TypeProvider</id>
+    <title>Froto Type Provider</title>
+    <version>$version$</version>
+    <authors>Cameron Taggart, James Hugard, Uladzimir Makarau</authors>
+    <owners>Cameron Taggart, James Hugard, Uladzimir Makarau</owners>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/ctaggart/froto</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>F# Type Provider for Google Protocol Buffers</description>
+    <copyright>Copyright 2019</copyright>
+    <dependencies>
+      <group targetFramework="netstandard2.0">
+        <dependency id="FSharp.Core" version="4.5.2" />
+        <dependency id="Froto.Serialization" version="$version$" />
+      </group>
+    </dependencies>
+    <references>
+      <reference file="Froto.TypeProvider.Runtime.dll" />
+    </references>
+  </metadata>
+  <files>
+    <file src="bin\Release\netstandard2.0\Froto.TypeProvider.Runtime.dll" target="lib/netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\Froto.TypeProvider.Runtime.pdb" target="lib/netstandard2.0" />
+
+    <file src="bin\Release\netstandard2.0\typeproviders\fsharp41\netstandard2.0\Froto.TypeProvider.DesignTime.dll" target="lib/typeproviders/fsharp41/netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\typeproviders\fsharp41\netstandard2.0\Froto.TypeProvider.DesignTime.pdb" target="lib/typeproviders/fsharp41/netstandard2.0" />
+
+    <file src="bin\Release\netstandard2.0\typeproviders\fsharp41\netstandard2.0\Froto.Serialization.dll" target="lib/typeproviders/fsharp41/netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\typeproviders\fsharp41\netstandard2.0\Froto.Serialization.pdb" target="lib/typeproviders/fsharp41/netstandard2.0" />
+
+    <file src="bin\Release\netstandard2.0\typeproviders\fsharp41\netstandard2.0\Froto.Parser.dll" target="lib/typeproviders/fsharp41/netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\typeproviders\fsharp41\netstandard2.0\Froto.Parser.pdb" target="lib/typeproviders/fsharp41/netstandard2.0" />
+
+    <file src="bin\Release\netstandard2.0\typeproviders\fsharp41\netstandard2.0\FParsec.dll" target="lib/typeproviders/fsharp41/netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\typeproviders\fsharp41\netstandard2.0\FParsecCS.dll" target="lib/typeproviders/fsharp41/netstandard2.0" />
+  </files>
+</package>

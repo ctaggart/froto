@@ -1,0 +1,65 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\TypeProvider.Runtime\Prelude.fs">
+      <Link>Runtime\Prelude.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\Option.fs">
+      <Link>Runtime\Option.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\ZeroCopyBuffer.fs">
+      <Link>Runtime\ZeroCopyBuffer.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\Ensure.fs">
+      <Link>Runtime\Ensure.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\Types.fs">
+      <Link>Runtime\Types.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\Codec.fs">
+      <Link>Runtime\Codec.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\TypeProviderAssembly.fs">
+      <Link>Runtime\TypeProviderAssembly.fs</Link>
+    </Compile>
+    <Compile Include="..\TypeProvider.Runtime\ResizeArray.fs">
+      <Link>Runtime\ResizeArray.fs</Link>
+    </Compile>
+    <Compile Include="Utils\Logger.fs" />
+    <Compile Include="Utils\FileWatcher.fs" />
+
+    <Compile Include="External/ProvidedTypes.fsi" />
+    <Compile Include="External/ProvidedTypes.fs" />
+    <Compile Include="Core/Exceptions.fs" />
+    <Compile Include="Core/Option.fs" />
+    <Compile Include="Core/Expr.fs" />
+    <Compile Include="Core/Naming.fs" />
+    <Compile Include="Core/Message.fs" />
+    <Compile Include="Generation/Model.fs" />
+    <Compile Include="Generation/Provided.fs" />
+    <Compile Include="Generation/TypeResolver.fs" />
+    <Compile Include="Generation/OneOf.fs" />
+    <Compile Include="Generation/Serialization.fs" />
+    <Compile Include="Generation/Deserialization.fs" />
+    <Compile Include="Generation/TypeGen.fs" />
+
+    <Compile Include="TypeProviderImpl.fs" />
+    <Compile Include="ProtocolBuffersTypeProviderCreator.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Parser\Froto.Parser.fsproj" />
+    <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
+    <PackageReference Include="FParsec" Version="1.0.3" />
+    <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
+  </ItemGroup>
+</Project>

@@ -15,3 +15,4 @@ docs/type-provider/paket.lock
 .idea/
 .vs/
 .ionide/
+.vscode/
