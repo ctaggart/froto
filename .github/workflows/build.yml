@@ -9,9 +9,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: Run a one-line script
-      run: echo Hello, world!
-    - name: Run a multi-line script
-      run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+    - name: look for dotnet
+      run: dotnet --version
+    - uses: docker://mcr.microsoft.com/dotnet/core/sdk:2.2.105
+      with:
+        args: dotnet --version
