@@ -1,5 +1,5 @@
 #!/bin/sh -e
-# build, test, and pack
+# build, test, pack
 SCRIPTROOT="$(cd "$(dirname "$0")"; pwd)"
 dotnet restore Froto.sln
 dotnet build Froto.sln -c Release

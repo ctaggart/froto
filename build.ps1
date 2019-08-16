@@ -1,4 +1,4 @@
-# build, test, and pack
+# build, test, pack
 
 # dotnet restore Froto.sln --force-evaluate
 # dotnet restore TypeProvider.Test\Froto.TypeProvider.Test.fsproj --force-evaluate

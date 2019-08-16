@@ -11,8 +11,9 @@ jobs:
     # - uses: docker://mcr.microsoft.com/dotnet/core/sdk:2.2.105
     #   with:
     #     args: ./build.sh
-    - run: |
-        dotnet tool install -g nbgv --version 2.3.167
-        nbgv get-version -v SemVer2
+    - name: build, test, pack
+      run: |
+        dotnet tool install -g nbgv --version 3.0.25
+        $HOME/.dotnet/tools/nbgv get-version get-version -v SemVer2
         # export VERSION=`nbgv get-version -v SemVer2`
         # ./build.sh
