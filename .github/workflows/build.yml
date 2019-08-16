@@ -1,0 +1,18 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-dotnet@v1
+    - name: build, test, pack
+      run: ./build.sh
+    - name: push
+      run: |
+        source=https://www.myget.org/F/froto/api/v2/package
+        key=${{secrets.myget_froto_api_key}} 
+        dotnet nuget push -s $source -k $key bin/Froto.Parser.*.nupkg
+        dotnet nuget push -s $source -k $key bin/Froto.Serialization.*.nupkg
+        dotnet nuget push -s $source -k $key bin/Froto.TypeProvider.DesignTime.*.nupkg
+        dotnet nuget push -s $source -k $key bin/Froto.TypeProvider.*.nupkg
