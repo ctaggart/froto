@@ -11,6 +11,31 @@ open Froto.Parser
 open Froto.Parser.Ast
 open Froto.Parser.Parse.Parsers
 
+module TestHelpers =
+    open System.IO
+
+    // Detect Mono runtime
+    let isMono = System.Type.GetType "Mono.Runtime" |> isNull |> not
+
+    /// Path of the test directory
+    let testPath =
+        let solutionPath =
+            if isMono then
+                "../../../"
+            else
+                let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
+                let codeBase' = Uri.EscapeUriString codeBase 
+                let codeBase'' = codeBase'.Replace("#", "%23") // handle paths like ../F#/..
+                let uri = Uri codeBase''
+                let assemblyPath = DirectoryInfo uri.LocalPath
+                (assemblyPath.Parent.Parent.Parent.Parent.Parent).FullName
+        Path.Combine(solutionPath, "test")
+
+    /// gets the path for a test file based on the relative path from the executing assembly
+    let getTestFilePath file =
+        Path.Combine(testPath, file)
+
+
 [<Xunit.Trait("Kind", "Unit")>]
 module Identifiers =
     [<Fact>]
@@ -854,21 +879,9 @@ module Proto =
         )
 
 
-    open System.IO
-
-    /// gets the path for a test file based on the relative path from the executing assembly
-    let getTestFile file =
-         let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
-         let codeBase' = Uri.EscapeUriString codeBase 
-         let codeBase'' = codeBase'.Replace("#", "%23") // handle paths like ../F#/..
-         let uri = Uri codeBase''
-         let assemblyPath = DirectoryInfo uri.LocalPath
-         let solutionPath = (assemblyPath.Parent.Parent.Parent.Parent.Parent).FullName
-         Path.Combine(solutionPath, Path.Combine("test",file))
-
     [<Fact>]
     let ``Parse Google protobuf 'descriptor.proto' without error`` () =
-        Parse.fromFile <| getTestFile "google/protobuf/descriptor.proto"
+        Parse.fromFile <| TestHelpers.getTestFilePath "google/protobuf/descriptor.proto"
         |> ignore
 
 [<Xunit.Trait("Kind", "Unit")>]
@@ -1132,7 +1145,6 @@ module RegressionTests =
                         TField("corpus", TOptional, TIdent("Corpus"), 4u, [])
                     ])
             ])
-module Import =
 module StringImport =
 
     [<Fact>]
@@ -1393,24 +1405,11 @@ module FileImport =
     open System
     open System.IO
 
-    let isMono = System.Type.GetType "Mono.Runtime" |> isNull |> not
-
-    /// gets the path for a test file based on the relative path from the executing assembly
-    let testDir =
-        let solutionPath =
-            if isMono then
-                "../../../"
-            else
-                let codeBase = Reflection.Assembly.GetExecutingAssembly().CodeBase
-                let assemblyPath = DirectoryInfo (Uri codeBase).LocalPath
-                (assemblyPath.Parent.Parent.Parent.Parent).FullName
-        Path.Combine(solutionPath, "test")
-
     [<Fact>]
     let ``Resolve File Import`` () =
         let dirs =
             [
-                testDir
+                TestHelpers.testPath
             ]
 
         let ast =
@@ -1429,6 +1428,3 @@ module FileImport =
             | _ -> false
             )
         |> should equal true
-
-
-
