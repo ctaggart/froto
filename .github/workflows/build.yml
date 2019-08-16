@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: look for dotnet
-      run: dotnet --version
+      run: dotnet --info
     - uses: docker://mcr.microsoft.com/dotnet/core/sdk:2.2.105
       with:
-        args: dotnet --version
+        args: ./build.sh
