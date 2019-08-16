@@ -1,5 +1,8 @@
 # build, test, and pack
 
+# dotnet restore Froto.sln --force-evaluate
+# dotnet restore TypeProvider.Test\Froto.TypeProvider.Test.fsproj --force-evaluate
+
 dotnet build -c Release Froto.sln
 if ($lastexitcode -ne 0){ exit $lastexitcode }
 dotnet build -c Release TypeProvider.Test\Froto.TypeProvider.Test.fsproj

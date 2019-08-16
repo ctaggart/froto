@@ -12,5 +12,7 @@ jobs:
     #   with:
     #     args: ./build.sh
     - run: |
-        export VERSION=`nbgv get-version -v SemVer2`
-        ./build.sh
+        dotnet tool install -g nbgv --version 2.3.167
+        nbgv get-version -v SemVer2
+        # export VERSION=`nbgv get-version -v SemVer2`
+        # ./build.sh
