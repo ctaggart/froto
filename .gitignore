@@ -16,3 +16,4 @@ docs/type-provider/paket.lock
 .vs/
 .ionide/
 .vscode/
+nbgv.json
