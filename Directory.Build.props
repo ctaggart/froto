@@ -5,4 +5,7 @@
     <NoWarn>NU1603</NoWarn>
     <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.1.6-beta-g87dadf6e11" PrivateAssets="All" />
+  </ItemGroup>
 </Project>

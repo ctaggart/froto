@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <NuspecFile>TypeProvider.Runtime.nuspec</NuspecFile>
@@ -14,7 +14,7 @@
   is used to pass generated nuget package version to custom nuspec file -->
   <Target Name="UpdateNuspecProperties" AfterTargets="GetBuildVersion">
     <PropertyGroup>
-      <NuspecProperties>$(NuspecProperties);version=$(NuGetPackageVersion)</NuspecProperties>    
+      <NuspecProperties>$(NuspecProperties);version=$(NuGetPackageVersion)</NuspecProperties>
     </PropertyGroup>
   </Target>
 
@@ -32,7 +32,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Serialization\Froto.Serialization.fsproj" />
   </ItemGroup>
-  
+
   <Target Name="BuildDesignTime" BeforeTargets="Build">
     <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Restore" />
     <MSBuild Projects="..\TypeProvider.DesignTime\Froto.TypeProvider.DesignTime.fsproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=netstandard2.0" />
@@ -42,13 +42,12 @@
     <CreateItem Include="..\TypeProvider.DesignTime\bin\$(Configuration)\netstandard2.0\*.dll;..\TypeProvider.DesignTime\bin\$(Configuration)\netstandard2.0\*.pdb">
       <Output TaskParameter="Include" ItemName="DesignTimeFiles" />
     </CreateItem>
-    
+
     <Copy SourceFiles="@(DesignTimeFiles)" DestinationFolder="$(OutputPath)\typeproviders\fsharp41\netstandard2.0" />
   </Target>
-  
+
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.0.25" PrivateAssets="All" />
   </ItemGroup>
 </Project>
