@@ -30,9 +30,9 @@
       },
       "Nerdbank.GitVersioning": {
         "type": "Direct",
-        "requested": "[3.0.25, )",
-        "resolved": "3.0.25",
-        "contentHash": "XHpul0zWJvaRL06fOJtGTim9sD9q1CbO8DnrSJGr6pjMcpVGRtDcLgcYycseGPKmOZeRmrzdR6gZihE3naHMwQ=="
+        "requested": "[3.1.6-beta, )",
+        "resolved": "3.1.6-beta",
+        "contentHash": "7PUZVnh/gu5UDnakKVSEvTnWRKMDEZgQR+S2VTNbSJq6zmbW0+pARfW4XZA7Av6gd/ErehsDDkhmBY9yFOQs3w=="
       },
       "NETStandard.Library": {
         "type": "Direct",
