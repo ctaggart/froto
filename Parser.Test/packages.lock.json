@@ -1118,7 +1118,7 @@
           "xunit.extensibility.core": "[2.4.1]"
         }
       },
-      "Froto.Parser": {
+      "froto.parser": {
         "type": "Project",
         "dependencies": {
           "FParsec": "1.0.3",

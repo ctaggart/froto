@@ -61,6 +61,6 @@
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <PackageReference Include="FParsec" Version="1.0.3" />
     <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.0.25" PrivateAssets="All" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.1.6-beta" PrivateAssets="All" />
   </ItemGroup>
 </Project>

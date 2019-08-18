@@ -1110,7 +1110,7 @@
           "xunit.extensibility.core": "[2.4.1]"
         }
       },
-      "Froto.Serialization": {
+      "froto.serialization": {
         "type": "Project",
         "dependencies": {
           "FSharp.Core": "4.5.2"

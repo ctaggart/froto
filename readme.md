@@ -11,6 +11,8 @@
 * [Froto.TypeProvider](http://www.nuget.org/packages/Froto.TypeProvider) - A type provider for Protocol Buffers. Supports proto2 so far. [Example usage](https://github.com/ctaggart/froto/blob/master/docs/type-provider/type-provider.md).
 
 ## Status
+* 0.7.x 2019-08 Type Provider support .NET Core. Parser supports import statements.
+* 0.6.0 2018-05 Add proto3 specific deserialization that requires fewer SRTP constraints
 * 0.5.0 2017-12 Froto.Parser & Froto.Serialization target netstandard2.0
 * 0.4.0 2016-10 Parser now supports full gRPC syntax and options syntax. New Froto.TypeProvider package with support for proto2.
 * 0.3.1 2016-06 Made Parser functions more discoverable and easier to use.
